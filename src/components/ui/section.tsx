@@ -10,16 +10,11 @@ type SectionProps = {
 
 export function Section({ title, description, children, className }: SectionProps) {
   return (
-    <section
-      className={cn(
-        'rounded-3xl border border-slate-200 bg-white p-6 shadow-sm',
-        className,
-      )}
-    >
+    <section className={cn('', className)}>
       {(title || description) && (
         <div className="mb-5 space-y-1">
-          {title ? <h2 className="text-lg font-semibold text-slate-950">{title}</h2> : null}
-          {description ? <p className="text-sm leading-6 text-slate-600">{description}</p> : null}
+          {title ? <h2 className="text-xl font-semibold text-slate-950">{title}</h2> : null}
+          {description ? <p className="text-sm leading-6 text-slate-500">{description}</p> : null}
         </div>
       )}
       {children}

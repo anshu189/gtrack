@@ -12,15 +12,16 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
       <div
         ref={ref}
         className={cn(
-          'overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm',
+          'rounded-xl border border-slate-200 bg-white dark:border-neutral-800 dark:bg-black',
+          title || description ? 'p-5' : 'p-4',
           className,
         )}
         {...props}
       >
         {title || description ? (
           <div className="mb-4 space-y-1">
-            {title ? <h3 className="text-base font-semibold text-slate-950">{title}</h3> : null}
-            {description ? <p className="text-sm leading-6 text-slate-600">{description}</p> : null}
+            {title ? <h3 className="text-base font-semibold text-slate-950 dark:text-white">{title}</h3> : null}
+            {description ? <p className="text-sm leading-6 text-slate-500 dark:text-neutral-400">{description}</p> : null}
           </div>
         ) : null}
         {children}

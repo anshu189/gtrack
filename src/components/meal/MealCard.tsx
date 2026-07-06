@@ -1,18 +1,43 @@
-import React from 'react'
+import { useState, useEffect } from 'react'
 import type { Meal } from '@/types'
+import { foodRepository } from '@/lib/repositories/foodRepository'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+
 interface MealCardProps {
   meal: Meal
   onAddItem?: () => void
   onDelete?: () => void
 }
 
-const MealCard: React.FC<MealCardProps> = ({ meal, onAddItem, onDelete }) => {
+const MealCard = ({ meal, onAddItem, onDelete }: MealCardProps) => {
+  const [resolvedNames, setResolvedNames] = useState<Record<string, string>>({})
+
+  useEffect(() => {
+    const unresolved = meal.items.filter((it) => !it.name)
+    if (unresolved.length === 0) return
+
+    let cancelled = false
+    const resolve = async () => {
+      const names: Record<string, string> = {}
+      for (const it of unresolved) {
+        try {
+          const food = await foodRepository.getById(it.foodId)
+          if (food) names[it.foodId] = food.name
+        } catch {
+          // skip
+        }
+      }
+      if (!cancelled) setResolvedNames((prev) => ({ ...prev, ...names }))
+    }
+    resolve()
+    return () => { cancelled = true }
+  }, [meal.items])
+
   return (
-    <Card className="p-4 bg-white text-black border border-gray-200 shadow-sm rounded-sm">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-lg font-medium">{meal.name}</h3>
+    <Card>
+      <div className="flex items-center justify-between">
+        <h3 className="text-base font-semibold text-slate-950">{meal.name}</h3>
         <div className="flex items-center gap-2">
           {onAddItem && (
             <Button size="sm" variant="outline" onClick={onAddItem}>
@@ -27,21 +52,22 @@ const MealCard: React.FC<MealCardProps> = ({ meal, onAddItem, onDelete }) => {
         </div>
       </div>
 
-      <div className="flex flex-col gap-2">
+      <div className="mt-3 space-y-2">
         {meal.items && meal.items.length > 0 ? (
-          meal.items.map((it) => (
-            <div key={it.id} className="flex items-center justify-between p-2 border border-gray-100 rounded-sm">
-              <div className="flex items-center gap-3">
-                <div className="text-sm font-medium">{it.foodId}</div>
-                <div className="text-xs text-gray-600">{it.quantity} {it.unit}</div>
+          meal.items.map((it) => {
+            const displayName = it.name ?? resolvedNames[it.foodId] ?? it.foodId.split(':').pop()
+            return (
+              <div key={it.id} className="flex items-center justify-between rounded-lg border border-slate-100 p-2">
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium text-slate-950">{displayName}</span>
+                  <span className="text-xs text-slate-500">{it.quantity} {it.unit}</span>
+                </div>
+                <span className="text-xs text-slate-500">{Math.round(it.nutrition?.calories ?? 0)} kcal</span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="text-xs text-gray-600">{Math.round(it.nutrition?.calories ?? 0)} kcal</div>
-              </div>
-            </div>
-          ))
+            )
+          })
         ) : (
-          <div className="text-sm text-gray-600">No items</div>
+          <p className="text-sm text-slate-500">No items</p>
         )}
       </div>
     </Card>

@@ -1,14 +1,14 @@
-import React from 'react'
 import { Button } from '@/components/ui/button'
 
 interface DeleteItemButtonProps {
-  onDelete: () => void
+  onClick: () => void
+  label?: string
 }
 
-const DeleteItemButton: React.FC<DeleteItemButtonProps> = ({ onDelete }) => {
+const DeleteItemButton = ({ onClick, label = 'Delete' }: DeleteItemButtonProps) => {
   return (
-    <Button size="sm" variant="secondary" onClick={onDelete}>
-      Delete
+    <Button size="sm" variant="ghost" onClick={onClick}>
+      {label}
     </Button>
   )
 }

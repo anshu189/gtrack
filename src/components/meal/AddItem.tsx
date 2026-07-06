@@ -1,42 +1,27 @@
-import React, { useState } from 'react'
+import { useState, useCallback } from 'react'
 import type { Food } from '@/types'
 import FoodPicker from './FoodPicker'
-import QuantityPicker from './QuantityPicker'
-import { Button } from '@/components/ui/button'
 
 interface AddItemProps {
   onAdd: (payload: { food: Food; quantity: number; unit?: string }) => void
 }
 
-const AddItem: React.FC<AddItemProps> = ({ onAdd }) => {
-  const [selected, setSelected] = useState<Food | null>(null)
-  const [quantity, setQuantity] = useState<number>(100)
-  const [unit, setUnit] = useState<string | undefined>('g')
+const AddItem = ({ onAdd }: AddItemProps) => {
+  const [addedName, setAddedName] = useState<string | null>(null)
 
-  const handleAdd = () => {
-    if (!selected) return
-    onAdd({ food: selected, quantity: Number(quantity), unit })
-    setSelected(null)
-    setQuantity(100)
-  }
+  const handleSelect = useCallback((food: Food) => {
+    const quantity = food.servingSize ?? 100
+    const unit = food.servingUnit ?? 'g'
+    onAdd({ food, quantity, unit })
+    setAddedName(food.name)
+    setTimeout(() => setAddedName(null), 2000)
+  }, [onAdd])
 
   return (
-    <div className="p-2 border border-gray-100 rounded-sm bg-white">
-      <FoodPicker onSelect={(f) => setSelected(f)} />
-
-      <div className="mt-2 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <QuantityPicker value={quantity} unit={unit} onChange={(v, u) => { setQuantity(v); setUnit(u) }} />
-        </div>
-        <div>
-          <Button onClick={handleAdd} disabled={!selected}>
-            Add Item
-          </Button>
-        </div>
-      </div>
-
-      {selected && (
-        <div className="mt-2 text-sm text-gray-700">Selected: {selected.name}</div>
+    <div className="rounded-lg border border-slate-100 bg-white p-3 dark:border-neutral-800 dark:bg-black">
+      <FoodPicker onSelect={handleSelect} />
+      {addedName && (
+        <p className="mt-2 text-sm text-green-600">Added: {addedName}</p>
       )}
     </div>
   )

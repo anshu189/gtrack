@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { DailyNote } from '@/types'
 import { useDebounce } from '@/hooks/useDebounce'
 
@@ -8,7 +8,7 @@ interface DailyNoteEditorProps {
   onSave: (note: DailyNote) => void
 }
 
-export const DailyNoteEditor: React.FC<DailyNoteEditorProps> = ({ date, note, onSave }) => {
+export const DailyNoteEditor = ({ date, note, onSave }: DailyNoteEditorProps) => {
   const [content, setContent] = useState(note?.content ?? '')
   const debouncedContent = useDebounce(content, 500)
   const onSaveRef = useRef(onSave)
@@ -36,7 +36,7 @@ export const DailyNoteEditor: React.FC<DailyNoteEditorProps> = ({ date, note, on
 
   return (
     <textarea
-      className="w-full resize-none rounded-sm border border-slate-200 px-3 py-2 text-sm"
+      className="w-full resize-none rounded-lg border border-slate-200 px-3 py-2 text-sm"
       placeholder="No notes for today."
       value={content}
       onChange={(e) => setContent(e.target.value)}

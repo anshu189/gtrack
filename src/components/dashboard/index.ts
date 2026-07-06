@@ -1,3 +1,3 @@
-export { DailySummary, DailySummaryCard } from './DailySummary'
+export { DailySummary } from './DailySummary'
 export { ProgressCards } from './ProgressCards'
 export { ProgressCard } from './ProgressCard'

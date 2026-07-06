@@ -15,25 +15,36 @@ type BottomNavigationProps = {
 export function BottomNavigation({ items }: BottomNavigationProps) {
   return (
     <nav aria-label="Bottom navigation">
-      <ul className="flex items-center justify-between gap-2">
+      <ul className="flex items-center justify-around">
         {items.map((item) => {
           const Icon = item.icon
           return (
-            <li key={item.label} className="flex-1">
+            <li key={item.label}>
               <button
                 type="button"
                 onClick={item.onClick}
-                className={cn(
-                  'w-full rounded-2xl border px-3 py-2 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2',
-                  item.active
-                    ? 'border-blue-600 bg-blue-50 text-blue-600'
-                    : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50',
-                )}
+                className="flex flex-col items-center gap-1"
               >
-                <div className="flex items-center gap-2">
-                  <Icon className="h-5 w-5" />
-                  <span className="text-sm font-medium">{item.label}</span>
+                <div
+                  className={cn(
+                    'flex h-9 w-9 items-center justify-center rounded-full transition-colors',
+                    item.active
+                      ? 'bg-blue-600 text-white'
+                      : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-neutral-500 dark:hover:bg-neutral-900 dark:hover:text-white',
+                  )}
+                >
+                  <Icon className="h-4 w-4" />
                 </div>
+                <span
+                  className={cn(
+                    'text-[10px] font-medium',
+                    item.active
+                      ? 'text-blue-600 dark:text-blue-400'
+                      : 'text-slate-500 dark:text-neutral-500',
+                  )}
+                >
+                  {item.label}
+                </span>
               </button>
             </li>
           )

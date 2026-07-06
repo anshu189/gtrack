@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import type { WaterLog } from '@/types'
 import { Button } from '@/components/ui/button'
 
@@ -12,7 +12,7 @@ const QUICK_AMOUNTS = [
   { label: '1L', value: 1000 },
 ]
 
-export const WaterLogging: React.FC<WaterLoggingProps> = ({ onAdd }) => {
+export const WaterLogging = ({ onAdd }: WaterLoggingProps) => {
   const [amount, setAmount] = useState(250)
 
   const handleAdd = (value: number) => {
@@ -20,7 +20,7 @@ export const WaterLogging: React.FC<WaterLoggingProps> = ({ onAdd }) => {
   }
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-3">
       <div className="flex gap-2">
         {QUICK_AMOUNTS.map((btn) => (
           <Button key={btn.value} size="sm" variant="outline" className="flex-1" onClick={() => handleAdd(btn.value)}>
@@ -31,7 +31,7 @@ export const WaterLogging: React.FC<WaterLoggingProps> = ({ onAdd }) => {
       <div className="flex items-center gap-2">
         <input
           type="number"
-          className="flex-1 rounded-sm border border-slate-200 px-3 py-2 text-sm"
+          className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm"
           placeholder="Custom amount"
           value={amount}
           onChange={(e) => setAmount(Number(e.target.value))}

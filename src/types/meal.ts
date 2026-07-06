@@ -6,6 +6,8 @@ export type MealID = string
 export interface MealItem {
   id: string
   foodId: FoodID
+  /** Human-readable food name (cached from Food at creation time) */
+  name?: string
   /** quantity in the unit specified (e.g., 100) */
   quantity: number
   /** unit, ideally matches Food.servingUnit (e.g., 'g') */

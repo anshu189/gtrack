@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react'
-import { useDailyNutritionProgress, useMealNutrition } from '@/hooks/useNutrition'
+import { useState, useEffect } from 'react'
+import { useDailyNutritionProgress } from '@/hooks/useNutrition'
 import { useMealStore } from '@/stores/mealStore'
 import { NutritionSummary, MealNutritionCard } from '@/components/nutrition'
 import { PageContainer } from '@/components/ui/page-container'
-import { Section } from '@/components/ui/section'
+import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { nutritionCalculationService } from '@/lib/services/nutritionCalculation'
 
-const NutritionTracker: React.FC = () => {
+const NutritionTracker = () => {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
   const mealStore = useMealStore()
   const { status: dailyStatus, loading } = useDailyNutritionProgress(selectedDate)
@@ -31,78 +32,87 @@ const NutritionTracker: React.FC = () => {
     setSelectedDate(new Date().toISOString().split('T')[0])
   }
 
+  const isToday = selectedDate === new Date().toISOString().split('T')[0]
+
   return (
     <PageContainer>
-      <Section title="Nutrition Tracker">
-        {/* Date selector */}
-        <div className="p-3 border border-gray-200 rounded-sm bg-white mb-4 flex items-center justify-between">
-          <Button size="sm" variant="outline" onClick={handlePreviousDay}>
-            ← Prev
-          </Button>
-          <div className="text-center">
-            <div className="text-sm font-medium">{new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}</div>
-            <div className="text-xs text-gray-600">{selectedDate}</div>
-          </div>
-          <div className="flex items-center gap-2">
+      <div className="mb-6">
+        <h1 className="text-2xl font-semibold text-slate-950">Nutrition Tracker</h1>
+      </div>
+
+      <div className="mb-6 flex items-center justify-between">
+        <Button size="sm" variant="outline" onClick={handlePreviousDay}>
+          &larr; Previous
+        </Button>
+        <div className="text-center">
+          <p className="text-sm font-medium text-slate-950">
+            {new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+          </p>
+          <p className="text-xs text-slate-500">{selectedDate}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          {!isToday && (
             <Button size="sm" variant="outline" onClick={handleToday}>
               Today
             </Button>
-            <Button size="sm" variant="outline" onClick={handleNextDay}>
-              Next →
-            </Button>
-          </div>
+          )}
+          <Button size="sm" variant="outline" onClick={handleNextDay} disabled={isToday}>
+            Next &rarr;
+          </Button>
         </div>
+      </div>
 
-        {/* Daily nutrition summary */}
-        {loading ? (
-          <div className="p-3 text-center text-gray-500">Loading...</div>
-        ) : (
-          <NutritionSummary status={dailyStatus} />
-        )}
+      {loading ? (
+        <p className="py-12 text-center text-sm text-slate-500">Loading...</p>
+      ) : (
+        <div className="space-y-6">
+          {dailyStatus && (
+            <Card title="Daily Nutrition">
+              <NutritionSummary status={dailyStatus} />
+            </Card>
+          )}
 
-        {/* Meals for the day */}
-        <div className="mt-4">
-          <h3 className="text-sm font-medium mb-2">Meals ({mealStore.meals.length})</h3>
-          <div className="flex flex-col gap-2">
+          <Card title={`Meals (${mealStore.meals.length})`}>
             {mealStore.meals.length === 0 ? (
-              <div className="p-3 text-xs text-center text-gray-500">No meals logged for this day</div>
+              <p className="text-sm text-slate-500">No meals logged for this day.</p>
             ) : (
-              mealStore.meals.map((meal) => {
-                const mealNutrition = useMealNutrition(meal)
-                if (!mealNutrition) return null
-                return <MealNutritionCard key={meal.id} name={meal.name ?? 'Meal'} nutrition={mealNutrition} />
-              })
-            )}
-          </div>
-        </div>
-
-        {/* Quick stats */}
-        {dailyStatus && (
-          <div className="mt-4 p-3 border border-gray-200 rounded-sm bg-gray-50">
-            <h3 className="text-sm font-medium mb-2">Quick Stats</h3>
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div>
-                <div className="font-medium">Remaining Calories</div>
-                <div className="text-gray-600">{Math.max(0, Math.round(dailyStatus.remaining.calories))} kcal</div>
+              <div className="space-y-2">
+                {mealStore.meals.map((meal) => {
+                  const mealNutrition = nutritionCalculationService.calculateMealNutrition(meal)
+                  return <MealNutritionCard key={meal.id} name={meal.name ?? 'Meal'} nutrition={mealNutrition} />
+                })}
               </div>
-              <div>
-                <div className="font-medium">Surplus / Deficit</div>
-                <div className={dailyStatus.surplus.calories > 0 ? 'text-red-600' : 'text-green-600'}>
-                  {dailyStatus.surplus.calories > 0 ? '+' : ''}{Math.round(dailyStatus.surplus.calories)} kcal
+            )}
+          </Card>
+
+          {dailyStatus && (
+            <Card title="Quick Stats">
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="rounded-lg border border-slate-200 p-3">
+                  <p className="text-xs text-slate-500">Remaining Calories</p>
+                  <p className="text-lg font-semibold text-slate-950">{Math.max(0, Math.round(dailyStatus.remaining.calories))} kcal</p>
+                </div>
+                <div className="rounded-lg border border-slate-200 p-3">
+                  <p className="text-xs text-slate-500">Surplus / Deficit</p>
+                  <p className={`text-lg font-semibold ${dailyStatus.surplus.calories > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                    {dailyStatus.surplus.calories > 0 ? '+' : ''}{Math.round(dailyStatus.surplus.calories)} kcal
+                  </p>
+                </div>
+                <div className="rounded-lg border border-slate-200 p-3">
+                  <p className="text-xs text-slate-500">Protein %</p>
+                  <p className="text-lg font-semibold text-slate-950">{Math.round(dailyStatus.percentage.protein)}%</p>
+                </div>
+                <div className="rounded-lg border border-slate-200 p-3">
+                  <p className="text-xs text-slate-500">Macros Balance</p>
+                  <p className="text-xs text-slate-600 mt-1">
+                    P: {Math.round(dailyStatus.actual.protein)}g &middot; C: {Math.round(dailyStatus.actual.carbs)}g &middot; F: {Math.round(dailyStatus.actual.fat)}g
+                  </p>
                 </div>
               </div>
-              <div>
-                <div className="font-medium">Protein %</div>
-                <div className="text-gray-600">{Math.round(dailyStatus.percentage.protein)}%</div>
-              </div>
-              <div>
-                <div className="font-medium">Macros Balance</div>
-                <div className="text-xs text-gray-600">P: {Math.round(dailyStatus.actual.protein)}g • C: {Math.round(dailyStatus.actual.carbs)}g • F: {Math.round(dailyStatus.actual.fat)}g</div>
-              </div>
-            </div>
-          </div>
-        )}
-      </Section>
+            </Card>
+          )}
+        </div>
+      )}
     </PageContainer>
   )
 }

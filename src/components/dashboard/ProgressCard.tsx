@@ -1,6 +1,3 @@
-import React from 'react'
-import { Card } from '@/components/ui/card'
-
 interface ProgressCardProps {
   label: string
   actual: number
@@ -17,37 +14,36 @@ const getBarColor = (percentage: number) => {
 }
 
 const getStatusLabel = (percentage: number) => {
-  if (percentage >= 100) return '✓ Complete'
+  if (percentage >= 100) return 'Complete'
   if (percentage >= 80) return 'On track'
   if (percentage >= 50) return 'Halfway'
   return 'Just started'
 }
 
-export const ProgressCard: React.FC<ProgressCardProps> = ({ label, actual, target, unit = 'g', percentage }) => {
+export const ProgressCard = ({ label, actual, target, unit = 'g', percentage }: ProgressCardProps) => {
   const barColor = getBarColor(percentage)
   const status = getStatusLabel(percentage)
   const displayPercentage = Math.min(percentage, 100)
 
   return (
-    <Card className="p-3 bg-white text-black border border-gray-200 shadow-sm rounded-sm">
-      <div className="flex items-center justify-between mb-2">
-        <div className="text-sm font-medium">{label}</div>
-        <div className="text-xs font-medium text-gray-600">{Math.round(percentage)}%</div>
+    <div className="rounded-xl border border-slate-200 bg-white p-4">
+      <div className="mb-2 flex items-center justify-between">
+        <span className="text-sm font-medium text-slate-950">{label}</span>
+        <span className="text-xs font-medium text-slate-500">{Math.round(percentage)}%</span>
       </div>
-
-      {/* Progress bar */}
-      <div className="w-full bg-gray-100 rounded-full h-3 mb-2 overflow-hidden">
-        <div className={`${barColor} h-3 rounded-full transition-all`} style={{ width: `${displayPercentage}%` }} />
+      <div className="mb-2 h-3 w-full overflow-hidden rounded-full bg-slate-100">
+        <div
+          className={`${barColor} h-3 rounded-full transition-all`}
+          style={{ width: `${displayPercentage}%` }}
+        />
       </div>
-
-      {/* Stats */}
       <div className="flex items-center justify-between text-xs">
-        <div className="text-gray-600">
+        <span className="text-slate-500">
           {Math.round(actual)} / {Math.round(target)} {unit}
-        </div>
-        <div className="font-medium text-gray-700">{status}</div>
+        </span>
+        <span className="font-medium text-slate-700">{status}</span>
       </div>
-    </Card>
+    </div>
   )
 }
 

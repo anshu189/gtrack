@@ -1,4 +1,3 @@
-import React from 'react'
 import type { WorkoutType } from '@/types'
 import { WORKOUT_TYPES, WORKOUT_LABELS } from '@/types/workout'
 import { Button } from '@/components/ui/button'
@@ -9,7 +8,7 @@ interface WorkoutLoggingProps {
   onSelect: (type: WorkoutType) => void
 }
 
-export const WorkoutLogging: React.FC<WorkoutLoggingProps> = ({ selectedType, onSelect }) => {
+export const WorkoutLogging = ({ selectedType, onSelect }: WorkoutLoggingProps) => {
   return (
     <div className="grid grid-cols-2 gap-2">
       {WORKOUT_TYPES.map((type) => (

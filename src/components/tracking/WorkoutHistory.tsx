@@ -1,4 +1,3 @@
-import React from 'react'
 import type { Workout } from '@/types'
 import { WORKOUT_LABELS } from '@/types/workout'
 
@@ -15,7 +14,7 @@ function formatDate(dateIso: string) {
   })
 }
 
-export const WorkoutHistory: React.FC<WorkoutHistoryProps> = ({ workouts, excludeDate }) => {
+export const WorkoutHistory = ({ workouts, excludeDate }: WorkoutHistoryProps) => {
   const items = workouts.filter((w) => w.date !== excludeDate)
 
   if (items.length === 0) {
@@ -23,10 +22,10 @@ export const WorkoutHistory: React.FC<WorkoutHistoryProps> = ({ workouts, exclud
   }
 
   return (
-    <ul className="divide-y divide-slate-100 rounded-sm border border-slate-200">
+    <ul className="divide-y divide-slate-100 rounded-lg border border-slate-200">
       {items.map((workout) => (
         <li key={workout.id} className="flex items-center justify-between px-3 py-2 text-sm">
-          <span className="text-slate-600">{formatDate(workout.date)}</span>
+          <span className="text-slate-500">{formatDate(workout.date)}</span>
           <span className="font-medium text-slate-950">{WORKOUT_LABELS[workout.type]}</span>
         </li>
       ))}

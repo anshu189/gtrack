@@ -1,5 +1,3 @@
-import React from 'react'
-
 interface QuantityPickerProps {
   value: number
   unit?: string
@@ -7,18 +5,18 @@ interface QuantityPickerProps {
   units?: string[]
 }
 
-const QuantityPicker: React.FC<QuantityPickerProps> = ({ value, unit = 'g', onChange, units = ['g', 'oz', 'serving'] }) => {
+const QuantityPicker = ({ value, unit = 'g', onChange, units = ['g', 'ml', 'serving'] }: QuantityPickerProps) => {
   return (
     <div className="flex items-center gap-2">
       <input
         type="number"
-        className="w-20 px-2 py-1 border border-gray-200 rounded-sm text-sm"
+        className="w-20 rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
         value={value}
         onChange={(e) => onChange(Number(e.target.value), unit)}
         min={0}
       />
       <select
-        className="px-2 py-1 border border-gray-200 rounded-sm text-sm"
+        className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
         value={unit}
         onChange={(e) => onChange(value, e.target.value)}
       >

@@ -1,23 +1,47 @@
-import React, { useEffect, useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { WeightEntry } from '@/types'
-import { Button } from '@/components/ui/button'
 
 interface WeightLoggingProps {
   todayEntry?: WeightEntry
   date: string
   onSave: (entry: WeightEntry) => void
+  showButton?: boolean
+  weight?: number
+  unit?: string
+  notes?: string
+  onWeightChange?: (weight: number) => void
+  onUnitChange?: (unit: WeightEntry['unit']) => void
+  onNotesChange?: (notes: string) => void
 }
 
-export const WeightLogging: React.FC<WeightLoggingProps> = ({ todayEntry, date, onSave }) => {
-  const [weight, setWeight] = useState(todayEntry?.weight ?? 0)
-  const [unit, setUnit] = useState<WeightEntry['unit']>(todayEntry?.unit ?? 'kg')
-  const [notes, setNotes] = useState(todayEntry?.notes ?? '')
+export const WeightLogging = ({
+  todayEntry,
+  date,
+  onSave,
+  showButton = true,
+  weight: controlledWeight,
+  unit: controlledUnit,
+  notes: controlledNotes,
+  onWeightChange,
+  onUnitChange,
+  onNotesChange,
+}: WeightLoggingProps) => {
+  const [internalWeight, setInternalWeight] = useState(todayEntry?.weight ?? 0)
+  const [internalUnit, setInternalUnit] = useState<WeightEntry['unit']>(todayEntry?.unit ?? 'kg')
+  const [internalNotes, setInternalNotes] = useState(todayEntry?.notes ?? '')
+
+  const isControlled = controlledWeight !== undefined
+  const weight = isControlled ? controlledWeight : internalWeight
+  const unit = (isControlled ? controlledUnit : internalUnit) as WeightEntry['unit']
+  const notes = (isControlled ? controlledNotes : internalNotes) ?? ''
 
   useEffect(() => {
-    setWeight(todayEntry?.weight ?? 0)
-    setUnit(todayEntry?.unit ?? 'kg')
-    setNotes(todayEntry?.notes ?? '')
-  }, [todayEntry])
+    if (!isControlled) {
+      setInternalWeight(todayEntry?.weight ?? 0)
+      setInternalUnit(todayEntry?.unit ?? 'kg')
+      setInternalNotes(todayEntry?.notes ?? '')
+    }
+  }, [todayEntry, isControlled])
 
   const handleSave = () => {
     if (weight <= 0) return
@@ -34,22 +58,30 @@ export const WeightLogging: React.FC<WeightLoggingProps> = ({ todayEntry, date, 
   }
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-3">
       <div className="flex items-center gap-2">
         <input
           type="number"
-          className="flex-1 rounded-sm border border-slate-200 px-3 py-2 text-sm"
+          className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
           placeholder="Weight"
           value={weight || ''}
-          onChange={(e) => setWeight(Number(e.target.value))}
+          onChange={(e) => {
+            const v = Number(e.target.value)
+            if (isControlled) onWeightChange?.(v)
+            else setInternalWeight(v)
+          }}
           step={0.1}
           min={0}
           aria-label="Weight value"
         />
         <select
-          className="rounded-sm border border-slate-200 px-3 py-2 text-sm"
+          className="rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
           value={unit}
-          onChange={(e) => setUnit(e.target.value as WeightEntry['unit'])}
+          onChange={(e) => {
+            const u = e.target.value as WeightEntry['unit']
+            if (isControlled) onUnitChange?.(u)
+            else setInternalUnit(u)
+          }}
           aria-label="Weight unit"
         >
           <option value="kg">kg</option>
@@ -58,15 +90,25 @@ export const WeightLogging: React.FC<WeightLoggingProps> = ({ todayEntry, date, 
       </div>
       <input
         type="text"
-        className="rounded-sm border border-slate-200 px-3 py-2 text-sm"
+        className="rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
         placeholder="Notes (optional)"
         value={notes}
-        onChange={(e) => setNotes(e.target.value)}
+        onChange={(e) => {
+          if (isControlled) onNotesChange?.(e.target.value)
+          else setInternalNotes(e.target.value)
+        }}
         aria-label="Weight notes"
       />
-      <Button onClick={handleSave} disabled={weight <= 0}>
-        {todayEntry ? 'Update Weight' : 'Log Weight'}
-      </Button>
+      {showButton && (
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={weight <= 0}
+          className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {todayEntry ? 'Update Weight' : 'Log Weight'}
+        </button>
+      )}
     </div>
   )
 }
