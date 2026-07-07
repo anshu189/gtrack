@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import type { Meal } from '@/types'
 import { foodRepository } from '@/lib/repositories/foodRepository'
 import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 
 interface MealCardProps {
   meal: Meal
@@ -38,18 +37,6 @@ const MealCard = ({ meal, onAddItem, onDelete }: MealCardProps) => {
     <Card>
       <div className="flex items-center justify-between">
         <h3 className="text-base font-semibold text-slate-950">{meal.name}</h3>
-        <div className="flex items-center gap-2">
-          {onAddItem && (
-            <Button size="sm" variant="outline" onClick={onAddItem}>
-              Add
-            </Button>
-          )}
-          {onDelete && (
-            <Button size="sm" variant="ghost" onClick={onDelete}>
-              Delete
-            </Button>
-          )}
-        </div>
       </div>
 
       <div className="mt-3 space-y-2">
@@ -57,7 +44,7 @@ const MealCard = ({ meal, onAddItem, onDelete }: MealCardProps) => {
           meal.items.map((it) => {
             const displayName = it.name ?? resolvedNames[it.foodId] ?? it.foodId.split(':').pop()
             return (
-              <div key={it.id} className="flex items-center justify-between rounded-lg border border-slate-100 p-2">
+              <div key={it.id} className="flex items-center justify-between border border-slate-100 p-2">
                 <div className="flex items-center gap-3">
                   <span className="text-sm font-medium text-slate-950">{displayName}</span>
                   <span className="text-xs text-slate-500">{it.quantity} {it.unit}</span>
@@ -70,6 +57,29 @@ const MealCard = ({ meal, onAddItem, onDelete }: MealCardProps) => {
           <p className="text-sm text-slate-500">No items</p>
         )}
       </div>
+
+      {(onAddItem || onDelete) && (
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          {onAddItem && (
+            <button
+              type="button"
+              onClick={onAddItem}
+              className="bg-black px-4 py-2 text-sm font-medium text-white"
+            >
+              Add
+            </button>
+          )}
+          {onDelete && (
+            <button
+              type="button"
+              onClick={onDelete}
+              className="border border-transparent px-4 py-2 text-sm font-medium text-red-600"
+            >
+              Delete
+            </button>
+          )}
+        </div>
+      )}
     </Card>
   )
 }

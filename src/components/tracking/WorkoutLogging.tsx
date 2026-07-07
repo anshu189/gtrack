@@ -14,8 +14,11 @@ export const WorkoutLogging = ({ selectedType, onSelect }: WorkoutLoggingProps) 
       {WORKOUT_TYPES.map((type) => (
         <Button
           key={type}
-          variant={selectedType === type ? 'default' : 'outline'}
-          className={cn('w-full', selectedType === type && 'ring-2 ring-blue-600 ring-offset-1')}
+          variant="outline"
+          className={cn(
+            'w-full',
+            selectedType === type && 'border-black text-white bg-black dark:border-white dark:text-white dark:bg-neutral-900',
+          )}
           onClick={() => onSelect(type)}
         >
           {WORKOUT_LABELS[type]}
@@ -24,5 +27,3 @@ export const WorkoutLogging = ({ selectedType, onSelect }: WorkoutLoggingProps) 
     </div>
   )
 }
-
-export default WorkoutLogging

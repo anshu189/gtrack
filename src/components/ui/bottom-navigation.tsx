@@ -27,9 +27,9 @@ export function BottomNavigation({ items }: BottomNavigationProps) {
               >
                 <div
                   className={cn(
-                    'flex h-9 w-9 items-center justify-center rounded-full transition-colors',
+                    'flex h-9 w-9 items-center justify-center transition-colors',
                     item.active
-                      ? 'bg-blue-600 text-white'
+                      ? 'bg-black text-white'
                       : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-neutral-500 dark:hover:bg-neutral-900 dark:hover:text-white',
                   )}
                 >
@@ -39,7 +39,7 @@ export function BottomNavigation({ items }: BottomNavigationProps) {
                   className={cn(
                     'text-[10px] font-medium',
                     item.active
-                      ? 'text-blue-600 dark:text-blue-400'
+                      ? 'text-black dark:text-white'
                       : 'text-slate-500 dark:text-neutral-500',
                   )}
                 >

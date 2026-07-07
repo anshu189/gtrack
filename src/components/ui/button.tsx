@@ -7,7 +7,7 @@ type ButtonSize = 'sm' | 'md' | 'lg'
 
 const buttonStyles: Record<ButtonVariant, string> = {
   default:
-    'bg-blue-600 text-white hover:bg-blue-700',
+    'bg-black text-white hover:bg-neutral-800',
   secondary:
     'bg-slate-100 text-slate-950 border border-slate-200 hover:bg-slate-200 dark:bg-neutral-900 dark:text-white dark:border-neutral-700 dark:hover:bg-neutral-800',
   outline:
@@ -36,7 +36,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         type={type}
         className={cn(
-          'inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50',
+          'inline-flex items-center justify-center gap-2 font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50',
           buttonStyles[variant],
           sizeStyles[size],
           className,

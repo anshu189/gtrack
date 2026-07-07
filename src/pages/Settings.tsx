@@ -10,7 +10,7 @@ const DEFAULT_SETTINGS: UserSettings = {
   id: 'settings:default',
   unitSystem: 'metric',
   theme: 'light',
-  nutritionTargets: { calories: 2000, protein: 150, carbs: 250, fat: 70 },
+  nutritionTargets: { calories: 3300, protein: 120, carbs: 420, fat: 95, fiber: 35 },
   waterGoalMl: 2000,
 }
 
@@ -18,10 +18,11 @@ export default function Settings() {
   const settingsStore = useSettingsStore()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const [calories, setCalories] = useState(2000)
-  const [protein, setProtein] = useState(150)
-  const [carbs, setCarbs] = useState(250)
-  const [fat, setFat] = useState(70)
+  const [calories, setCalories] = useState(3300)
+  const [protein, setProtein] = useState(120)
+  const [carbs, setCarbs] = useState(420)
+  const [fat, setFat] = useState(95)
+  const [fiber, setFiber] = useState(35)
   const [waterGoal, setWaterGoal] = useState(2000)
   const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('light')
   const [saving, setSaving] = useState(false)
@@ -41,6 +42,7 @@ export default function Settings() {
       setProtein(s.nutritionTargets?.protein ?? DEFAULT_SETTINGS.nutritionTargets!.protein!)
       setCarbs(s.nutritionTargets?.carbs ?? DEFAULT_SETTINGS.nutritionTargets!.carbs!)
       setFat(s.nutritionTargets?.fat ?? DEFAULT_SETTINGS.nutritionTargets!.fat!)
+      setFiber(s.nutritionTargets?.fiber ?? DEFAULT_SETTINGS.nutritionTargets!.fiber!)
       setWaterGoal(s.waterGoalMl ?? DEFAULT_SETTINGS.waterGoalMl!)
       setTheme(s.theme ?? 'light')
     }
@@ -60,6 +62,7 @@ export default function Settings() {
         protein: Math.max(0, protein),
         carbs: Math.max(0, carbs),
         fat: Math.max(0, fat),
+        fiber: Math.max(0, fiber),
       },
       waterGoalMl: Math.max(0, waterGoal),
       theme,
@@ -146,6 +149,7 @@ export default function Settings() {
     setProtein(DEFAULT_SETTINGS.nutritionTargets!.protein!)
     setCarbs(DEFAULT_SETTINGS.nutritionTargets!.carbs!)
     setFat(DEFAULT_SETTINGS.nutritionTargets!.fat!)
+    setFiber(DEFAULT_SETTINGS.nutritionTargets!.fiber!)
     setWaterGoal(DEFAULT_SETTINGS.waterGoalMl!)
     setTheme('light')
 
@@ -165,7 +169,7 @@ export default function Settings() {
               <label className="mb-1 block text-xs font-medium text-slate-500">Calories (kcal)</label>
               <input
                 type="number"
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                className="w-full border border-slate-200 px-3 py-2 text-sm"
                 value={calories}
                 onChange={(e) => setCalories(Number(e.target.value))}
                 min={0}
@@ -176,7 +180,7 @@ export default function Settings() {
               <label className="mb-1 block text-xs font-medium text-slate-500">Protein (g)</label>
               <input
                 type="number"
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                className="w-full border border-slate-200 px-3 py-2 text-sm"
                 value={protein}
                 onChange={(e) => setProtein(Number(e.target.value))}
                 min={0}
@@ -187,7 +191,7 @@ export default function Settings() {
               <label className="mb-1 block text-xs font-medium text-slate-500">Carbs (g)</label>
               <input
                 type="number"
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                className="w-full border border-slate-200 px-3 py-2 text-sm"
                 value={carbs}
                 onChange={(e) => setCarbs(Number(e.target.value))}
                 min={0}
@@ -198,11 +202,22 @@ export default function Settings() {
               <label className="mb-1 block text-xs font-medium text-slate-500">Fat (g)</label>
               <input
                 type="number"
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                className="w-full border border-slate-200 px-3 py-2 text-sm"
                 value={fat}
                 onChange={(e) => setFat(Number(e.target.value))}
                 min={0}
                 step={5}
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-slate-500">Fiber (g)</label>
+              <input
+                type="number"
+                className="w-full border border-slate-200 px-3 py-2 text-sm"
+                value={fiber}
+                onChange={(e) => setFiber(Number(e.target.value))}
+                min={0}
+                step={1}
               />
             </div>
           </div>
@@ -213,7 +228,7 @@ export default function Settings() {
             <label className="mb-1 block text-xs font-medium text-slate-500">Daily target (ml)</label>
             <input
               type="number"
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              className="w-full border border-slate-200 px-3 py-2 text-sm"
               value={waterGoal}
               onChange={(e) => setWaterGoal(Number(e.target.value))}
               min={0}

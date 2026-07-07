@@ -8,7 +8,7 @@ import { dailyNoteRepository } from '@/lib/repositories/dailyNoteRepository'
 import { nutritionCalculationService } from '@/lib/services/nutritionCalculation'
 import { useDailyNutritionProgress } from '@/hooks/useNutrition'
 import { useSettingsStore } from '@/stores/settingsStore'
-import { NutritionSummary } from '@/components/nutrition'
+import { NutritionSummary, MealNutritionCard } from '@/components/nutrition'
 import { WorkoutLogging } from '@/components/tracking'
 import { WaterLogging, WaterProgress } from '@/components/tracking'
 import { WeightLogging } from '@/components/tracking'
@@ -242,9 +242,9 @@ export default function History() {
   const isToday = selectedDate === getTodayIso()
 
   function renderWorkout() {
-    if (!workout) return <p className="text-sm text-slate-500 dark:text-neutral-500">No workout logged</p>
+    if (!workout) return <p className="text-base text-slate-500 dark:text-neutral-500">No workout logged</p>
     const labels: Record<string, string> = { push: 'Push', pull: 'Pull', legs: 'Legs', rest: 'Rest' }
-    return <p className="text-sm text-slate-950 dark:text-white">{labels[workout] ?? workout}</p>
+    return <p className="text-base text-slate-950 dark:text-white">{labels[workout] ?? workout}</p>
   }
 
   function renderWaterLogs() {
@@ -252,7 +252,7 @@ export default function History() {
     return (
       <div className="flex flex-wrap gap-1">
         {waterLogs.map((log) => (
-          <span key={log.id} className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs text-slate-600 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-400">
+          <span key={log.id} className="border border-slate-200 bg-slate-50 px-2.5 py-1 text-sm text-slate-600 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-400">
             {log.amount} {log.unit}
           </span>
         ))}
@@ -262,12 +262,12 @@ export default function History() {
 
   function renderWeight() {
     if (!weightEntry || !weightEntry.weight) return <p className="text-sm text-slate-500 dark:text-neutral-500">No weight logged</p>
-    return <p className="text-sm text-slate-950 dark:text-white">{weightEntry.weight} {weightEntry.unit}</p>
+    return <p className="text-base text-slate-950 dark:text-white">{weightEntry.weight} {weightEntry.unit}</p>
   }
 
   function renderNote() {
-    if (!dailyNote?.content) return <p className="text-sm text-slate-500 dark:text-neutral-500">No notes</p>
-    return <p className="text-sm whitespace-pre-wrap text-slate-950 dark:text-white">{dailyNote.content}</p>
+    if (!dailyNote?.content) return <p className="text-base text-slate-500 dark:text-neutral-500">No notes</p>
+    return <p className="text-base whitespace-pre-wrap text-slate-950 dark:text-white">{dailyNote.content}</p>
   }
 
   return (
@@ -281,10 +281,28 @@ export default function History() {
           &larr; Previous
         </Button>
         <div className="text-center">
-          <p className="text-sm font-medium text-slate-950 dark:text-white">
+          <button
+            type="button"
+            onClick={() => {
+              const input = document.getElementById('history-date-picker') as HTMLInputElement
+              if (input) input.showPicker?.() ?? input.click()
+            }}
+            className="text-sm font-medium text-slate-950 hover:text-neutral-700 dark:text-white dark:hover:text-neutral-400"
+          >
             {new Date(`${selectedDate}T12:00:00`).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
-          </p>
-          <p className="text-xs text-slate-500 dark:text-neutral-500">{selectedDate}</p>
+          </button>
+          <input
+            id="history-date-picker"
+            type="date"
+            value={selectedDate}
+            onChange={(e) => {
+              setSelectedDate(e.target.value)
+              setEditing(false)
+              setHasChanges(false)
+              setWaterChanged(false)
+            }}
+            className="sr-only"
+          />
         </div>
         <div className="flex items-center gap-2">
           {!isToday && (
@@ -316,22 +334,11 @@ export default function History() {
                 {meals.map((meal) => {
                   const mealNutrition = nutritionCalculationService.calculateMealNutrition(meal)
                   return (
-                    <div key={meal.id} className="rounded-lg border border-slate-200 p-3 dark:border-neutral-800">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-slate-950 dark:text-white">
-                          {meal.name || 'Meal'}
-                        </span>
-                        <Button size="sm" variant="ghost" onClick={() => handleDeleteMeal(meal.id)}>
-                          Delete
-                        </Button>
-                      </div>
-                      <p className="mt-1 text-xs text-slate-500 dark:text-neutral-500">
-                        {meal.items.length} item{meal.items.length !== 1 ? 's' : ''} &middot;{' '}
-                        {Math.round(mealNutrition.calories)} kcal &middot; P:{' '}
-                        {Math.round(mealNutrition.protein)}g &middot; C:{' '}
-                        {Math.round(mealNutrition.carbs)}g &middot; F:{' '}
-                        {Math.round(mealNutrition.fat)}g
-                      </p>
+                    <div key={meal.id} className="relative">
+                      <MealNutritionCard name={meal.name ?? 'Meal'} nutrition={mealNutrition} />
+                      <Button size="sm" variant="ghost" className="absolute right-2 top-2 text-red-600 dark:text-red-400" onClick={() => handleDeleteMeal(meal.id)}>
+                        Delete
+                      </Button>
                     </div>
                   )
                 })}
@@ -361,7 +368,7 @@ export default function History() {
                     {waterLogs.map((log) => (
                       <span
                         key={log.id}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs text-slate-600 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-400"
+                        className="inline-flex items-center gap-1.5 border border-slate-200 bg-slate-50 px-2.5 py-1 text-sm text-slate-600 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-400"
                       >
                         {log.amount} {log.unit}
                         <button
@@ -404,7 +411,7 @@ export default function History() {
           <Card title="Daily Notes">
             {editing ? (
               <textarea
-                className="w-full resize-none rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
+                className="w-full resize-none border border-slate-200 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
                 placeholder="No notes for this day."
                 value={editNoteContent}
                 onChange={(e) => setEditNoteContent(e.target.value)}
@@ -423,7 +430,7 @@ export default function History() {
                   Cancel
                 </Button>
                 <Button
-                  className={`flex-1 ${hasChanges ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-slate-100 text-slate-950'}`}
+                  className={`flex-1 ${hasChanges ? 'bg-black text-white hover:bg-neutral-800' : 'bg-slate-100 text-slate-950'}`}
                   onClick={handleUpdateLog}
                   disabled={!hasChanges}
                 >

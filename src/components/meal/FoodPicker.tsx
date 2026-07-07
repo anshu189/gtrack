@@ -88,7 +88,7 @@ const FoodPicker = ({ onSelect, placeholder = 'Search foods' }: FoodPickerProps)
     <div className="w-full">
       <div className="flex items-center gap-2">
         <input
-          className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
+          className="flex-1 border border-slate-200 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder={placeholder}
@@ -102,7 +102,7 @@ const FoodPicker = ({ onSelect, placeholder = 'Search foods' }: FoodPickerProps)
           {results.map((f) => (
             <li
               key={f.id}
-              className="flex cursor-pointer items-center justify-between rounded-lg p-2 hover:bg-blue-50 dark:hover:bg-neutral-800"
+              className="flex cursor-pointer items-center justify-between p-2 hover:bg-neutral-50 dark:hover:bg-neutral-800"
               onClick={() => { onSelect(f); setQ('') }}
             >
               <div>
@@ -120,16 +120,16 @@ const FoodPicker = ({ onSelect, placeholder = 'Search foods' }: FoodPickerProps)
             + Create Custom Food
           </Button>
         ) : (
-          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-3 dark:border-neutral-700 dark:bg-neutral-900">
+          <div className="border border-slate-200 bg-slate-50 p-3 space-y-3 dark:border-neutral-700 dark:bg-neutral-900">
             <p className="text-xs font-semibold text-slate-700 dark:text-neutral-300">New Custom Food</p>
             <input
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+              className="w-full border border-slate-200 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
               value={customName}
               onChange={(e) => setCustomName(e.target.value)}
               placeholder="Food name"
             />
             <select
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+              className="w-full border border-slate-200 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
               value={customCategory}
               onChange={(e) => setCustomCategory(e.target.value)}
             >
@@ -140,13 +140,13 @@ const FoodPicker = ({ onSelect, placeholder = 'Search foods' }: FoodPickerProps)
             <div className="flex items-center gap-2">
               <input
                 type="number"
-                className="w-24 rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+                className="w-24 border border-slate-200 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
                 value={customServing}
                 onChange={(e) => setCustomServing(Number(e.target.value))}
                 placeholder="Serving"
               />
               <input
-                className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+                className="flex-1 border border-slate-200 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
                 value={customUnit}
                 onChange={(e) => setCustomUnit(e.target.value)}
                 placeholder="Unit (e.g. g, ml, oz)"
@@ -157,7 +157,7 @@ const FoodPicker = ({ onSelect, placeholder = 'Search foods' }: FoodPickerProps)
                 <p className="text-xs text-slate-500 mb-1 dark:text-neutral-500">Calories</p>
                 <input
                   type="number"
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+                  className="w-full border border-slate-200 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
                   value={customCalories}
                   onChange={(e) => setCustomCalories(Number(e.target.value))}
                 />
@@ -166,7 +166,7 @@ const FoodPicker = ({ onSelect, placeholder = 'Search foods' }: FoodPickerProps)
                 <p className="text-xs text-slate-500 mb-1 dark:text-neutral-500">Protein (g)</p>
                 <input
                   type="number"
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+                  className="w-full border border-slate-200 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
                   value={customProtein}
                   onChange={(e) => setCustomProtein(Number(e.target.value))}
                 />
@@ -175,7 +175,7 @@ const FoodPicker = ({ onSelect, placeholder = 'Search foods' }: FoodPickerProps)
                 <p className="text-xs text-slate-500 mb-1 dark:text-neutral-500">Carbs (g)</p>
                 <input
                   type="number"
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+                  className="w-full border border-slate-200 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
                   value={customCarbs}
                   onChange={(e) => setCustomCarbs(Number(e.target.value))}
                 />
@@ -184,7 +184,7 @@ const FoodPicker = ({ onSelect, placeholder = 'Search foods' }: FoodPickerProps)
                 <p className="text-xs text-slate-500 mb-1 dark:text-neutral-500">Fat (g)</p>
                 <input
                   type="number"
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+                  className="w-full border border-slate-200 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
                   value={customFat}
                   onChange={(e) => setCustomFat(Number(e.target.value))}
                 />

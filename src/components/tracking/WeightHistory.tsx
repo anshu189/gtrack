@@ -29,7 +29,7 @@ export const WeightHistory = ({ entries, excludeDate }: WeightHistoryProps) => {
   }
 
   return (
-    <ul className="divide-y divide-slate-100 rounded-lg border border-slate-200">
+    <ul className="divide-y divide-slate-100 border border-slate-200">
       {items.map((entry, index) => {
         const previous = items[index + 1]
         const trend = getTrend(entry, previous)

@@ -70,30 +70,30 @@ const MealBuilder = () => {
 
       <div className="space-y-6">
         <Card title="New Meal">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <input
               type="text"
-              className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              className="flex-1 border border-slate-200 px-3 py-2 text-sm"
               value={mealNameInput}
               onChange={(e) => setMealNameInput(e.target.value)}
               placeholder="Meal name"
             />
-            <Button onClick={handleCreateMeal}>Create</Button>
+            <Button onClick={handleCreateMeal} className="w-full sm:w-auto">Create</Button>
           </div>
         </Card>
 
         {currentMeal && (
-          <div className="rounded-xl border border-blue-200 bg-blue-50 p-5">
-            <h3 className="mb-3 text-sm font-semibold text-blue-700">{currentMeal.name}</h3>
+          <div className="border border-black bg-white p-5">
+            <h3 className="mb-3 text-sm font-semibold text-slate-950">{currentMeal.name}</h3>
             <AddItem onAdd={handleAddItem} />
             <div className="mt-4 space-y-2">
               {currentMeal.items?.map((item) => (
-                <div key={item.id} className="flex items-center justify-between rounded-lg border border-blue-100 bg-white p-2">
+                <div key={item.id} className="flex items-center justify-between border border-slate-200 bg-white p-2">
                   <div>
                     <p className="text-sm font-medium text-slate-950">{item.foodId}</p>
                     <p className="text-xs text-slate-500">{item.quantity} {item.unit}</p>
                   </div>
-                  <Button size="sm" variant="ghost" onClick={() => handleRemoveItem(item.id)}>
+                  <Button size="sm" variant="ghost" className="text-red-600 dark:text-red-400" onClick={() => handleRemoveItem(item.id)}>
                     Remove
                   </Button>
                 </div>

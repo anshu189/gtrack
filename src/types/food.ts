@@ -2,7 +2,7 @@ import type { Nutrition } from './nutrition'
 
 export type FoodID = string
 
-export type FoodSource = 'builtin' | 'custom' | 'imported'
+export type FoodSource = 'IFCT' | 'USDA' | 'FSSAI' | 'Brand' | 'Custom'
 
 export interface FoodMeasure {
   /** Optional measure id, e.g., 'm:cup' */
@@ -31,7 +31,9 @@ export interface FoodBase {
   /** Optional alternative measures (cup, piece, tbsp) */
   measures?: FoodMeasure[]
   isCustom?: boolean
+  isDiscrete?: boolean
   source?: FoodSource
+  sourceReference?: string
   createdAt?: string
   updatedAt?: string
 }

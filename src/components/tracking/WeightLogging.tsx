@@ -62,7 +62,7 @@ export const WeightLogging = ({
       <div className="flex items-center gap-2">
         <input
           type="number"
-          className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
+          className="flex-1 border border-slate-200 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
           placeholder="Weight"
           value={weight || ''}
           onChange={(e) => {
@@ -75,7 +75,7 @@ export const WeightLogging = ({
           aria-label="Weight value"
         />
         <select
-          className="rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
+          className="border border-slate-200 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
           value={unit}
           onChange={(e) => {
             const u = e.target.value as WeightEntry['unit']
@@ -90,7 +90,7 @@ export const WeightLogging = ({
       </div>
       <input
         type="text"
-        className="rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
+        className="border border-slate-200 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
         placeholder="Notes (optional)"
         value={notes}
         onChange={(e) => {
@@ -104,7 +104,7 @@ export const WeightLogging = ({
           type="button"
           onClick={handleSave}
           disabled={weight <= 0}
-          className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex items-center justify-center gap-2 bg-black px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {todayEntry ? 'Update Weight' : 'Log Weight'}
         </button>
@@ -112,5 +112,3 @@ export const WeightLogging = ({
     </div>
   )
 }
-
-export default WeightLogging

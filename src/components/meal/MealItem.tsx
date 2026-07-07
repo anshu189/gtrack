@@ -23,7 +23,7 @@ const MealItem = ({ item, onDelete }: MealItemProps) => {
   const displayName = item.name ?? resolvedName ?? item.foodId
 
   return (
-    <div className="flex items-center justify-between rounded-lg border border-slate-100 p-2">
+    <div className="flex items-center justify-between border border-slate-100 p-2">
       <div className="flex items-center gap-3">
         <span className="text-sm font-medium text-slate-950">{displayName}</span>
         <span className="text-xs text-slate-500">{item.quantity} {item.unit}</span>
@@ -31,7 +31,7 @@ const MealItem = ({ item, onDelete }: MealItemProps) => {
       <div className="flex items-center gap-2">
         <span className="text-xs text-slate-500">{Math.round(item.nutrition?.calories ?? 0)} kcal</span>
         {onDelete && (
-          <Button size="sm" variant="ghost" onClick={() => onDelete(item.id)}>
+          <Button size="sm" variant="ghost" className="text-red-600 dark:text-red-400" onClick={() => onDelete(item.id)}>
             Remove
           </Button>
         )}

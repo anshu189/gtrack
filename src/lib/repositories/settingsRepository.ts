@@ -10,7 +10,13 @@ export interface SettingsRepository {
 export class DexieSettingsRepository implements SettingsRepository {
   async get() {
     const all = await db.settings.toArray()
-    return all.length ? all[0] : undefined
+    if (all.length) return all[0]
+    return {
+      id: 'settings:default',
+      unitSystem: 'metric' as const,
+      nutritionTargets: { calories: 3300, protein: 120, carbs: 420, fat: 95, fiber: 35 },
+      waterGoalMl: 2000,
+    }
   }
 
   async save(s: UserSettings) {

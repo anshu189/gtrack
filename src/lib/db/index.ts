@@ -110,7 +110,7 @@ class GTrakDB extends Dexie {
       if (count === 0 && foods.length > 0) {
         const now = new Date().toISOString()
         const toInsert = foods.map((f) => ({ ...f, createdAt: f.createdAt ?? now, updatedAt: f.updatedAt ?? now }))
-        await this.foods.bulkAdd(toInsert)
+        await this.foods.bulkPut(toInsert)
       }
     } catch (e) {
       // do not crash app on seeding errors; log for diagnostics
@@ -125,7 +125,7 @@ class GTrakDB extends Dexie {
       if (count === 0 && categories.length > 0) {
         const now = new Date().toISOString()
         const toInsert = categories.map((c) => ({ ...c, createdAt: c.createdAt ?? now, updatedAt: c.updatedAt ?? now }))
-        await this.categories.bulkAdd(toInsert)
+        await this.categories.bulkPut(toInsert)
       }
     } catch (e) {
       // eslint-disable-next-line no-console
@@ -139,7 +139,7 @@ class GTrakDB extends Dexie {
       if (count === 0 && presets.length > 0) {
         const now = new Date().toISOString()
         const toInsert = presets.map((p) => ({ ...p, createdAt: p.createdAt ?? now, updatedAt: p.updatedAt ?? now }))
-        await this.quantityPresets.bulkAdd(toInsert)
+        await this.quantityPresets.bulkPut(toInsert)
       }
     } catch (e) {
       // eslint-disable-next-line no-console
@@ -153,7 +153,7 @@ class GTrakDB extends Dexie {
       if (count === 0 && sources.length > 0) {
         const now = new Date().toISOString()
         const toInsert = sources.map((s) => ({ ...s, createdAt: s.createdAt ?? now, updatedAt: s.updatedAt ?? now }))
-        await this.nutritionSources.bulkAdd(toInsert)
+        await this.nutritionSources.bulkPut(toInsert)
       }
     } catch (e) {
       // eslint-disable-next-line no-console

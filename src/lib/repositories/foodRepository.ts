@@ -51,7 +51,7 @@ export class DexieFoodRepository implements FoodRepository {
       servingUnit: input.servingUnit ?? input.measures?.[0]?.unit ?? 'g',
       measures: input.measures ?? [],
       isCustom: true,
-      source: 'custom',
+      source: 'Custom',
       nutrition: input.nutrition ?? { calories: 0, protein: 0, carbs: 0, fat: 0 },
       aliases: input.aliases ?? [],
       notes: input.notes,

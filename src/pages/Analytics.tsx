@@ -240,32 +240,32 @@ export default function Analytics() {
 
           <Card title="Summary">
             <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-lg border border-slate-200 p-4">
+              <div className="border border-slate-200 p-4">
                 <p className="text-xs text-slate-500">Avg Daily Calories</p>
                 <p className="mt-1 text-xl font-semibold text-slate-950">{avgCalories}</p>
                 <p className="text-xs text-slate-500">target: {calTarget}</p>
               </div>
-              <div className="rounded-lg border border-slate-200 p-4">
+              <div className="border border-slate-200 p-4">
                 <p className="text-xs text-slate-500">Avg Protein</p>
                 <p className="mt-1 text-xl font-semibold text-slate-950">{avgProtein}g</p>
                 <p className="text-xs text-slate-500">target: {proteinTarget}g</p>
               </div>
-              <div className="rounded-lg border border-slate-200 p-4">
+              <div className="border border-slate-200 p-4">
                 <p className="text-xs text-slate-500">Avg Carbs</p>
                 <p className="mt-1 text-xl font-semibold text-slate-950">{avgCarbs}g</p>
                 <p className="text-xs text-slate-500">target: {carbsTarget}g</p>
               </div>
-              <div className="rounded-lg border border-slate-200 p-4">
+              <div className="border border-slate-200 p-4">
                 <p className="text-xs text-slate-500">Avg Fat</p>
                 <p className="mt-1 text-xl font-semibold text-slate-950">{avgFat}g</p>
                 <p className="text-xs text-slate-500">target: {fatTarget}g</p>
               </div>
-              <div className="rounded-lg border border-slate-200 p-4">
+              <div className="border border-slate-200 p-4">
                 <p className="text-xs text-slate-500">Workouts</p>
                 <p className="mt-1 text-xl font-semibold text-slate-950">{totalWorkouts}</p>
                 <p className="text-xs text-slate-500">in {RANGE_LABELS[range].toLowerCase()}</p>
               </div>
-              <div className="rounded-lg border border-slate-200 p-4">
+              <div className="border border-slate-200 p-4">
                 <p className="text-xs text-slate-500">Workout Split</p>
                 <div className="mt-1 space-y-0.5">
                   {workoutSummary.filter((w) => w.value > 0).map((w) => (

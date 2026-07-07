@@ -32,20 +32,19 @@ function getTodayIso() {
 
 const Dashboard = () => {
   const navigate = useNavigate()
-  const today = getTodayIso()
+  const [selectedDate, setSelectedDate] = useState(getTodayIso())
   const mealStore = useMealStore()
   const workoutStore = useWorkoutStore()
   const waterStore = useWaterStore()
   const weightStore = useWeightStore()
   const dailyNoteStore = useDailyNoteStore()
   const settingsStore = useSettingsStore()
-  const { status: dailyStatus } = useDailyNutritionProgress(today)
+  const { status: dailyStatus } = useDailyNutritionProgress(selectedDate)
 
   const waterGoal = settingsStore.settings?.waterGoalMl ?? DEFAULT_WATER_GOAL_ML
-  const [pendingWeight, setPendingWeight] = useState(weightStore.todayEntry?.weight ?? 0)
-  const [pendingWeightUnit, setPendingWeightUnit] = useState<WeightEntry['unit']>(weightStore.todayEntry?.unit ?? 'kg')
-  const [pendingWeightNotes, setPendingWeightNotes] = useState(weightStore.todayEntry?.notes ?? '')
-  const [submitted, setSubmitted] = useState(false)
+
+  const today = getTodayIso()
+  const isToday = selectedDate === today
 
   const errors = [
     mealStore.error,
@@ -57,17 +56,33 @@ const Dashboard = () => {
   ].filter(Boolean) as string[]
 
   useEffect(() => {
-    mealStore.loadByDateRange(`${today}T00:00:00Z`, `${today}T23:59:59Z`)
-    workoutStore.loadToday(today)
+    mealStore.loadByDateRange(`${selectedDate}T00:00:00Z`, `${selectedDate}T23:59:59Z`)
+    workoutStore.loadToday(selectedDate)
     workoutStore.loadRecent(7)
-    waterStore.loadByDate(today)
-    weightStore.loadToday(today)
+    waterStore.loadByDate(selectedDate)
+    weightStore.loadToday(selectedDate)
     weightStore.loadRecent(7)
-    dailyNoteStore.loadByDate(today)
+    dailyNoteStore.loadByDate(selectedDate)
     settingsStore.load()
-  }, [today])
+  }, [selectedDate])
 
-  const formattedDate = new Date(`${today}T12:00:00`).toLocaleDateString('en-US', {
+  const handlePreviousDay = () => {
+    const prev = new Date(selectedDate)
+    prev.setDate(prev.getDate() - 1)
+    setSelectedDate(prev.toISOString().split('T')[0])
+  }
+
+  const handleNextDay = () => {
+    const next = new Date(selectedDate)
+    next.setDate(next.getDate() + 1)
+    setSelectedDate(next.toISOString().split('T')[0])
+  }
+
+  const handleToday = () => {
+    setSelectedDate(getTodayIso())
+  }
+
+  const formattedDate = new Date(`${selectedDate}T12:00:00`).toLocaleDateString('en-US', {
     weekday: 'long',
     month: 'short',
     day: 'numeric',
@@ -75,14 +90,14 @@ const Dashboard = () => {
   })
 
   const handleWorkoutSelect = (type: WorkoutType) => {
-    workoutStore.setWorkoutType(today, type)
+    workoutStore.setWorkoutType(selectedDate, type)
   }
 
   const handleAddWater = async (log: Partial<WaterLog>) => {
     const now = new Date().toISOString()
     await waterStore.add({
       id: `water:${Date.now()}`,
-      date: today,
+      date: selectedDate,
       amount: log.amount ?? 250,
       unit: log.unit ?? 'ml',
       timestamp: now,
@@ -102,8 +117,8 @@ const Dashboard = () => {
     if (pendingWeight > 0) {
       const now = new Date().toISOString()
       await weightStore.upsert({
-        id: `weight:${today}`,
-        date: today,
+        id: `weight:${selectedDate}`,
+        date: selectedDate,
         weight: pendingWeight,
         unit: pendingWeightUnit,
         notes: pendingWeightNotes.trim() || undefined,
@@ -114,20 +129,59 @@ const Dashboard = () => {
     setPendingWeight(0)
     setPendingWeightUnit('kg')
     setPendingWeightNotes('')
-    weightStore.loadToday(today)
+    weightStore.loadToday(selectedDate)
     setSubmitted(true)
     setTimeout(() => setSubmitted(false), 3000)
   }
 
+  const [pendingWeight, setPendingWeight] = useState(weightStore.todayEntry?.weight ?? 0)
+  const [pendingWeightUnit, setPendingWeightUnit] = useState<WeightEntry['unit']>(weightStore.todayEntry?.unit ?? 'kg')
+  const [pendingWeightNotes, setPendingWeightNotes] = useState(weightStore.todayEntry?.notes ?? '')
+  const [submitted, setSubmitted] = useState(false)
+
   return (
     <PageContainer>
-      <div className="mb-6">
-        <p className="text-xs font-medium uppercase tracking-widest text-blue-600">{formattedDate}</p>
+      <div className="flex justify-between mb-6">
         <h1 className="mt-1 text-2xl font-semibold text-slate-950">Dashboard</h1>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              const input = document.getElementById('dash-date-picker') as HTMLInputElement
+              if (input) input.showPicker?.() ?? input.click()
+            }}
+            className="!text-sm font-medium uppercase tracking-wide text-black hover:text-neutral-700"
+          >
+            {formattedDate}
+          </button>
+          <input
+            id="dash-date-picker"
+            type="date"
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+            className="sr-only"
+          />
+        </div>
+      </div>
+
+      <div className="mb-6 flex items-center justify-between">
+        <Button size="sm" variant="outline" onClick={handlePreviousDay}>
+          &larr; Previous
+        </Button>
+        <div className="flex items-center gap-2">
+          {!isToday && (
+            <Button size="sm" variant="outline" onClick={handleToday}>
+              Today
+            </Button>
+          )}
+          <Button size="sm" variant="outline" onClick={handleNextDay} disabled={isToday}>
+            Next &rarr;
+          </Button>
+        </div>
       </div>
 
       {errors.length > 0 && (
-        <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+        <div className="mb-6 border border-red-200 bg-red-50 p-4 text-sm text-red-700">
           {errors.map((err, i) => <div key={i}>{err}</div>)}
         </div>
       )}
@@ -150,11 +204,11 @@ const Dashboard = () => {
         <Card title="Today's Meals">
           <div className="space-y-2">
             {mealStore.meals.length === 0 ? (
-              <p className="text-sm text-slate-500">No meals logged today</p>
+              <p className="text-sm text-slate-500">No meals logged for this day</p>
             ) : (
               mealStore.meals.map((meal) => (
-                <div key={meal.id} className="flex items-center justify-between rounded-lg border border-slate-200 p-3">
-                  <span className="text-sm font-medium text-slate-950">{meal.name}</span>
+                <div key={meal.id} className="flex items-center justify-between border border-slate-600 p-3">
+                  <span className="text-sm font-medium text-slate-950 capitalize">{meal.name}</span>
                   <span className="text-xs text-slate-500">
                     {meal.items?.reduce((sum, item) => sum + (item.nutrition?.calories ?? 0), 0).toFixed(0)} kcal
                   </span>
@@ -178,8 +232,8 @@ const Dashboard = () => {
             </div>
           )}
           <div className="mt-4">
-            <p className="mb-2 text-xs font-medium text-slate-500">Recent workouts</p>
-            <WorkoutHistory workouts={workoutStore.recentWorkouts} excludeDate={today} />
+            <p className="mb-2 text-sm font-medium text-slate-500">Recent workouts</p>
+            <WorkoutHistory workouts={workoutStore.recentWorkouts} excludeDate={selectedDate} />
           </div>
         </Card>
 
@@ -193,7 +247,7 @@ const Dashboard = () => {
               {waterStore.waterLogs.map((log) => (
                 <span
                   key={log.id}
-                  className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs text-slate-600"
+                  className="border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs text-slate-600"
                 >
                   {log.amount} {log.unit}
                 </span>
@@ -205,7 +259,7 @@ const Dashboard = () => {
         <Card title="Weight">
           <WeightLogging
             todayEntry={weightStore.todayEntry}
-            date={today}
+            date={selectedDate}
             onSave={handleSaveWeight}
             showButton={false}
             weight={pendingWeight}
@@ -215,14 +269,14 @@ const Dashboard = () => {
             onUnitChange={setPendingWeightUnit}
             onNotesChange={setPendingWeightNotes}
           />
-          <div className="mt-4">
-            <p className="mb-2 text-xs font-medium text-slate-500">Weight history</p>
-            <WeightHistory entries={weightStore.recentEntries} excludeDate={today} />
+          <div className="mt-6">
+            <p className="mb-2 text-sm font-medium text-slate-500">Weight history</p>
+            <WeightHistory entries={weightStore.recentEntries} excludeDate={selectedDate} />
           </div>
         </Card>
 
         <Card title="Daily Notes">
-          <DailyNoteEditor date={today} note={dailyNoteStore.note} onSave={handleSaveNote} />
+          <DailyNoteEditor date={selectedDate} note={dailyNoteStore.note} onSave={handleSaveNote} />
         </Card>
 
         <Button onClick={handleSubmitDay} size="lg" className="w-full">

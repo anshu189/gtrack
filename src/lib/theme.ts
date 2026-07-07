@@ -10,13 +10,13 @@ export const theme = {
     accent: 'var(--color-accent)',
   },
   radius: {
-    sm: 'var(--radius-sm)',
-    md: 'var(--radius-md)',
-    lg: 'var(--radius-lg)',
+    sm: '0',
+    md: '0',
+    lg: '0',
   },
   shadows: {
-    sm: 'var(--shadow-sm)',
-    md: 'var(--shadow-md)',
-    ring: 'var(--shadow-ring)',
+    sm: 'none',
+    md: 'none',
+    ring: 'none',
   },
 } as const

@@ -11,7 +11,7 @@ interface NutritionProgressBarProps {
 const NutritionProgressBar = ({ label, actual, target, unit = 'g' }: NutritionProgressBarProps) => {
   const percentage = Math.min((actual / target) * 100, 100)
   const isOver = actual > target
-  const barColor = isOver ? 'bg-orange-500' : percentage > 80 ? 'bg-green-500' : 'bg-blue-500'
+  const barColor = isOver ? 'bg-orange-500' : percentage > 80 ? 'bg-green-500' : 'bg-black'
 
   return (
     <div>
@@ -21,9 +21,9 @@ const NutritionProgressBar = ({ label, actual, target, unit = 'g' }: NutritionPr
           {Math.round(actual)} / {Math.round(target)} {unit}
         </span>
       </div>
-      <div className="h-2 w-full rounded-full bg-slate-100">
+      <div className="h-2 w-full bg-slate-100">
         <div
-          className={`${barColor} h-2 rounded-full transition-all`}
+          className={`${barColor} h-2 transition-all`}
           style={{ width: `${Math.min(percentage, 100)}%` }}
         />
       </div>
@@ -61,22 +61,22 @@ export const NutritionSummary = ({ status, compact = false }: NutritionSummaryPr
   return (
     <div>
       <div className="mb-4 grid grid-cols-4 gap-3">
-        <div className="rounded-lg bg-slate-50 p-3 text-center">
+        <div className="bg-slate-50 p-3 text-center">
           <p className="text-lg font-bold text-slate-950">{Math.round(status.actual.calories)}</p>
           <p className="text-xs text-slate-500">kcal</p>
           <p className="text-xs text-slate-400">{Math.round(status.percentage.calories)}%</p>
         </div>
-        <div className="rounded-lg bg-slate-50 p-3 text-center">
+        <div className="bg-slate-50 p-3 text-center">
           <p className="text-lg font-bold text-slate-950">{Math.round(status.actual.protein)}</p>
           <p className="text-xs text-slate-500">protein</p>
           <p className="text-xs text-slate-400">{Math.round(status.percentage.protein)}%</p>
         </div>
-        <div className="rounded-lg bg-slate-50 p-3 text-center">
+        <div className="bg-slate-50 p-3 text-center">
           <p className="text-lg font-bold text-slate-950">{Math.round(status.actual.carbs)}</p>
           <p className="text-xs text-slate-500">carbs</p>
           <p className="text-xs text-slate-400">{Math.round(status.percentage.carbs)}%</p>
         </div>
-        <div className="rounded-lg bg-slate-50 p-3 text-center">
+        <div className="bg-slate-50 p-3 text-center">
           <p className="text-lg font-bold text-slate-950">{Math.round(status.actual.fat)}</p>
           <p className="text-xs text-slate-500">fat</p>
           <p className="text-xs text-slate-400">{Math.round(status.percentage.fat)}%</p>
@@ -91,7 +91,7 @@ export const NutritionSummary = ({ status, compact = false }: NutritionSummaryPr
       </div>
 
       {statusStrings && (
-        <div className="mt-4 rounded-lg bg-slate-50 p-3">
+        <div className="mt-4 bg-slate-50 p-3">
           <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-600">
             <span><span className="font-medium text-slate-700">Calories:</span> {statusStrings.calories}</span>
             <span><span className="font-medium text-slate-700">Protein:</span> {statusStrings.protein}</span>

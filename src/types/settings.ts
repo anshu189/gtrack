@@ -5,6 +5,7 @@ export interface NutritionTargets {
   protein?: number
   carbs?: number
   fat?: number
+  fiber?: number
 }
 
 export interface UserSettings {

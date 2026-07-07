@@ -20,8 +20,6 @@ export class NutritionCalculationService {
       carbs: 0,
       fat: 0,
       fiber: 0,
-      sugar: 0,
-      sodium: 0,
     }
 
     meal.items?.forEach((item) => {
@@ -31,8 +29,6 @@ export class NutritionCalculationService {
         totals.carbs += item.nutrition.carbs ?? 0
         totals.fat += item.nutrition.fat ?? 0
         totals.fiber = (totals.fiber ?? 0) + (item.nutrition.fiber ?? 0)
-        totals.sugar = (totals.sugar ?? 0) + (item.nutrition.sugar ?? 0)
-        totals.sodium = (totals.sodium ?? 0) + (item.nutrition.sodium ?? 0)
       }
     })
 
@@ -53,8 +49,6 @@ export class NutritionCalculationService {
       carbs: 0,
       fat: 0,
       fiber: 0,
-      sugar: 0,
-      sodium: 0,
     }
 
     meals.forEach((meal) => {
@@ -64,8 +58,6 @@ export class NutritionCalculationService {
       totals.carbs += mealNutrition.carbs ?? 0
       totals.fat += mealNutrition.fat ?? 0
       totals.fiber = (totals.fiber ?? 0) + (mealNutrition.fiber ?? 0)
-      totals.sugar = (totals.sugar ?? 0) + (mealNutrition.sugar ?? 0)
-      totals.sodium = (totals.sodium ?? 0) + (mealNutrition.sodium ?? 0)
     })
 
     return totals
@@ -76,13 +68,11 @@ export class NutritionCalculationService {
    */
   calculateProgress(actual: Nutrition, targets?: NutritionTargets): NutritionStatus {
     const targetNutrition: Nutrition = {
-      calories: targets?.calories ?? 2000,
-      protein: targets?.protein ?? 150,
-      carbs: targets?.carbs ?? 250,
-      fat: targets?.fat ?? 70,
-      fiber: 30,
-      sugar: 25,
-      sodium: 2300,
+      calories: targets?.calories ?? 3300,
+      protein: targets?.protein ?? 120,
+      carbs: targets?.carbs ?? 420,
+      fat: targets?.fat ?? 95,
+      fiber: targets?.fiber ?? 35,
     }
 
     const percentage: Record<keyof Nutrition, number> = {
@@ -91,8 +81,6 @@ export class NutritionCalculationService {
       carbs: (actual.carbs / targetNutrition.carbs) * 100,
       fat: (actual.fat / targetNutrition.fat) * 100,
       fiber: (actual.fiber ?? 0) / (targetNutrition.fiber ?? 1) * 100,
-      sugar: (actual.sugar ?? 0) / (targetNutrition.sugar ?? 1) * 100,
-      sodium: (actual.sodium ?? 0) / (targetNutrition.sodium ?? 1) * 100,
     }
 
     const surplus: Record<keyof Nutrition, number> = {
@@ -101,8 +89,6 @@ export class NutritionCalculationService {
       carbs: actual.carbs - targetNutrition.carbs,
       fat: actual.fat - targetNutrition.fat,
       fiber: (actual.fiber ?? 0) - (targetNutrition.fiber ?? 0),
-      sugar: (actual.sugar ?? 0) - (targetNutrition.sugar ?? 0),
-      sodium: (actual.sodium ?? 0) - (targetNutrition.sodium ?? 0),
     }
 
     const remaining: Nutrition = {
@@ -111,8 +97,6 @@ export class NutritionCalculationService {
       carbs: Math.max(0, targetNutrition.carbs - actual.carbs),
       fat: Math.max(0, targetNutrition.fat - actual.fat),
       fiber: Math.max(0, (targetNutrition.fiber ?? 0) - (actual.fiber ?? 0)),
-      sugar: Math.max(0, (targetNutrition.sugar ?? 0) - (actual.sugar ?? 0)),
-      sodium: Math.max(0, (targetNutrition.sodium ?? 0) - (actual.sodium ?? 0)),
     }
 
     return { actual, target: targetNutrition, remaining, percentage, surplus }

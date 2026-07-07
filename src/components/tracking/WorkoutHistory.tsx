@@ -22,7 +22,7 @@ export const WorkoutHistory = ({ workouts, excludeDate }: WorkoutHistoryProps) =
   }
 
   return (
-    <ul className="divide-y divide-slate-100 rounded-lg border border-slate-200">
+    <ul className="divide-y divide-slate-100 border border-slate-400">
       {items.map((workout) => (
         <li key={workout.id} className="flex items-center justify-between px-3 py-2 text-sm">
           <span className="text-slate-500">{formatDate(workout.date)}</span>
