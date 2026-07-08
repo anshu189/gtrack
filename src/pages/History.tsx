@@ -242,17 +242,17 @@ export default function History() {
   const isToday = selectedDate === getTodayIso()
 
   function renderWorkout() {
-    if (!workout) return <p className="text-base text-slate-500 dark:text-neutral-500">No workout logged</p>
+    if (!workout) return <p className="text-base text-slate-500 dark:text-[#FDFDFD]/60">No workout logged</p>
     const labels: Record<string, string> = { push: 'Push', pull: 'Pull', legs: 'Legs', rest: 'Rest' }
-    return <p className="text-base text-slate-950 dark:text-white">{labels[workout] ?? workout}</p>
+    return <p className="text-base text-slate-950 dark:text-[#FDFDFD]">{labels[workout] ?? workout}</p>
   }
 
   function renderWaterLogs() {
-    if (waterLogs.length === 0) return <p className="text-sm text-slate-500 dark:text-neutral-500">No water logged</p>
+    if (waterLogs.length === 0) return <p className="text-sm text-slate-500 dark:text-[#FDFDFD]/60">No water logged</p>
     return (
       <div className="flex flex-wrap gap-1">
         {waterLogs.map((log) => (
-          <span key={log.id} className="border border-slate-200 bg-slate-50 px-2.5 py-1 text-sm text-slate-600 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-400">
+          <span key={log.id} className="border border-slate-200 bg-slate-50 px-2.5 py-1 text-sm text-slate-600 dark:border-[#2D2D2D] dark:bg-[#1F1F1F] dark:text-[#FDFDFD]/70">
             {log.amount} {log.unit}
           </span>
         ))}
@@ -261,19 +261,19 @@ export default function History() {
   }
 
   function renderWeight() {
-    if (!weightEntry || !weightEntry.weight) return <p className="text-sm text-slate-500 dark:text-neutral-500">No weight logged</p>
-    return <p className="text-base text-slate-950 dark:text-white">{weightEntry.weight} {weightEntry.unit}</p>
+    if (!weightEntry || !weightEntry.weight) return <p className="text-sm text-slate-500 dark:text-[#FDFDFD]/60">No weight logged</p>
+    return <p className="text-base text-slate-950 dark:text-[#FDFDFD]">{weightEntry.weight} {weightEntry.unit}</p>
   }
 
   function renderNote() {
-    if (!dailyNote?.content) return <p className="text-base text-slate-500 dark:text-neutral-500">No notes</p>
-    return <p className="text-base whitespace-pre-wrap text-slate-950 dark:text-white">{dailyNote.content}</p>
+    if (!dailyNote?.content) return <p className="text-base text-slate-500 dark:text-[#FDFDFD]/60">No notes</p>
+    return <p className="text-base whitespace-pre-wrap text-slate-950 dark:text-[#FDFDFD]">{dailyNote.content}</p>
   }
 
   return (
     <PageContainer>
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-slate-950 dark:text-white">History</h1>
+        <h1 className="text-2xl font-semibold text-slate-950 dark:text-[#FDFDFD]">History</h1>
       </div>
 
       <div className="mb-6 flex items-center justify-between">
@@ -287,7 +287,7 @@ export default function History() {
               const input = document.getElementById('history-date-picker') as HTMLInputElement
               if (input) input.showPicker?.() ?? input.click()
             }}
-            className="text-sm font-medium text-slate-950 hover:text-neutral-700 dark:text-white dark:hover:text-neutral-400"
+            className="text-sm font-medium text-slate-950 hover:text-neutral-700 dark:text-[#FDFDFD] dark:hover:text-[#FDFDFD]"
           >
             {new Date(`${selectedDate}T12:00:00`).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
           </button>
@@ -317,7 +317,7 @@ export default function History() {
       </div>
 
       {loading ? (
-        <p className="py-12 text-center text-sm text-slate-500 dark:text-neutral-500">Loading...</p>
+        <p className="py-12 text-center text-sm text-slate-500 dark:text-[#FDFDFD]/60">Loading...</p>
       ) : (
         <div className="space-y-6">
           {dailyStatus && (
@@ -328,7 +328,7 @@ export default function History() {
 
           <Card title={`Meals (${meals.length})`}>
             {meals.length === 0 ? (
-              <p className="text-sm text-slate-500 dark:text-neutral-500">No meals logged for this day.</p>
+              <p className="text-sm text-slate-500 dark:text-[#FDFDFD]/60">No meals logged for this day.</p>
             ) : (
               <div className="space-y-2">
                 {meals.map((meal) => {
@@ -368,12 +368,12 @@ export default function History() {
                     {waterLogs.map((log) => (
                       <span
                         key={log.id}
-                        className="inline-flex items-center gap-1.5 border border-slate-200 bg-slate-50 px-2.5 py-1 text-sm text-slate-600 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-400"
+                        className="inline-flex items-center gap-1.5 border border-slate-200 bg-slate-50 px-2.5 py-1 text-sm text-slate-600 dark:border-[#2D2D2D] dark:bg-[#1F1F1F] dark:text-[#FDFDFD]/70"
                       >
                         {log.amount} {log.unit}
                         <button
                           type="button"
-                          className="text-slate-400 hover:text-red-600 dark:text-neutral-500 dark:hover:text-red-400"
+                          className="text-slate-400 hover:text-red-600 dark:text-[#FDFDFD]/60 dark:hover:text-red-400"
                           onClick={() => handleDeleteWaterLog(log.id)}
                           aria-label="Delete water log"
                         >
@@ -411,7 +411,7 @@ export default function History() {
           <Card title="Daily Notes">
             {editing ? (
               <textarea
-                className="w-full resize-none border border-slate-200 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
+                className="w-full resize-none border border-slate-200 px-3 py-2 text-sm dark:border-[#2D2D2D] dark:bg-[#1F1F1F] dark:text-[#FDFDFD]"
                 placeholder="No notes for this day."
                 value={editNoteContent}
                 onChange={(e) => setEditNoteContent(e.target.value)}
@@ -446,7 +446,7 @@ export default function History() {
             {!confirmDelete ? (
               <Button
                 variant="outline"
-                className="w-full text-red-600"
+                className="w-full text-red-400 dark:text-red-400 dark:border-red-400"
                 onClick={() => setConfirmDelete(true)}
               >
                 Delete Entire Day

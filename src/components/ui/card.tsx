@@ -12,7 +12,7 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
       <div
         ref={ref}
         className={cn(
-          'border border-slate-200 bg-white dark:border-neutral-800 dark:bg-black',
+          'border border-slate-200 bg-white dark:border-[#2D2D2D] dark:bg-[#000]',
           title || description ? 'p-5' : 'p-4',
           className,
         )}
@@ -20,8 +20,8 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
       >
         {title || description ? (
           <div className="mb-4 space-y-1">
-            {title ? <h3 className="text-base font-semibold text-slate-950 dark:text-white">{title}</h3> : null}
-            {description ? <p className="text-sm leading-6 text-slate-500 dark:text-neutral-400">{description}</p> : null}
+            {title ? <h3 className="text-base font-semibold text-slate-950 dark:text-[#FDFDFD]">{title}</h3> : null}
+            {description ? <p className="text-sm leading-6 text-slate-500 dark:text-[#FDFDFD]/70">{description}</p> : null}
           </div>
         ) : null}
         {children}

@@ -8,11 +8,11 @@ interface DailySummaryCardProps {
 }
 
 const DailySummaryCard = ({ label, value, unit }: DailySummaryCardProps) => (
-  <div className="border border-slate-200 bg-white p-4">
-    <p className="text-xs font-medium text-slate-500">{label}</p>
-    <p className="mt-1 text-xl font-bold text-slate-950">
+  <div className="border border-slate-200 bg-white p-4 dark:border-[#2D2D2D] dark:bg-[#1F1F1F]">
+    <p className="text-xs font-medium text-slate-500 dark:text-[#FDFDFD]/70">{label}</p>
+    <p className="mt-1 text-xl font-bold text-slate-950 dark:text-[#FDFDFD]">
       {value}
-      {unit && <span className="ml-1 text-sm font-normal text-slate-500">{unit}</span>}
+      {unit && <span className="ml-1 text-sm font-normal text-slate-500 dark:text-[#FDFDFD]/70">{unit}</span>}
     </p>
   </div>
 )

@@ -4,6 +4,7 @@ import type { Food, Meal, HistoryEntry, UserSettings, Category, QuantityPreset, 
 import builtInFoods from '@/data/builtInFoods'
 import builtInCategories from '@/data/categories'
 import foodsSeed from '@/data/foodsSeed'
+import macroOverrides from '@/data/macroOverrides'
 import quantityPresetsSeed from '@/data/quantityPresets'
 import nutritionSourcesSeed from '@/data/nutritionSources'
 
@@ -109,8 +110,15 @@ class GTrakDB extends Dexie {
       const count = await this.foods.count()
       if (count === 0 && foods.length > 0) {
         const now = new Date().toISOString()
-        const toInsert = foods.map((f) => ({ ...f, createdAt: f.createdAt ?? now, updatedAt: f.updatedAt ?? now }))
-        await this.foods.bulkPut(toInsert)
+        const merged = foods.map((f) => {
+          const override = macroOverrides[f.id]
+          const base = { ...f, createdAt: f.createdAt ?? now, updatedAt: now }
+          if (override) {
+            return { ...base, nutrition: { ...base.nutrition, ...override } }
+          }
+          return base
+        })
+        await this.foods.bulkPut(merged)
       }
     } catch (e) {
       // do not crash app on seeding errors; log for diagnostics
@@ -172,6 +180,23 @@ export async function initDB() {
   // Seed foods: prefer the expanded foodsSeed (larger dataset); include the small builtInFoods too
   const combined = [...builtInFoods, ...foodsSeed]
   await db.seedBuiltIns(combined)
+
+  // Apply localStorage overrides on every load (catches any out-of-sync state)
+  try {
+    const stored = localStorage.getItem('gtrak:macroOverrides')
+    if (stored) {
+      const localOverrides: Record<string, import('@/types').Nutrition> = JSON.parse(stored)
+      const now = new Date().toISOString()
+      for (const [id, nutrition] of Object.entries(localOverrides)) {
+        const existing = await db.foods.get(id)
+        if (existing) {
+          await db.foods.put({ ...existing, nutrition: { ...existing.nutrition, ...nutrition }, updatedAt: now })
+        }
+      }
+    }
+  } catch (e) {
+    // ignore localStorage errors
+  }
 
   // Seed quantity presets
   await db.seedQuantityPresets(quantityPresetsSeed)

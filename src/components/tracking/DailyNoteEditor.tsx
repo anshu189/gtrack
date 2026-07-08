@@ -36,7 +36,7 @@ export const DailyNoteEditor = ({ date, note, onSave }: DailyNoteEditorProps) =>
 
   return (
     <textarea
-      className="w-full resize-none border border-slate-200 px-3 py-2 text-sm"
+      className="w-full resize-none border border-slate-200 dark:border-slate-500 px-3 py-2 text-sm"
       placeholder="No notes for today."
       value={content}
       onChange={(e) => setContent(e.target.value)}

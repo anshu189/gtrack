@@ -67,6 +67,17 @@ export class DexieFoodRepository implements FoodRepository {
   async update(id: string, patch: Partial<Food>) {
     await db.foods.update(id, { ...patch, updatedAt: new Date().toISOString() })
     await foodSearchService.refreshIfStale()
+    // persist override to localStorage
+    if (patch.nutrition) {
+      try {
+        const stored = localStorage.getItem('gtrak:macroOverrides')
+        const overrides: Record<string, import('@/types').Nutrition> = stored ? JSON.parse(stored) : {}
+        overrides[id] = { ...(overrides[id] ?? {}), ...patch.nutrition }
+        localStorage.setItem('gtrak:macroOverrides', JSON.stringify(overrides))
+      } catch (e) {
+        // ignore storage errors
+      }
+    }
   }
 
   async delete(id: string) {

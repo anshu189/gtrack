@@ -17,7 +17,7 @@ export const WorkoutLogging = ({ selectedType, onSelect }: WorkoutLoggingProps) 
           variant="outline"
           className={cn(
             'w-full',
-            selectedType === type && 'border-black text-white bg-black dark:border-white dark:text-white dark:bg-neutral-900',
+            selectedType === type && 'border-black text-white bg-black dark:border-[#FDFDFD] dark:text-[#FDFDFD] dark:bg-[#1F1F1F]',
           )}
           onClick={() => onSelect(type)}
         >

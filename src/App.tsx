@@ -32,7 +32,7 @@ function App() {
   }, [])
 
   if (!ready) {
-    return <div className="flex min-h-screen items-center justify-center bg-slate-50"><p className="text-sm text-slate-500">Loading...</p></div>
+    return <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-[#111111]"><p className="text-sm text-slate-500 dark:text-[#FDFDFD]/70">Loading...</p></div>
   }
 
   return <AppLayout />
@@ -67,8 +67,8 @@ function AppLayout() {
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 rounded-bl-2xl items-center justify-center bg-black text-2xl font-bold text-white">G</div>
           <div>
-            <p className="text-xl font-medium uppercase tracking-tight text-black">GTrak</p>
-            <h1 className="text-xs font-semibold text-slate-950">Growth Tracker for G's</h1>
+            <p className="text-xl font-medium uppercase tracking-tight text-black dark:text-[#FDFDFD]">GTrak</p>
+            <h1 className="text-xs font-semibold text-slate-950 dark:text-[#FDFDFD]/70">Growth Tracker for G's</h1>
           </div>
         </div>
       }

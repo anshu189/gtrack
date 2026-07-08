@@ -25,7 +25,7 @@ export const WaterLogging = ({ onAdd }: WaterLoggingProps) => {
             key={amount}
             type="button"
             onClick={() => onAdd({ amount, unit: 'ml' })}
-            className="border border-slate-300 px-3 py-1.5 !text-sm text-slate-950 hover:bg-slate-100 dark:border-neutral-700 dark:text-white dark:hover:bg-neutral-800"
+            className="border border-slate-300 px-3 py-1.5 !text-sm text-slate-950 hover:bg-slate-100 dark:border-[#2D2D2D] dark:text-[#FDFDFD] dark:hover:bg-[#2D2D2D]"
           >
             {amount} ml
           </button>
@@ -34,7 +34,7 @@ export const WaterLogging = ({ onAdd }: WaterLoggingProps) => {
       <div className="mt-2 flex items-center gap-2">
         <input
           type="number"
-          className="flex-1 border border-slate-200 px-3 py-1.5 text-sm dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
+          className="flex-1 border border-slate-200 px-3 py-1.5 text-sm dark:border-[#2D2D2D] dark:bg-[#1F1F1F] dark:text-[#FDFDFD]"
           placeholder="Custom amount (ml)"
           value={custom}
           onChange={(e) => setCustom(e.target.value)}

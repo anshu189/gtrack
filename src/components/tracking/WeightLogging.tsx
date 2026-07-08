@@ -62,7 +62,7 @@ export const WeightLogging = ({
       <div className="flex items-center gap-2">
         <input
           type="number"
-          className="flex-1 border border-slate-200 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
+          className="flex-1 border border-slate-200 px-3 py-2 text-sm dark:border-[#2D2D2D] dark:bg-[#1F1F1F] dark:text-[#FDFDFD]"
           placeholder="Weight"
           value={weight || ''}
           onChange={(e) => {
@@ -75,7 +75,7 @@ export const WeightLogging = ({
           aria-label="Weight value"
         />
         <select
-          className="border border-slate-200 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
+          className="border border-slate-200 px-3 py-2 text-sm dark:border-[#2D2D2D] dark:bg-[#1F1F1F] dark:text-[#FDFDFD]"
           value={unit}
           onChange={(e) => {
             const u = e.target.value as WeightEntry['unit']
@@ -90,7 +90,7 @@ export const WeightLogging = ({
       </div>
       <input
         type="text"
-        className="border border-slate-200 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
+        className="border border-slate-200 px-3 py-2 text-sm dark:border-[#2D2D2D] dark:bg-[#1F1F1F] dark:text-[#FDFDFD]"
         placeholder="Notes (optional)"
         value={notes}
         onChange={(e) => {

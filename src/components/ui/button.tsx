@@ -9,11 +9,11 @@ const buttonStyles: Record<ButtonVariant, string> = {
   default:
     'bg-black text-white hover:bg-neutral-800',
   secondary:
-    'bg-slate-100 text-slate-950 border border-slate-200 hover:bg-slate-200 dark:bg-neutral-900 dark:text-white dark:border-neutral-700 dark:hover:bg-neutral-800',
+    'bg-slate-100 text-slate-950 border border-slate-200 hover:bg-slate-200 dark:bg-[#2D2D2D] dark:text-[#FDFDFD] dark:border-[#2D2D2D] dark:hover:bg-[#2D2D2D]',
   outline:
-    'bg-white text-slate-950 border border-slate-200 hover:bg-slate-50 dark:bg-neutral-900 dark:text-white dark:border-neutral-700 dark:hover:bg-neutral-800',
+    'bg-white text-slate-950 border border-slate-200 hover:bg-slate-50 dark:bg-[#2D2D2D] dark:text-[#FDFDFD] dark:border-[#2D2D2D] dark:hover:bg-[#2D2D2D]',
   ghost:
-    'bg-transparent text-slate-950 hover:bg-slate-100 dark:text-white dark:hover:bg-neutral-900',
+    'bg-transparent text-slate-950 hover:bg-slate-100 dark:text-[#FDFDFD] dark:hover:bg-[#2D2D2D]',
   danger:
     'bg-red-600 text-white hover:bg-red-700',
 }

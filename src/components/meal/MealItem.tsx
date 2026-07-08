@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import type { MealItem } from '@/types'
 import { foodRepository } from '@/lib/repositories/foodRepository'
 import { Button } from '@/components/ui/button'
+import { formatNum } from '@/lib/utils/format'
 
 interface MealItemProps {
   item: MealItem
@@ -23,13 +24,13 @@ const MealItem = ({ item, onDelete }: MealItemProps) => {
   const displayName = item.name ?? resolvedName ?? item.foodId
 
   return (
-    <div className="flex items-center justify-between border border-slate-100 p-2">
+    <div className="flex items-center justify-between border border-slate-100 p-2 dark:border-[#2D2D2D]">
       <div className="flex items-center gap-3">
-        <span className="text-sm font-medium text-slate-950">{displayName}</span>
-        <span className="text-xs text-slate-500">{item.quantity} {item.unit}</span>
+        <span className="text-sm font-medium text-slate-950 dark:text-[#FDFDFD]">{displayName}</span>
+        <span className="text-xs text-slate-500 dark:text-[#FDFDFD]/70">{item.quantity} {item.unit}</span>
       </div>
       <div className="flex items-center gap-2">
-        <span className="text-xs text-slate-500">{Math.round(item.nutrition?.calories ?? 0)} kcal</span>
+        <span className="text-xs text-slate-500 dark:text-[#FDFDFD]/70">{formatNum(item.nutrition?.calories ?? 0)} kcal</span>
         {onDelete && (
           <Button size="sm" variant="ghost" className="text-red-600 dark:text-red-400" onClick={() => onDelete(item.id)}>
             Remove

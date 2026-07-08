@@ -149,16 +149,16 @@ export default function Analytics() {
   ]
 
   const daysCount = nutritionData.length || 1
-  const avgCalories = Math.round(nutritionData.reduce((s, d) => s + d.calories, 0) / daysCount)
-  const avgProtein = Math.round(nutritionData.reduce((s, d) => s + d.protein, 0) / daysCount)
-  const avgCarbs = Math.round(nutritionData.reduce((s, d) => s + d.carbs, 0) / daysCount)
-  const avgFat = Math.round(nutritionData.reduce((s, d) => s + d.fat, 0) / daysCount)
+  const avgCalories = nutritionData.reduce((s, d) => s + d.calories, 0) / daysCount
+  const avgProtein = nutritionData.reduce((s, d) => s + d.protein, 0) / daysCount
+  const avgCarbs = nutritionData.reduce((s, d) => s + d.carbs, 0) / daysCount
+  const avgFat = nutritionData.reduce((s, d) => s + d.fat, 0) / daysCount
   const totalWorkouts = workouts.filter((w) => w.type !== 'rest').length
 
   return (
     <PageContainer>
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-slate-950">Analytics</h1>
+        <h1 className="text-2xl font-semibold text-slate-950 dark:text-[#FDFDFD]">Analytics</h1>
       </div>
 
       <div className="mb-6 flex items-center gap-2">
@@ -241,38 +241,38 @@ export default function Analytics() {
           <Card title="Summary">
             <div className="grid grid-cols-2 gap-3">
               <div className="border border-slate-200 p-4">
-                <p className="text-xs text-slate-500">Avg Daily Calories</p>
-                <p className="mt-1 text-xl font-semibold text-slate-950">{avgCalories}</p>
-                <p className="text-xs text-slate-500">target: {calTarget}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-300">Avg Daily Calories</p>
+                <p className="mt-1 text-xl font-semibold text-slate-950 dark:text-slate-300">{avgCalories}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-300">target: {calTarget}</p>
               </div>
               <div className="border border-slate-200 p-4">
-                <p className="text-xs text-slate-500">Avg Protein</p>
-                <p className="mt-1 text-xl font-semibold text-slate-950">{avgProtein}g</p>
-                <p className="text-xs text-slate-500">target: {proteinTarget}g</p>
+                <p className="text-xs text-slate-500 dark:text-slate-300">Avg Protein</p>
+                <p className="mt-1 text-xl font-semibold text-slate-950 dark:text-slate-300">{avgProtein}g</p>
+                <p className="text-xs text-slate-500 dark:text-slate-300">target: {proteinTarget}g</p>
               </div>
               <div className="border border-slate-200 p-4">
-                <p className="text-xs text-slate-500">Avg Carbs</p>
-                <p className="mt-1 text-xl font-semibold text-slate-950">{avgCarbs}g</p>
-                <p className="text-xs text-slate-500">target: {carbsTarget}g</p>
+                <p className="text-xs text-slate-500 dark:text-slate-300">Avg Carbs</p>
+                <p className="mt-1 text-xl font-semibold text-slate-950 dark:text-slate-300">{avgCarbs}g</p>
+                <p className="text-xs text-slate-500 dark:text-slate-300">target: {carbsTarget}g</p>
               </div>
               <div className="border border-slate-200 p-4">
-                <p className="text-xs text-slate-500">Avg Fat</p>
-                <p className="mt-1 text-xl font-semibold text-slate-950">{avgFat}g</p>
-                <p className="text-xs text-slate-500">target: {fatTarget}g</p>
+                <p className="text-xs text-slate-500 dark:text-slate-300">Avg Fat</p>
+                <p className="mt-1 text-xl font-semibold text-slate-950 dark:text-slate-300">{avgFat}g</p>
+                <p className="text-xs text-slate-500 dark:text-slate-300">target: {fatTarget}g</p>
               </div>
               <div className="border border-slate-200 p-4">
-                <p className="text-xs text-slate-500">Workouts</p>
-                <p className="mt-1 text-xl font-semibold text-slate-950">{totalWorkouts}</p>
-                <p className="text-xs text-slate-500">in {RANGE_LABELS[range].toLowerCase()}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-300">Workouts</p>
+                <p className="mt-1 text-xl font-semibold text-slate-950 dark:text-slate-300">{totalWorkouts}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-300">in {RANGE_LABELS[range].toLowerCase()}</p>
               </div>
               <div className="border border-slate-200 p-4">
-                <p className="text-xs text-slate-500">Workout Split</p>
+                <p className="text-xs text-slate-500 dark:text-slate-300">Workout Split</p>
                 <div className="mt-1 space-y-0.5">
                   {workoutSummary.filter((w) => w.value > 0).map((w) => (
-                    <p key={w.name} className="text-xs text-slate-600">{w.name}: {w.value}x</p>
+                    <p key={w.name} className="text-xs text-slate-600 dark:text-slate-300">{w.name}: {w.value}x</p>
                   ))}
                   {workoutSummary.every((w) => w.value === 0) && (
-                    <p className="text-xs text-slate-400">No data</p>
+                    <p className="text-xs text-slate-400 dark:text-slate-300">No data</p>
                   )}
                 </div>
               </div>

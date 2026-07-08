@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import type { Meal } from '@/types'
 import { foodRepository } from '@/lib/repositories/foodRepository'
 import { Card } from '@/components/ui/card'
+import { formatNum } from '@/lib/utils/format'
 
 interface MealCardProps {
   meal: Meal
@@ -36,25 +37,32 @@ const MealCard = ({ meal, onAddItem, onDelete }: MealCardProps) => {
   return (
     <Card>
       <div className="flex items-center justify-between">
-        <h3 className="text-base font-semibold text-slate-950">{meal.name}</h3>
+        <h3 className="text-base font-semibold text-slate-950 dark:text-[#FDFDFD]">{meal.name}</h3>
       </div>
 
       <div className="mt-3 space-y-2">
         {meal.items && meal.items.length > 0 ? (
           meal.items.map((it) => {
             const displayName = it.name ?? resolvedNames[it.foodId] ?? it.foodId.split(':').pop()
+            const multiplier = (it.quantity ?? 100) / 100
+            const n = it.nutrition
             return (
-              <div key={it.id} className="flex items-center justify-between border border-slate-100 p-2">
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-medium text-slate-950">{displayName}</span>
-                  <span className="text-xs text-slate-500">{it.quantity} {it.unit}</span>
+              <div key={it.id} className="border border-slate-100 p-2 dark:border-[#2D2D2D]">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-slate-950 dark:text-[#FDFDFD]">{displayName}</span>
+                  <span className="text-xs text-slate-500 dark:text-[#FDFDFD]/70">{it.quantity} {it.unit}</span>
                 </div>
-                <span className="text-xs text-slate-500">{Math.round(it.nutrition?.calories ?? 0)} kcal</span>
+                <div className="mt-1 grid grid-cols-4 gap-2 text-xs">
+                  <span className="dark:text-[#FDFDFD]">{n ? formatNum(n.calories * multiplier) : '0'} kcal</span>
+                  <span className="dark:text-[#FDFDFD]">{n ? formatNum(n.protein * multiplier) : '0'}g P</span>
+                  <span className="dark:text-[#FDFDFD]">{n ? formatNum(n.carbs * multiplier) : '0'}g C</span>
+                  <span className="dark:text-[#FDFDFD]">{n ? formatNum(n.fat * multiplier) : '0'}g F</span>
+                </div>
               </div>
             )
           })
         ) : (
-          <p className="text-sm text-slate-500">No items</p>
+          <p className="text-sm text-slate-500 dark:text-[#FDFDFD]/70">No items</p>
         )}
       </div>
 
@@ -64,7 +72,7 @@ const MealCard = ({ meal, onAddItem, onDelete }: MealCardProps) => {
             <button
               type="button"
               onClick={onAddItem}
-              className="bg-black px-4 py-2 text-sm font-medium text-white"
+              className="bg-black px-4 py-2 text-sm font-medium text-white dark:bg-slate-300 dark:text-black"
             >
               Add
             </button>
@@ -73,7 +81,7 @@ const MealCard = ({ meal, onAddItem, onDelete }: MealCardProps) => {
             <button
               type="button"
               onClick={onDelete}
-              className="border border-transparent px-4 py-2 text-sm font-medium text-red-600"
+              className="border border-transparent dark:border-red-300 px-4 py-2 text-sm font-medium text-red-400"
             >
               Delete
             </button>

@@ -34,8 +34,8 @@ const AddItem = ({ onAdd }: AddItemProps) => {
 
   if (selectedFood) {
     return (
-      <div className="border border-slate-100 bg-white p-3 dark:border-neutral-800 dark:bg-black">
-        <p className="mb-3 text-sm font-medium text-slate-950 dark:text-white">{selectedFood.name}</p>
+      <div className="border border-slate-100 bg-white p-3 dark:border-[#2D2D2D] dark:bg-[#1F1F1F]">
+        <p className="mb-3 text-sm font-medium text-slate-950 dark:text-[#FDFDFD]">{selectedFood.name}</p>
         <QuantityPicker value={quantity} unit={unit} onChange={(v, u) => { setQuantity(v); if (u) setUnit(u) }} />
         <div className="mt-3 flex items-center gap-2">
           <Button variant="outline" size="sm" className="flex-1" onClick={handleCancel}>Cancel</Button>
@@ -46,7 +46,7 @@ const AddItem = ({ onAdd }: AddItemProps) => {
   }
 
   return (
-    <div className="border border-slate-100 bg-white p-3 dark:border-neutral-800 dark:bg-black">
+    <div className="border border-slate-100 bg-white p-3 dark:border-[#2D2D2D] dark:bg-[#1F1F1F]">
       <FoodPicker onSelect={handleSelect} />
       {addedName && (
         <p className="mt-2 text-sm text-green-600">Added: {addedName}</p>

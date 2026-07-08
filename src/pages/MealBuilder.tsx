@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import type { Food, Meal, MealItem } from '@/types'
 import { useMealStore } from '@/stores/mealStore'
-import { MealCard, AddItem } from '@/components/meal'
+import { MealCard, AddItem, FoodMacroEditor } from '@/components/meal'
 import { Button } from '@/components/ui/button'
 import { PageContainer } from '@/components/ui/page-container'
 import { Card } from '@/components/ui/card'
@@ -10,6 +10,7 @@ const MealBuilder = () => {
   const mealStore = useMealStore()
   const [currentMeal, setCurrentMeal] = useState<Partial<Meal> | null>(null)
   const [mealNameInput, setMealNameInput] = useState('')
+  const [showEditor, setShowEditor] = useState(false)
 
   useEffect(() => {
     mealStore.loadAll()
@@ -64,27 +65,35 @@ const MealBuilder = () => {
 
   return (
     <PageContainer>
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-slate-950">Meal Builder</h1>
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="text-2xl font-semibold text-slate-950 dark:text-[#FDFDFD]">Meal Builder</h1>
+        <Button variant="outline" size="sm" onClick={() => setShowEditor((v) => !v)}>
+          {showEditor ? 'Done Editing' : 'Edit Foods'}
+        </Button>
       </div>
 
+      {showEditor ? (
+        <Card title="Food Macro Editor">
+          <FoodMacroEditor />
+        </Card>
+      ) : (
       <div className="space-y-6">
         <Card title="New Meal">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <input
               type="text"
-              className="flex-1 border border-slate-200 px-3 py-2 text-sm"
+              className="flex-1 border border-slate-200 dark:border-slate-500 px-3 py-2 text-sm"
               value={mealNameInput}
               onChange={(e) => setMealNameInput(e.target.value)}
               placeholder="Meal name"
             />
-            <Button onClick={handleCreateMeal} className="w-full sm:w-auto">Create</Button>
+            <Button onClick={handleCreateMeal} className="w-full sm:w-auto dark:bg-slate-300 dark:text-black">Create</Button>
           </div>
         </Card>
 
         {currentMeal && (
-          <div className="border border-black bg-white p-5">
-            <h3 className="mb-3 text-sm font-semibold text-slate-950">{currentMeal.name}</h3>
+          <div className="border border-black bg-white dark:bg-[#111111] p-5">
+            <h3 className="mb-3 text-sm font-semibold text-slate-950 dark:text-slate-300">{currentMeal.name}</h3>
             <AddItem onAdd={handleAddItem} />
             <div className="mt-4 space-y-2">
               {currentMeal.items?.map((item) => (
@@ -100,7 +109,7 @@ const MealBuilder = () => {
               ))}
             </div>
             <div className="mt-4 flex items-center gap-2">
-              <Button onClick={handleSaveMeal}>Save Meal</Button>
+              <Button onClick={handleSaveMeal} className='dark:bg-slate-300 dark:text-black'>Save Meal</Button>
               <Button onClick={() => setCurrentMeal(null)} variant="outline">
                 Cancel
               </Button>
@@ -125,6 +134,7 @@ const MealBuilder = () => {
           )}
         </Card>
       </div>
+      )}
     </PageContainer>
   )
 }

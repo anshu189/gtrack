@@ -25,7 +25,7 @@ export const WeightHistory = ({ entries, excludeDate }: WeightHistoryProps) => {
   const items = entries.filter((e) => e.date !== excludeDate)
 
   if (items.length === 0) {
-    return <p className="text-sm text-slate-500">Log today&apos;s weight to begin tracking.</p>
+    return <p className="text-sm text-slate-500 dark:text-slate-300">Log today&apos;s weight to begin tracking.</p>
   }
 
   return (
@@ -35,9 +35,9 @@ export const WeightHistory = ({ entries, excludeDate }: WeightHistoryProps) => {
         const trend = getTrend(entry, previous)
         return (
           <li key={entry.id} className="flex items-center justify-between px-3 py-2 text-sm">
-            <span className="text-slate-500">{formatDate(entry.date)}</span>
+            <span className="text-slate-500 dark:text-slate-300">{formatDate(entry.date)}</span>
             <div className="flex items-center gap-3">
-              <span className="font-medium text-slate-950">
+              <span className="font-medium text-slate-950 dark:text-slate-300">
                 {entry.weight} {entry.unit}
               </span>
               {trend && <span className={`text-xs ${trend.className}`}>{trend.label}</span>}

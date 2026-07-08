@@ -142,7 +142,7 @@ const Dashboard = () => {
   return (
     <PageContainer>
       <div className="flex justify-between mb-6">
-        <h1 className="mt-1 text-2xl font-semibold text-slate-950">Dashboard</h1>
+        <h1 className="mt-1 text-2xl font-semibold text-slate-950 dark:text-[#FDFDFD]">Dashboard</h1>
         <div className="flex items-center gap-2">
           <button
             type="button"
@@ -150,7 +150,7 @@ const Dashboard = () => {
               const input = document.getElementById('dash-date-picker') as HTMLInputElement
               if (input) input.showPicker?.() ?? input.click()
             }}
-            className="!text-sm font-medium uppercase tracking-wide text-black hover:text-neutral-700"
+            className="!text-sm font-medium uppercase tracking-wide text-black hover:text-neutral-700 dark:text-[#FDFDFD]"
           >
             {formattedDate}
           </button>
@@ -165,8 +165,8 @@ const Dashboard = () => {
       </div>
 
       <div className="mb-6 flex items-center justify-between">
-        <Button size="sm" variant="outline" onClick={handlePreviousDay}>
-          &larr; Previous
+        <Button size="sm" variant="outline" onClick={handlePreviousDay} className='flex gap-2 items-center'>
+          ← Previous
         </Button>
         <div className="flex items-center gap-2">
           {!isToday && (
@@ -175,7 +175,7 @@ const Dashboard = () => {
             </Button>
           )}
           <Button size="sm" variant="outline" onClick={handleNextDay} disabled={isToday}>
-            Next &rarr;
+            Next →
           </Button>
         </div>
       </div>
@@ -204,12 +204,12 @@ const Dashboard = () => {
         <Card title="Today's Meals">
           <div className="space-y-2">
             {mealStore.meals.length === 0 ? (
-              <p className="text-sm text-slate-500">No meals logged for this day</p>
+              <p className="text-sm text-slate-500 dark:text-slate-300">No meals logged for this day</p>
             ) : (
               mealStore.meals.map((meal) => (
                 <div key={meal.id} className="flex items-center justify-between border border-slate-600 p-3">
-                  <span className="text-sm font-medium text-slate-950 capitalize">{meal.name}</span>
-                  <span className="text-xs text-slate-500">
+                  <span className="text-sm font-medium text-slate-950 capitalize dark:text-slate-300">{meal.name}</span>
+                  <span className="text-xs text-slate-500 dark:text-slate-300">
                     {meal.items?.reduce((sum, item) => sum + (item.nutrition?.calories ?? 0), 0).toFixed(0)} kcal
                   </span>
                 </div>
@@ -232,7 +232,7 @@ const Dashboard = () => {
             </div>
           )}
           <div className="mt-4">
-            <p className="mb-2 text-sm font-medium text-slate-500">Recent workouts</p>
+            <p className="mb-2 text-sm font-medium text-slate-500 dark:text-slate-200">Recent workouts</p>
             <WorkoutHistory workouts={workoutStore.recentWorkouts} excludeDate={selectedDate} />
           </div>
         </Card>
@@ -247,7 +247,7 @@ const Dashboard = () => {
               {waterStore.waterLogs.map((log) => (
                 <span
                   key={log.id}
-                  className="border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs text-slate-600"
+                  className="border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs text-slate-600 dark:border-[#2D2D2D] dark:bg-[#1F1F1F] dark:text-[#FDFDFD]/70"
                 >
                   {log.amount} {log.unit}
                 </span>
@@ -270,7 +270,7 @@ const Dashboard = () => {
             onNotesChange={setPendingWeightNotes}
           />
           <div className="mt-6">
-            <p className="mb-2 text-sm font-medium text-slate-500">Weight history</p>
+            <p className="mb-2 text-sm font-medium text-slate-500 dark:text-slate-200">Weight history</p>
             <WeightHistory entries={weightStore.recentEntries} excludeDate={selectedDate} />
           </div>
         </Card>
@@ -279,7 +279,7 @@ const Dashboard = () => {
           <DailyNoteEditor date={selectedDate} note={dailyNoteStore.note} onSave={handleSaveNote} />
         </Card>
 
-        <Button onClick={handleSubmitDay} size="lg" className="w-full">
+        <Button onClick={handleSubmitDay} size="lg" className="w-full dark:bg-slate-200 dark:text-black">
           {submitted ? 'Day Logged!' : 'Submit Daily Log'}
         </Button>
       </div>

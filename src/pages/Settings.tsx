@@ -159,17 +159,17 @@ export default function Settings() {
   return (
     <PageContainer>
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-slate-950">Settings</h1>
+        <h1 className="text-2xl font-semibold text-slate-950 dark:text-[#FDFDFD]">Settings</h1>
       </div>
 
       <div className="space-y-6">
         <Card title="Nutrition Targets">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="mb-1 block text-xs font-medium text-slate-500">Calories (kcal)</label>
+              <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-[#FDFDFD]/70">Calories (kcal)</label>
               <input
                 type="number"
-                className="w-full border border-slate-200 px-3 py-2 text-sm"
+                className="w-full border border-slate-200 px-3 py-2 text-sm dark:border-[#2D2D2D] dark:bg-[#1F1F1F] dark:text-[#FDFDFD]"
                 value={calories}
                 onChange={(e) => setCalories(Number(e.target.value))}
                 min={0}
@@ -177,10 +177,10 @@ export default function Settings() {
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-slate-500">Protein (g)</label>
+              <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-[#FDFDFD]/70">Protein (g)</label>
               <input
                 type="number"
-                className="w-full border border-slate-200 px-3 py-2 text-sm"
+                className="w-full border border-slate-200 px-3 py-2 text-sm dark:border-[#2D2D2D] dark:bg-[#1F1F1F] dark:text-[#FDFDFD]"
                 value={protein}
                 onChange={(e) => setProtein(Number(e.target.value))}
                 min={0}
@@ -188,10 +188,10 @@ export default function Settings() {
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-slate-500">Carbs (g)</label>
+              <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-[#FDFDFD]/70">Carbs (g)</label>
               <input
                 type="number"
-                className="w-full border border-slate-200 px-3 py-2 text-sm"
+                className="w-full border border-slate-200 px-3 py-2 text-sm dark:border-[#2D2D2D] dark:bg-[#1F1F1F] dark:text-[#FDFDFD]"
                 value={carbs}
                 onChange={(e) => setCarbs(Number(e.target.value))}
                 min={0}
@@ -199,10 +199,10 @@ export default function Settings() {
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-slate-500">Fat (g)</label>
+              <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-[#FDFDFD]/70">Fat (g)</label>
               <input
                 type="number"
-                className="w-full border border-slate-200 px-3 py-2 text-sm"
+                className="w-full border border-slate-200 px-3 py-2 text-sm dark:border-[#2D2D2D] dark:bg-[#1F1F1F] dark:text-[#FDFDFD]"
                 value={fat}
                 onChange={(e) => setFat(Number(e.target.value))}
                 min={0}
@@ -210,10 +210,10 @@ export default function Settings() {
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-slate-500">Fiber (g)</label>
+              <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-[#FDFDFD]/70">Fiber (g)</label>
               <input
                 type="number"
-                className="w-full border border-slate-200 px-3 py-2 text-sm"
+                className="w-full border border-slate-200 px-3 py-2 text-sm dark:border-[#2D2D2D] dark:bg-[#1F1F1F] dark:text-[#FDFDFD]"
                 value={fiber}
                 onChange={(e) => setFiber(Number(e.target.value))}
                 min={0}
@@ -225,10 +225,10 @@ export default function Settings() {
 
         <Card title="Water Goal">
           <div>
-            <label className="mb-1 block text-xs font-medium text-slate-500">Daily target (ml)</label>
+            <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-[#FDFDFD]/70">Daily target (ml)</label>
             <input
               type="number"
-              className="w-full border border-slate-200 px-3 py-2 text-sm"
+              className="w-full border border-slate-200 px-3 py-2 text-sm dark:border-[#2D2D2D] dark:bg-[#1F1F1F] dark:text-[#FDFDFD]"
               value={waterGoal}
               onChange={(e) => setWaterGoal(Number(e.target.value))}
               min={0}
@@ -272,7 +272,7 @@ export default function Settings() {
               ref={fileInputRef}
               type="file"
               accept=".json"
-              className="mb-2 text-sm"
+              className="mb-2 text-sm dark:text-[#FDFDFD] dark:border dark:border-slate-600 p-1"
               onChange={handleImport}
             />
             {importStatus && <span className="text-xs text-green-600">{importStatus}</span>}
@@ -284,7 +284,7 @@ export default function Settings() {
             <Button
               variant="outline"
               size="sm"
-              className="text-red-600"
+              className="text-red-600 dark:bg-red-400 dark:border-red-400 dark:border dark:font-bold"
               onClick={() => setConfirmReset(true)}
             >
               Reset All Data

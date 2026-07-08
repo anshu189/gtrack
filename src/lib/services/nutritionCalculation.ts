@@ -24,11 +24,12 @@ export class NutritionCalculationService {
 
     meal.items?.forEach((item) => {
       if (item.nutrition) {
-        totals.calories += item.nutrition.calories ?? 0
-        totals.protein += item.nutrition.protein ?? 0
-        totals.carbs += item.nutrition.carbs ?? 0
-        totals.fat += item.nutrition.fat ?? 0
-        totals.fiber = (totals.fiber ?? 0) + (item.nutrition.fiber ?? 0)
+        const multiplier = (item.quantity ?? 100) / 100
+        totals.calories += (item.nutrition.calories ?? 0) * multiplier
+        totals.protein += (item.nutrition.protein ?? 0) * multiplier
+        totals.carbs += (item.nutrition.carbs ?? 0) * multiplier
+        totals.fat += (item.nutrition.fat ?? 0) * multiplier
+        totals.fiber = (totals.fiber ?? 0) + (item.nutrition.fiber ?? 0) * multiplier
       }
     })
 

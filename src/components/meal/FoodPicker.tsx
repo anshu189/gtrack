@@ -88,7 +88,7 @@ const FoodPicker = ({ onSelect, placeholder = 'Search foods' }: FoodPickerProps)
     <div className="w-full">
       <div className="flex items-center gap-2">
         <input
-          className="flex-1 border border-slate-200 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
+          className="flex-1 border border-slate-200 px-3 py-2 text-sm dark:border-[#2D2D2D] dark:bg-[#1F1F1F] dark:text-[#FDFDFD]"
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder={placeholder}
@@ -96,18 +96,18 @@ const FoodPicker = ({ onSelect, placeholder = 'Search foods' }: FoodPickerProps)
         <Button onClick={() => setQ('')} variant="ghost">Clear</Button>
       </div>
       <div className="mt-2 max-h-56 overflow-auto">
-        {loading && <p className="text-sm text-slate-500 dark:text-neutral-500">Searching...</p>}
-        {!loading && results.length === 0 && q && <p className="text-sm text-slate-500 dark:text-neutral-500">No results</p>}
+        {loading && <p className="text-sm text-slate-500 dark:text-[#FDFDFD]/60">Searching...</p>}
+        {!loading && results.length === 0 && q && <p className="text-sm text-slate-500 dark:text-[#FDFDFD]/60">No results</p>}
         <ul className="space-y-1">
           {results.map((f) => (
             <li
               key={f.id}
-              className="flex cursor-pointer items-center justify-between p-2 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+              className="flex cursor-pointer items-center justify-between p-2 hover:bg-neutral-50 dark:hover:bg-[#2D2D2D]"
               onClick={() => { onSelect(f); setQ('') }}
             >
               <div>
-                <p className="text-sm font-medium text-slate-950 dark:text-white">{f.name}</p>
-                <p className="text-xs text-slate-500 dark:text-neutral-400">{f.nutrition.calories} kcal / {f.servingSize}{f.servingUnit ? ` ${f.servingUnit}` : ''}</p>
+                <p className="text-sm font-medium text-slate-950 dark:text-[#FDFDFD]">{f.name}</p>
+                <p className="text-xs text-slate-500 dark:text-[#FDFDFD]/70">{f.nutrition.calories} kcal / {f.servingSize}{f.servingUnit ? ` ${f.servingUnit}` : ''}</p>
               </div>
             </li>
           ))}
@@ -120,16 +120,16 @@ const FoodPicker = ({ onSelect, placeholder = 'Search foods' }: FoodPickerProps)
             + Create Custom Food
           </Button>
         ) : (
-          <div className="border border-slate-200 bg-slate-50 p-3 space-y-3 dark:border-neutral-700 dark:bg-neutral-900">
-            <p className="text-xs font-semibold text-slate-700 dark:text-neutral-300">New Custom Food</p>
+          <div className="border border-slate-200 bg-slate-50 p-3 space-y-3 dark:border-[#2D2D2D] dark:bg-[#1F1F1F]">
+            <p className="text-xs font-semibold text-slate-700 dark:text-[#FDFDFD]/80">New Custom Food</p>
             <input
-              className="w-full border border-slate-200 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+              className="w-full border border-slate-200 px-3 py-2 text-sm dark:border-[#2D2D2D] dark:bg-[#2D2D2D] dark:text-[#FDFDFD]"
               value={customName}
               onChange={(e) => setCustomName(e.target.value)}
               placeholder="Food name"
             />
             <select
-              className="w-full border border-slate-200 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+              className="w-full border border-slate-200 px-3 py-2 text-sm dark:border-[#2D2D2D] dark:bg-[#2D2D2D] dark:text-[#FDFDFD]"
               value={customCategory}
               onChange={(e) => setCustomCategory(e.target.value)}
             >
@@ -140,13 +140,13 @@ const FoodPicker = ({ onSelect, placeholder = 'Search foods' }: FoodPickerProps)
             <div className="flex items-center gap-2">
               <input
                 type="number"
-                className="w-24 border border-slate-200 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+                className="w-24 border border-slate-200 px-3 py-2 text-sm dark:border-[#2D2D2D] dark:bg-[#2D2D2D] dark:text-[#FDFDFD]"
                 value={customServing}
                 onChange={(e) => setCustomServing(Number(e.target.value))}
                 placeholder="Serving"
               />
               <input
-                className="flex-1 border border-slate-200 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+                className="flex-1 border border-slate-200 px-3 py-2 text-sm dark:border-[#2D2D2D] dark:bg-[#2D2D2D] dark:text-[#FDFDFD]"
                 value={customUnit}
                 onChange={(e) => setCustomUnit(e.target.value)}
                 placeholder="Unit (e.g. g, ml, oz)"
@@ -154,37 +154,37 @@ const FoodPicker = ({ onSelect, placeholder = 'Search foods' }: FoodPickerProps)
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <p className="text-xs text-slate-500 mb-1 dark:text-neutral-500">Calories</p>
+                <p className="text-xs text-slate-500 mb-1 dark:text-[#FDFDFD]/60">Calories</p>
                 <input
                   type="number"
-                  className="w-full border border-slate-200 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+                  className="w-full border border-slate-200 px-3 py-2 text-sm dark:border-[#2D2D2D] dark:bg-[#2D2D2D] dark:text-[#FDFDFD]"
                   value={customCalories}
                   onChange={(e) => setCustomCalories(Number(e.target.value))}
                 />
               </div>
               <div>
-                <p className="text-xs text-slate-500 mb-1 dark:text-neutral-500">Protein (g)</p>
+                <p className="text-xs text-slate-500 mb-1 dark:text-[#FDFDFD]/60">Protein (g)</p>
                 <input
                   type="number"
-                  className="w-full border border-slate-200 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+                  className="w-full border border-slate-200 px-3 py-2 text-sm dark:border-[#2D2D2D] dark:bg-[#2D2D2D] dark:text-[#FDFDFD]"
                   value={customProtein}
                   onChange={(e) => setCustomProtein(Number(e.target.value))}
                 />
               </div>
               <div>
-                <p className="text-xs text-slate-500 mb-1 dark:text-neutral-500">Carbs (g)</p>
+                <p className="text-xs text-slate-500 mb-1 dark:text-[#FDFDFD]/60">Carbs (g)</p>
                 <input
                   type="number"
-                  className="w-full border border-slate-200 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+                  className="w-full border border-slate-200 px-3 py-2 text-sm dark:border-[#2D2D2D] dark:bg-[#2D2D2D] dark:text-[#FDFDFD]"
                   value={customCarbs}
                   onChange={(e) => setCustomCarbs(Number(e.target.value))}
                 />
               </div>
               <div>
-                <p className="text-xs text-slate-500 mb-1 dark:text-neutral-500">Fat (g)</p>
+                <p className="text-xs text-slate-500 mb-1 dark:text-[#FDFDFD]/60">Fat (g)</p>
                 <input
                   type="number"
-                  className="w-full border border-slate-200 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+                  className="w-full border border-slate-200 px-3 py-2 text-sm dark:border-[#2D2D2D] dark:bg-[#2D2D2D] dark:text-[#FDFDFD]"
                   value={customFat}
                   onChange={(e) => setCustomFat(Number(e.target.value))}
                 />
