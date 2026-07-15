@@ -22,6 +22,8 @@ import {
 import { PageContainer } from '@/components/ui/page-container'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { foodRepository } from '@/lib/repositories/foodRepository'
+import { formatNum } from '@/lib/utils/format'
 import type { DailyNote, WaterLog, WeightEntry, WorkoutType } from '@/types'
 
 const DEFAULT_WATER_GOAL_ML = 2000
@@ -138,6 +140,39 @@ const Dashboard = () => {
   const [pendingWeightUnit, setPendingWeightUnit] = useState<WeightEntry['unit']>(weightStore.todayEntry?.unit ?? 'kg')
   const [pendingWeightNotes, setPendingWeightNotes] = useState(weightStore.todayEntry?.notes ?? '')
   const [submitted, setSubmitted] = useState(false)
+  const [expandedMeals, setExpandedMeals] = useState<Set<string>>(new Set())
+  const [resolvedFoodNames, setResolvedFoodNames] = useState<Record<string, string>>({})
+
+  const toggleMealExpand = (mealId: string) => {
+    setExpandedMeals((prev) => {
+      const next = new Set(prev)
+      if (next.has(mealId)) next.delete(mealId)
+      else next.add(mealId)
+      return next
+    })
+  }
+
+  useEffect(() => {
+    const allItems = mealStore.meals.flatMap((m) => m.items ?? [])
+    const unresolved = allItems.filter((it) => !it.name)
+    if (unresolved.length === 0) return
+    let cancelled = false
+    const resolve = async () => {
+      const names: Record<string, string> = {}
+      for (const it of unresolved) {
+        if (resolvedFoodNames[it.foodId]) continue
+        try {
+          const food = await foodRepository.getById(it.foodId)
+          if (food) names[it.foodId] = food.name
+        } catch { /* skip */ }
+      }
+      if (!cancelled && Object.keys(names).length > 0) {
+        setResolvedFoodNames((prev) => ({ ...prev, ...names }))
+      }
+    }
+    resolve()
+    return () => { cancelled = true }
+  }, [mealStore.meals])
 
   return (
     <PageContainer>
@@ -204,18 +239,55 @@ const Dashboard = () => {
         <Card title="Today's Meals">
           <div className="space-y-2">
             {mealStore.meals.length === 0 ? (
-              <p className="text-sm text-slate-500 dark:text-slate-300">No meals logged for this day</p>
+              <p className="text-sm text-slate-500 dark:text-[#FDFDFD]/60">No meals logged for this day</p>
             ) : (
-              mealStore.meals.map((meal) => (
-                <div key={meal.id} className="flex items-center justify-between border border-slate-600 p-3">
-                  <span className="text-sm font-medium text-slate-950 capitalize dark:text-slate-300">{meal.name}</span>
-                  <span className="text-xs text-slate-500 dark:text-slate-300">
-                    {meal.items?.reduce((sum, item) => sum + (item.nutrition?.calories ?? 0), 0).toFixed(0)} kcal
-                  </span>
-                </div>
-              ))
+              mealStore.meals.map((meal) => {
+                const expanded = expandedMeals.has(meal.id)
+                const mealCalories = meal.items?.reduce((sum, item) => {
+                  const multiplier = (item.quantity ?? 100) / 100
+                  return sum + (item.nutrition?.calories ?? 0) * multiplier
+                }, 0) ?? 0
+                return (
+                  <div key={meal.id} className="border border-[#2D2D2D]">
+                    <button
+                      type="button"
+                      onClick={() => toggleMealExpand(meal.id)}
+                      className="flex w-full items-center justify-between p-3 text-left"
+                    >
+                      <span className="text-sm font-medium text-slate-950 capitalize dark:text-[#FDFDFD]">{meal.name}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-slate-500 dark:text-[#FDFDFD]/60">
+                          {formatNum(mealCalories)} kcal
+                        </span>
+                        <span className="text-xs text-[#FDFDFD]/40">{expanded ? '▲' : '▼'}</span>
+                      </div>
+                    </button>
+                    {expanded && meal.items && meal.items.length > 0 && (
+                      <div className="border-t border-[#2D2D2D] px-3 pb-3 pt-2 space-y-1">
+                        {meal.items.map((it) => {
+                          const displayName = it.name ?? resolvedFoodNames[it.foodId] ?? it.foodId.split(':').pop()
+                          const multiplier = (it.quantity ?? 100) / 100
+                          const n = it.nutrition
+                          return (
+                            <div key={it.id} className="flex items-center justify-between text-xs py-1">
+                              <span className="text-[#FDFDFD]/80">{displayName}</span>
+                              <div className="flex items-center gap-3">
+                                <span className="text-[#FDFDFD]/50">{it.quantity}{it.unit}</span>
+                                <span className="text-[#FDFDFD]/70">{n ? formatNum(n.calories * multiplier) : '0'} kcal</span>
+                                <span className="text-[#FDFDFD]/50">{n ? formatNum(n.protein * multiplier) : '0'}g P</span>
+                                <span className="text-[#FDFDFD]/50">{n ? formatNum(n.carbs * multiplier) : '0'}g C</span>
+                                <span className="text-[#FDFDFD]/50">{n ? formatNum(n.fat * multiplier) : '0'}g F</span>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )
+              })
             )}
-            <Button onClick={() => navigate('/meals')} variant="outline" className="w-full">
+            <Button onClick={() => navigate('/meals', { state: { date: selectedDate } })} variant="outline" className="w-full">
               + Add Meal
             </Button>
           </div>

@@ -12,6 +12,7 @@ import { useSettingsStore } from '@/stores/settingsStore'
 import { PageContainer } from '@/components/ui/page-container'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { formatNum } from '@/lib/utils/format'
 
 type RangeKey = '7d' | '30d' | '90d'
 
@@ -175,7 +176,7 @@ export default function Analytics() {
       </div>
 
       {loading ? (
-        <p className="py-12 text-center text-sm text-slate-500">Loading...</p>
+        <p className="py-12 text-center text-sm text-slate-500 dark:text-[#FDFDFD]/60">Loading...</p>
       ) : (
         <div className="space-y-6">
           <Card title="Daily Calories">
@@ -240,39 +241,39 @@ export default function Analytics() {
 
           <Card title="Summary">
             <div className="grid grid-cols-2 gap-3">
-              <div className="border border-slate-200 p-4">
-                <p className="text-xs text-slate-500 dark:text-slate-300">Avg Daily Calories</p>
-                <p className="mt-1 text-xl font-semibold text-slate-950 dark:text-slate-300">{avgCalories}</p>
-                <p className="text-xs text-slate-500 dark:text-slate-300">target: {calTarget}</p>
+              <div className="border border-slate-200 p-4 dark:border-[#2D2D2D]">
+                <p className="text-xs text-slate-500 dark:text-[#FDFDFD]/60">Avg Daily Calories</p>
+                <p className="mt-1 text-xl font-semibold text-slate-950 dark:text-[#FDFDFD]">{formatNum(avgCalories)}</p>
+                <p className="text-xs text-slate-500 dark:text-[#FDFDFD]/60">target: {formatNum(calTarget)}</p>
               </div>
-              <div className="border border-slate-200 p-4">
-                <p className="text-xs text-slate-500 dark:text-slate-300">Avg Protein</p>
-                <p className="mt-1 text-xl font-semibold text-slate-950 dark:text-slate-300">{avgProtein}g</p>
-                <p className="text-xs text-slate-500 dark:text-slate-300">target: {proteinTarget}g</p>
+              <div className="border border-slate-200 p-4 dark:border-[#2D2D2D]">
+                <p className="text-xs text-slate-500 dark:text-[#FDFDFD]/60">Avg Protein</p>
+                <p className="mt-1 text-xl font-semibold text-slate-950 dark:text-[#FDFDFD]">{formatNum(avgProtein)}g</p>
+                <p className="text-xs text-slate-500 dark:text-[#FDFDFD]/60">target: {formatNum(proteinTarget)}g</p>
               </div>
-              <div className="border border-slate-200 p-4">
-                <p className="text-xs text-slate-500 dark:text-slate-300">Avg Carbs</p>
-                <p className="mt-1 text-xl font-semibold text-slate-950 dark:text-slate-300">{avgCarbs}g</p>
-                <p className="text-xs text-slate-500 dark:text-slate-300">target: {carbsTarget}g</p>
+              <div className="border border-slate-200 p-4 dark:border-[#2D2D2D]">
+                <p className="text-xs text-slate-500 dark:text-[#FDFDFD]/60">Avg Carbs</p>
+                <p className="mt-1 text-xl font-semibold text-slate-950 dark:text-[#FDFDFD]">{formatNum(avgCarbs)}g</p>
+                <p className="text-xs text-slate-500 dark:text-[#FDFDFD]/60">target: {formatNum(carbsTarget)}g</p>
               </div>
-              <div className="border border-slate-200 p-4">
-                <p className="text-xs text-slate-500 dark:text-slate-300">Avg Fat</p>
-                <p className="mt-1 text-xl font-semibold text-slate-950 dark:text-slate-300">{avgFat}g</p>
-                <p className="text-xs text-slate-500 dark:text-slate-300">target: {fatTarget}g</p>
+              <div className="border border-slate-200 p-4 dark:border-[#2D2D2D]">
+                <p className="text-xs text-slate-500 dark:text-[#FDFDFD]/60">Avg Fat</p>
+                <p className="mt-1 text-xl font-semibold text-slate-950 dark:text-[#FDFDFD]">{formatNum(avgFat)}g</p>
+                <p className="text-xs text-slate-500 dark:text-[#FDFDFD]/60">target: {formatNum(fatTarget)}g</p>
               </div>
-              <div className="border border-slate-200 p-4">
-                <p className="text-xs text-slate-500 dark:text-slate-300">Workouts</p>
-                <p className="mt-1 text-xl font-semibold text-slate-950 dark:text-slate-300">{totalWorkouts}</p>
-                <p className="text-xs text-slate-500 dark:text-slate-300">in {RANGE_LABELS[range].toLowerCase()}</p>
+              <div className="border border-slate-200 p-4 dark:border-[#2D2D2D]">
+                <p className="text-xs text-slate-500 dark:text-[#FDFDFD]/60">Workouts</p>
+                <p className="mt-1 text-xl font-semibold text-slate-950 dark:text-[#FDFDFD]">{totalWorkouts}</p>
+                <p className="text-xs text-slate-500 dark:text-[#FDFDFD]/60">in {RANGE_LABELS[range].toLowerCase()}</p>
               </div>
-              <div className="border border-slate-200 p-4">
-                <p className="text-xs text-slate-500 dark:text-slate-300">Workout Split</p>
+              <div className="border border-slate-200 p-4 dark:border-[#2D2D2D]">
+                <p className="text-xs text-slate-500 dark:text-[#FDFDFD]/60">Workout Split</p>
                 <div className="mt-1 space-y-0.5">
                   {workoutSummary.filter((w) => w.value > 0).map((w) => (
-                    <p key={w.name} className="text-xs text-slate-600 dark:text-slate-300">{w.name}: {w.value}x</p>
+                    <p key={w.name} className="text-xs text-slate-600 dark:text-[#FDFDFD]/70">{w.name}: {w.value}x</p>
                   ))}
                   {workoutSummary.every((w) => w.value === 0) && (
-                    <p className="text-xs text-slate-400 dark:text-slate-300">No data</p>
+                    <p className="text-xs text-slate-400 dark:text-[#FDFDFD]/40">No data</p>
                   )}
                 </div>
               </div>

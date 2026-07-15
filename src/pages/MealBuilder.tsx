@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import type { Food, Meal, MealItem } from '@/types'
 import { useMealStore } from '@/stores/mealStore'
 import { MealCard, AddItem, FoodMacroEditor } from '@/components/meal'
@@ -6,20 +7,52 @@ import { Button } from '@/components/ui/button'
 import { PageContainer } from '@/components/ui/page-container'
 import { Card } from '@/components/ui/card'
 
+function getTodayIso() {
+  return new Date().toISOString().split('T')[0]
+}
+
 const MealBuilder = () => {
+  const location = useLocation()
   const mealStore = useMealStore()
   const [currentMeal, setCurrentMeal] = useState<Partial<Meal> | null>(null)
   const [mealNameInput, setMealNameInput] = useState('')
   const [showEditor, setShowEditor] = useState(false)
+  const [selectedDate, setSelectedDate] = useState<string>(
+    (location.state as any)?.date ?? getTodayIso()
+  )
+
+  const isToday = selectedDate === getTodayIso()
 
   useEffect(() => {
-    mealStore.loadAll()
-  }, [])
+    mealStore.loadByDateRange(`${selectedDate}T00:00:00Z`, `${selectedDate}T23:59:59Z`)
+  }, [selectedDate])
+
+  const handlePreviousDay = () => {
+    const prev = new Date(selectedDate)
+    prev.setDate(prev.getDate() - 1)
+    setSelectedDate(prev.toISOString().split('T')[0])
+  }
+
+  const handleNextDay = () => {
+    const next = new Date(selectedDate)
+    next.setDate(next.getDate() + 1)
+    setSelectedDate(next.toISOString().split('T')[0])
+  }
+
+  const handleToday = () => {
+    setSelectedDate(getTodayIso())
+  }
+
+  const formattedDate = new Date(`${selectedDate}T12:00:00`).toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  })
 
   const handleCreateMeal = async () => {
     const created = await mealStore.create({
       name: mealNameInput || 'Meal',
-      loggedAt: new Date().toISOString(),
+      loggedAt: `${selectedDate}T12:00:00Z`,
       items: [],
     })
     setCurrentMeal(created)
@@ -78,38 +111,71 @@ const MealBuilder = () => {
         </Card>
       ) : (
       <div className="space-y-6">
+        <div className="mb-2 flex items-center justify-between">
+          <Button size="sm" variant="outline" onClick={handlePreviousDay} className="flex gap-2 items-center">
+            &larr; Prev
+          </Button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                const input = document.getElementById('meal-date-picker') as HTMLInputElement
+                if (input) input.showPicker?.() ?? input.click()
+              }}
+              className="text-sm font-medium text-slate-950 hover:text-neutral-700 dark:text-[#FDFDFD]"
+            >
+              {formattedDate}
+            </button>
+            <input
+              id="meal-date-picker"
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="sr-only"
+            />
+            {!isToday && (
+              <Button size="sm" variant="outline" onClick={handleToday}>
+                Today
+              </Button>
+            )}
+          </div>
+          <Button size="sm" variant="outline" onClick={handleNextDay} disabled={isToday}>
+            Next &rarr;
+          </Button>
+        </div>
+
         <Card title="New Meal">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <input
               type="text"
-              className="flex-1 border border-slate-200 dark:border-slate-500 px-3 py-2 text-sm"
+              className="flex-1 border border-slate-200 dark:border-[#2D2D2D] px-3 py-2 text-sm dark:bg-[#1F1F1F] dark:text-[#FDFDFD]"
               value={mealNameInput}
               onChange={(e) => setMealNameInput(e.target.value)}
               placeholder="Meal name"
             />
-            <Button onClick={handleCreateMeal} className="w-full sm:w-auto dark:bg-slate-300 dark:text-black">Create</Button>
+            <Button onClick={handleCreateMeal} className="w-full sm:w-auto dark:bg-[#FDFDFD] dark:text-[#111111]">Create</Button>
           </div>
         </Card>
 
         {currentMeal && (
-          <div className="border border-black bg-white dark:bg-[#111111] p-5">
-            <h3 className="mb-3 text-sm font-semibold text-slate-950 dark:text-slate-300">{currentMeal.name}</h3>
+          <div className="border border-[#2D2D2D] bg-[#1F1F1F] p-5">
+            <h3 className="mb-3 text-sm font-semibold text-[#FDFDFD]">{currentMeal.name}</h3>
             <AddItem onAdd={handleAddItem} />
             <div className="mt-4 space-y-2">
               {currentMeal.items?.map((item) => (
-                <div key={item.id} className="flex items-center justify-between border border-slate-200 bg-white p-2">
+                <div key={item.id} className="flex items-center justify-between border border-[#2D2D2D] bg-[#111111] p-2">
                   <div>
-                    <p className="text-sm font-medium text-slate-950">{item.foodId}</p>
-                    <p className="text-xs text-slate-500">{item.quantity} {item.unit}</p>
+                    <p className="text-sm font-medium text-[#FDFDFD]">{item.foodId}</p>
+                    <p className="text-xs text-[#FDFDFD]/60">{item.quantity} {item.unit}</p>
                   </div>
-                  <Button size="sm" variant="ghost" className="text-red-600 dark:text-red-400" onClick={() => handleRemoveItem(item.id)}>
+                  <Button size="sm" variant="ghost" className="text-red-400" onClick={() => handleRemoveItem(item.id)}>
                     Remove
                   </Button>
                 </div>
               ))}
             </div>
             <div className="mt-4 flex items-center gap-2">
-              <Button onClick={handleSaveMeal} className='dark:bg-slate-300 dark:text-black'>Save Meal</Button>
+              <Button onClick={handleSaveMeal} className='dark:bg-[#FDFDFD] dark:text-[#111111]'>Save Meal</Button>
               <Button onClick={() => setCurrentMeal(null)} variant="outline">
                 Cancel
               </Button>
@@ -117,12 +183,12 @@ const MealBuilder = () => {
           </div>
         )}
 
-        <Card title="Recent Meals">
+        <Card title="Meals">
           {mealStore.meals.length === 0 ? (
-            <p className="text-sm text-slate-500">No meals yet</p>
+            <p className="text-sm text-[#FDFDFD]/60">No meals for this day</p>
           ) : (
             <div className="space-y-2">
-              {mealStore.meals.slice(-5).map((meal) => (
+              {mealStore.meals.map((meal) => (
                 <MealCard
                   key={meal.id}
                   meal={meal}

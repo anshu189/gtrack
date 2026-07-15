@@ -5,16 +5,18 @@ import { workoutRepository } from '@/lib/repositories/workoutRepository'
 import { waterRepository } from '@/lib/repositories/waterRepository'
 import { weightRepository } from '@/lib/repositories/weightRepository'
 import { dailyNoteRepository } from '@/lib/repositories/dailyNoteRepository'
+import { foodRepository } from '@/lib/repositories/foodRepository'
 import { nutritionCalculationService } from '@/lib/services/nutritionCalculation'
 import { useDailyNutritionProgress } from '@/hooks/useNutrition'
 import { useSettingsStore } from '@/stores/settingsStore'
-import { NutritionSummary, MealNutritionCard } from '@/components/nutrition'
+import { NutritionSummary } from '@/components/nutrition'
 import { WorkoutLogging } from '@/components/tracking'
 import { WaterLogging, WaterProgress } from '@/components/tracking'
 import { WeightLogging } from '@/components/tracking'
 import { PageContainer } from '@/components/ui/page-container'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { formatNum } from '@/lib/utils/format'
 
 const DEFAULT_WATER_GOAL_ML = 2000
 
@@ -41,6 +43,8 @@ export default function History() {
   const [editWeightNotes, setEditWeightNotes] = useState('')
   const [editNoteContent, setEditNoteContent] = useState('')
   const [waterChanged, setWaterChanged] = useState(false)
+  const [expandedMeals, setExpandedMeals] = useState<Set<string>>(new Set())
+  const [resolvedFoodNames, setResolvedFoodNames] = useState<Record<string, string>>({})
 
   const settingsStore = useSettingsStore()
   const waterGoal = settingsStore.settings?.waterGoalMl ?? DEFAULT_WATER_GOAL_ML
@@ -180,6 +184,37 @@ export default function History() {
     const noteChanged = editNoteContent !== (dailyNote?.content ?? '')
     setHasChanges(weightChanged || workoutChanged || noteChanged || waterChanged)
   }, [editing, editWorkout, editWeight, editWeightUnit, editWeightNotes, editNoteContent, workout, weightEntry, dailyNote, waterChanged])
+
+  const toggleMealExpand = (mealId: string) => {
+    setExpandedMeals((prev) => {
+      const next = new Set(prev)
+      if (next.has(mealId)) next.delete(mealId)
+      else next.add(mealId)
+      return next
+    })
+  }
+
+  useEffect(() => {
+    const allItems = meals.flatMap((m) => m.items ?? [])
+    const unresolved = allItems.filter((it) => !it.name)
+    if (unresolved.length === 0) return
+    let cancelled = false
+    const resolve = async () => {
+      const names: Record<string, string> = {}
+      for (const it of unresolved) {
+        if (resolvedFoodNames[it.foodId]) continue
+        try {
+          const food = await foodRepository.getById(it.foodId)
+          if (food) names[it.foodId] = food.name
+        } catch { /* skip */ }
+      }
+      if (!cancelled && Object.keys(names).length > 0) {
+        setResolvedFoodNames((prev) => ({ ...prev, ...names }))
+      }
+    }
+    resolve()
+    return () => { cancelled = true }
+  }, [meals])
 
   const handleUpdateLog = async () => {
     const now = new Date().toISOString()
@@ -333,12 +368,48 @@ export default function History() {
               <div className="space-y-2">
                 {meals.map((meal) => {
                   const mealNutrition = nutritionCalculationService.calculateMealNutrition(meal)
+                  const expanded = expandedMeals.has(meal.id)
                   return (
-                    <div key={meal.id} className="relative">
-                      <MealNutritionCard name={meal.name ?? 'Meal'} nutrition={mealNutrition} />
-                      <Button size="sm" variant="ghost" className="absolute right-2 top-2 text-red-600 dark:text-red-400" onClick={() => handleDeleteMeal(meal.id)}>
-                        Delete
-                      </Button>
+                    <div key={meal.id} className="border border-[#2D2D2D]">
+                      <div className="flex items-center justify-between p-3">
+                        <button
+                          type="button"
+                          onClick={() => toggleMealExpand(meal.id)}
+                          className="flex-1 text-left"
+                        >
+                          <span className="text-sm font-medium text-slate-950 capitalize dark:text-[#FDFDFD]">{meal.name ?? 'Meal'}</span>
+                        </button>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-[#FDFDFD]/60">{formatNum(mealNutrition.calories)} kcal</span>
+                          <button type="button" onClick={() => toggleMealExpand(meal.id)} className="text-xs text-[#FDFDFD]/40 px-1">
+                            {expanded ? '▲' : '▼'}
+                          </button>
+                          <Button size="sm" variant="ghost" className="text-red-400 text-xs" onClick={() => handleDeleteMeal(meal.id)}>
+                            Delete
+                          </Button>
+                        </div>
+                      </div>
+                      {expanded && meal.items && meal.items.length > 0 && (
+                        <div className="border-t border-[#2D2D2D] px-3 pb-3 pt-2 space-y-1">
+                          {meal.items.map((it) => {
+                            const displayName = it.name ?? resolvedFoodNames[it.foodId] ?? it.foodId.split(':').pop()
+                            const multiplier = (it.quantity ?? 100) / 100
+                            const n = it.nutrition
+                            return (
+                              <div key={it.id} className="flex items-center justify-between text-xs py-1">
+                                <span className="text-[#FDFDFD]/80">{displayName}</span>
+                                <div className="flex items-center gap-3">
+                                  <span className="text-[#FDFDFD]/50">{it.quantity}{it.unit}</span>
+                                  <span className="text-[#FDFDFD]/70">{n ? formatNum(n.calories * multiplier) : '0'} kcal</span>
+                                  <span className="text-[#FDFDFD]/50">{n ? formatNum(n.protein * multiplier) : '0'}g P</span>
+                                  <span className="text-[#FDFDFD]/50">{n ? formatNum(n.carbs * multiplier) : '0'}g C</span>
+                                  <span className="text-[#FDFDFD]/50">{n ? formatNum(n.fat * multiplier) : '0'}g F</span>
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      )}
                     </div>
                   )
                 })}
