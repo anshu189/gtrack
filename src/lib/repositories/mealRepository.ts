@@ -1,5 +1,5 @@
 import db from '@/lib/db'
-import type { Meal } from '@/types'
+import type { Meal, DeletedMealEntry } from '@/types'
 
 export interface MealRepository {
   getById(id: string): Promise<Meal | undefined>
@@ -9,6 +9,10 @@ export interface MealRepository {
   create(input: Partial<Meal>): Promise<Meal>
   update(id: string, patch: Partial<Meal>): Promise<void>
   delete(id: string): Promise<void>
+  deleteSoft(meal: Meal): Promise<void>
+  restoreDeleted(deleteId: string): Promise<void>
+  listDeleted(): Promise<DeletedMealEntry[]>
+  purgeExpiredDeletions(): Promise<void>
 }
 
 function generateId() {
@@ -61,6 +65,41 @@ export class DexieMealRepository implements MealRepository {
 
   async delete(id: string) {
     await db.meals.delete(id)
+  }
+
+  getMidnight(): string {
+    const d = new Date()
+    d.setHours(0, 0, 0, 0)
+    return d.toISOString()
+  }
+
+  async deleteSoft(meal: Meal): Promise<void> {
+    const now = new Date().toISOString()
+    const entry: DeletedMealEntry = {
+      id: meal.id,
+      meal: { ...meal },
+      deletedAt: now,
+      originalLoggedAt: meal.loggedAt,
+    }
+    await db.deletedMeals.put(entry)
+    await db.meals.delete(meal.id)
+  }
+
+  async restoreDeleted(deleteId: string): Promise<void> {
+    const entry = await db.deletedMeals.get(deleteId)
+    if (!entry) return
+    await db.meals.add(entry.meal)
+    await db.deletedMeals.delete(deleteId)
+  }
+
+  async listDeleted(): Promise<DeletedMealEntry[]> {
+    await this.purgeExpiredDeletions()
+    return db.deletedMeals.toArray()
+  }
+
+  async purgeExpiredDeletions(): Promise<void> {
+    const midnight = this.getMidnight()
+    await db.deletedMeals.where('deletedAt').below(midnight).delete()
   }
 }
 

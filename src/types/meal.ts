@@ -29,3 +29,10 @@ export interface Meal {
   /** Optional cached totals */
   totals?: Nutrition
 }
+
+export interface DeletedMealEntry {
+  id: string
+  meal: Meal
+  deletedAt: string
+  originalLoggedAt: string
+}

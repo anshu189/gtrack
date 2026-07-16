@@ -9,10 +9,12 @@ import { foodRepository } from '@/lib/repositories/foodRepository'
 import { nutritionCalculationService } from '@/lib/services/nutritionCalculation'
 import { useDailyNutritionProgress } from '@/hooks/useNutrition'
 import { useSettingsStore } from '@/stores/settingsStore'
+import { useMealStore } from '@/stores/mealStore'
 import { NutritionSummary } from '@/components/nutrition'
 import { WorkoutLogging } from '@/components/tracking'
 import { WaterLogging, WaterProgress } from '@/components/tracking'
 import { WeightLogging } from '@/components/tracking'
+import { UndoBanner } from '@/components/meal'
 import { PageContainer } from '@/components/ui/page-container'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -47,7 +49,9 @@ export default function History() {
   const [resolvedFoodNames, setResolvedFoodNames] = useState<Record<string, string>>({})
 
   const settingsStore = useSettingsStore()
+  const mealStore = useMealStore()
   const waterGoal = settingsStore.settings?.waterGoalMl ?? DEFAULT_WATER_GOAL_ML
+  const [dismissedUndoIds, setDismissedUndoIds] = useState<Set<string>>(new Set())
 
   const { status: dailyStatus } = useDailyNutritionProgress(selectedDate)
 
@@ -80,6 +84,8 @@ export default function History() {
       setWaterTotal(loadedTotal)
       setWeightEntry(loadedWeight)
       setDailyNote(loadedNote)
+
+      mealStore.loadDeleted()
     } finally {
       setLoading(false)
     }
@@ -138,8 +144,18 @@ export default function History() {
   }
 
   const handleDeleteMeal = async (mealId: string) => {
-    await mealRepository.delete(mealId)
+    await mealStore.removeWithUndo(mealId)
     setMeals((prev) => prev.filter((m) => m.id !== mealId))
+  }
+
+  const handleUndo = (deleteId: string) => {
+    mealStore.restoreDeleted(deleteId)
+    const entry = mealStore.deletedMeals.find((d) => d.id === deleteId)
+    if (entry) setMeals((prev) => [...prev, entry.meal])
+  }
+
+  const handleDismissUndo = (deleteId: string) => {
+    setDismissedUndoIds((prev) => new Set(prev).add(deleteId))
   }
 
   const handleDeleteDay = async () => {
@@ -297,7 +313,14 @@ export default function History() {
 
   function renderWeight() {
     if (!weightEntry || !weightEntry.weight) return <p className="text-sm text-slate-500 dark:text-[#FDFDFD]/60">No weight logged</p>
-    return <p className="text-base text-slate-950 dark:text-[#FDFDFD]">{weightEntry.weight} {weightEntry.unit}</p>
+    return (
+      <div>
+        <p className="text-base text-slate-950 dark:text-[#FDFDFD]">{weightEntry.weight} {weightEntry.unit}</p>
+        {weightEntry.notes && (
+          <p className="mt-1 text-sm text-[#FDFDFD]/60">{weightEntry.notes}</p>
+        )}
+      </div>
+    )
   }
 
   function renderNote() {
@@ -355,6 +378,13 @@ export default function History() {
         <p className="py-12 text-center text-sm text-slate-500 dark:text-[#FDFDFD]/60">Loading...</p>
       ) : (
         <div className="space-y-6">
+          <UndoBanner
+            entries={mealStore.deletedMeals}
+            dismissedIds={dismissedUndoIds}
+            onDismiss={handleDismissUndo}
+            onUndo={handleUndo}
+          />
+
           {dailyStatus && (
             <Card title="Nutrition">
               <NutritionSummary status={dailyStatus} />
@@ -384,9 +414,11 @@ export default function History() {
                           <button type="button" onClick={() => toggleMealExpand(meal.id)} className="text-xs text-[#FDFDFD]/40 px-1">
                             {expanded ? '▲' : '▼'}
                           </button>
-                          <Button size="sm" variant="ghost" className="text-red-400 text-xs" onClick={() => handleDeleteMeal(meal.id)}>
-                            Delete
-                          </Button>
+                          {editing && (
+                            <Button size="sm" variant="ghost" className="text-red-400 text-xs" onClick={() => handleDeleteMeal(meal.id)}>
+                              Delete
+                            </Button>
+                          )}
                         </div>
                       </div>
                       {expanded && meal.items && meal.items.length > 0 && (

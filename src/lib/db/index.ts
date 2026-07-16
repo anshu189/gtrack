@@ -1,6 +1,6 @@
 import Dexie from 'dexie'
 import type { Table } from 'dexie'
-import type { Food, Meal, HistoryEntry, UserSettings, Category, QuantityPreset, NutritionSource, Favorite, Workout, WaterLog, WeightEntry, DailyNote } from '@/types'
+import type { Food, Meal, DeletedMealEntry, HistoryEntry, UserSettings, Category, QuantityPreset, NutritionSource, Favorite, Workout, WaterLog, WeightEntry, DailyNote } from '@/types'
 import builtInFoods from '@/data/builtInFoods'
 import builtInCategories from '@/data/categories'
 import foodsSeed from '@/data/foodsSeed'
@@ -22,6 +22,7 @@ class GTrakDB extends Dexie {
   waterLogs!: Table<WaterLog, string>
   weights!: Table<WeightEntry, string>
   dailyNotes!: Table<DailyNote, string>
+  deletedMeals!: Table<DeletedMealEntry, string>
 
   constructor() {
     super('gtrak')
@@ -102,6 +103,25 @@ class GTrakDB extends Dexie {
       dailyNotes: 'id, date',
     }).upgrade(async (_tx) => {
       // v6 migration scaffold for tracking tables
+    })
+
+    // Schema for version 7: add deletedMeals for undo
+    this.version(7).stores({
+      foods: 'id, name, category, tags, source',
+      meals: 'id, loggedAt',
+      history: 'id, loggedAt, type',
+      settings: 'id',
+      categories: 'id, name, parentId',
+      quantityPresets: 'id, unit, label',
+      nutritionSources: 'id, name',
+      favorites: 'id, foodId, createdAt',
+      workouts: 'id, date, type',
+      waterLogs: 'id, date, timestamp',
+      weights: 'id, date',
+      dailyNotes: 'id, date',
+      deletedMeals: 'id, deletedAt, originalLoggedAt',
+    }).upgrade(async (_tx) => {
+      // v7 migration scaffold for deletedMeals
     })
   }
 

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import type { Food, Meal, MealItem } from '@/types'
 import { useMealStore } from '@/stores/mealStore'
-import { MealCard, AddItem, FoodMacroEditor } from '@/components/meal'
+import { MealCard, AddItem, FoodMacroEditor, UndoBanner } from '@/components/meal'
 import { Button } from '@/components/ui/button'
 import { PageContainer } from '@/components/ui/page-container'
 import { Card } from '@/components/ui/card'
@@ -22,9 +22,11 @@ const MealBuilder = () => {
   )
 
   const isToday = selectedDate === getTodayIso()
+  const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     mealStore.loadByDateRange(`${selectedDate}T00:00:00Z`, `${selectedDate}T23:59:59Z`)
+    mealStore.loadDeleted()
   }, [selectedDate])
 
   const handlePreviousDay = () => {
@@ -93,7 +95,15 @@ const MealBuilder = () => {
   }
 
   const handleDeleteMeal = async (id: string) => {
-    await mealStore.remove(id)
+    await mealStore.removeWithUndo(id)
+  }
+
+  const handleUndo = (deleteId: string) => {
+    mealStore.restoreDeleted(deleteId)
+  }
+
+  const handleDismissUndo = (deleteId: string) => {
+    setDismissedIds((prev) => new Set(prev).add(deleteId))
   }
 
   return (
@@ -143,6 +153,13 @@ const MealBuilder = () => {
             Next &rarr;
           </Button>
         </div>
+
+        <UndoBanner
+          entries={mealStore.deletedMeals}
+          dismissedIds={dismissedIds}
+          onDismiss={handleDismissUndo}
+          onUndo={handleUndo}
+        />
 
         <Card title="New Meal">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
