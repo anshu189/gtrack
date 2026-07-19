@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
-import type { Food, Nutrition } from '@/types'
+import type { Food, FoodMeasure, Nutrition } from '@/types'
 import { Button } from '@/components/ui/button'
 import { foodSearchService } from '@/lib/search/foodSearch'
 import { foodRepository } from '@/lib/repositories/foodRepository'
 import { formatNum } from '@/lib/utils/format'
+import { computeGramsPerUnit } from '@/lib/utils/nutrition'
 
 const LS_KEY = 'gtrak:macroOverrides'
 
@@ -17,6 +18,8 @@ const FoodMacroEditor = () => {
   const [saving, setSaving] = useState(false)
   const [done, setDone] = useState<string | null>(null)
   const [importMsg, setImportMsg] = useState<string | null>(null)
+  const [editQuantity, setEditQuantity] = useState<number>(100)
+  const [editUnit, setEditUnit] = useState('g')
   const fileRef = useRef<HTMLInputElement>(null)
   const debounceRef = useRef<number | null>(null)
 
@@ -37,31 +40,73 @@ const FoodMacroEditor = () => {
 
   const handleSelect = (food: Food) => {
     setSelected(food)
-    const factor = (food.servingSize ?? 100) / 100
+    const qty = food.servingSize ?? 100
+    const unit = food.servingUnit ?? 'g'
+    setEditQuantity(qty)
+    setEditUnit(unit)
+    const factor = qty / 100
     setNutrition({
       calories: Math.round(food.nutrition.calories * factor * 100) / 100,
       protein: Math.round(food.nutrition.protein * factor * 100) / 100,
       carbs: Math.round(food.nutrition.carbs * factor * 100) / 100,
       fat: Math.round(food.nutrition.fat * factor * 100) / 100,
     })
-    setFiber(food.nutrition.fiber ? Math.round(food.nutrition.fiber * factor * 100) / 100 : 0)
+    setFiber(Math.round((food.nutrition.fiber ?? 0) * factor * 100) / 100)
     setDone(null)
+  }
+
+  const handleQuantityChange = (newQty: number, newUnit: string) => {
+    if (!selected) return
+    const oldGrams = editQuantity * computeGramsPerUnit(selected, editUnit)
+    const newGrams = newQty * computeGramsPerUnit(selected, newUnit)
+    const scale = oldGrams > 0 ? newGrams / oldGrams : 1
+    setNutrition((p) => ({
+      calories: Math.round(p.calories * scale * 100) / 100,
+      protein: Math.round(p.protein * scale * 100) / 100,
+      carbs: Math.round(p.carbs * scale * 100) / 100,
+      fat: Math.round(p.fat * scale * 100) / 100,
+    }))
+    setFiber((p) => Math.round(p * scale * 100) / 100)
+    setEditQuantity(newQty)
+    setEditUnit(newUnit)
   }
 
   const handleUpdate = async () => {
     if (!selected) return
     setSaving(true)
     try {
-      const servingSize = selected.servingSize ?? 100
-      const factor = servingSize === 100 ? 1 : 100 / servingSize
+      const grams = editQuantity * computeGramsPerUnit(selected, editUnit)
+      const factor = 100 / grams
+
+      // Build updated measures array
+      const existingMeasures = selected.measures ?? []
+      let newMeasures = [...existingMeasures]
+      if (editUnit !== 'g' && editUnit !== 'ml') {
+        const idx = newMeasures.findIndex((m) => m.unit === editUnit)
+        const entry: FoodMeasure = {
+          label: `${editQuantity} ${editUnit}`,
+          quantity: editQuantity,
+          unit: editUnit,
+          grams: editQuantity * computeGramsPerUnit(selected, editUnit),
+        }
+        if (idx >= 0) {
+          newMeasures[idx] = entry
+        } else {
+          newMeasures.push(entry)
+        }
+      }
+
       await foodRepository.update(selected.id, {
         nutrition: {
           calories: Math.round(nutrition.calories * factor * 100) / 100,
           protein: Math.round(nutrition.protein * factor * 100) / 100,
           carbs: Math.round(nutrition.carbs * factor * 100) / 100,
           fat: Math.round(nutrition.fat * factor * 100) / 100,
-          fiber: fiber ? Math.round(fiber * factor * 100) / 100 : undefined,
+          fiber: Math.round((fiber ?? 0) * factor * 100) / 100,
         },
+        measures: newMeasures,
+        servingSize: editQuantity,
+        servingUnit: editUnit,
       })
       setDone(selected.name)
       setSelected(null)
@@ -165,10 +210,27 @@ const FoodMacroEditor = () => {
       {selected && (
         <div className="mt-3 border border-slate-200 bg-slate-50 p-3 dark:border-[#2D2D2D] dark:bg-[#1F1F1F]">
           <p className="mb-2 text-sm font-semibold text-slate-950 dark:text-[#FDFDFD]">{selected.name}</p>
-          <p className="mb-3 text-xs text-slate-400 dark:text-[#FDFDFD]/70">
-            Per {selected.servingSize ?? 100}{selected.servingUnit ?? 'g'}: {formatNum(selected.nutrition.calories)} kcal / {formatNum(selected.nutrition.protein)}g P / {formatNum(selected.nutrition.carbs)}g C / {formatNum(selected.nutrition.fat)}g F{selected.nutrition.fiber ? ` / ${formatNum(selected.nutrition.fiber)}g fiber` : ''}
-            {selected.source && ` (${selected.source})`}
-          </p>
+          <div className="mb-3 flex flex-wrap items-center gap-1 text-xs text-slate-400 dark:text-[#FDFDFD]/70">
+            <span>Per</span>
+            <input
+              type="number"
+              className="w-14 border border-slate-200 px-1.5 py-0.5 text-xs dark:border-[#2D2D2D] dark:bg-[#2D2D2D] dark:text-[#FDFDFD]"
+              value={editQuantity}
+              onChange={(e) => handleQuantityChange(Number(e.target.value), editUnit)}
+              min={0}
+            />
+            <select
+              className="border border-slate-200 px-1.5 py-0.5 text-xs dark:border-[#2D2D2D] dark:bg-[#2D2D2D] dark:text-[#FDFDFD]"
+              value={editUnit}
+              onChange={(e) => handleQuantityChange(editQuantity, e.target.value)}
+            >
+              {['g', 'ml', 'piece', 'cup', 'tbsp', 'tsp', 'slice'].map((u) => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </select>
+            <span>: {formatNum(nutrition.calories)} kcal / {formatNum(nutrition.protein)}g P / {formatNum(nutrition.carbs)}g C / {formatNum(nutrition.fat)}g F{fiber ? ` / ${formatNum(fiber)}g fiber` : ''}</span>
+            {selected.source && <span> ({selected.source})</span>}
+          </div>
           <div className="grid grid-cols-2 gap-2">
             {fields.map((f) => (
               <div key={f.key}>

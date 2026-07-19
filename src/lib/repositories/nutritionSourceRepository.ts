@@ -3,6 +3,7 @@ import {
   query, orderBy,
 } from 'firebase/firestore'
 import { firestore } from '@/lib/firebase'
+import { cleanForFirestore } from '@/lib/utils/firestore'
 import type { NutritionSource } from '@/types'
 
 const COLLECTION = 'nutritionSources'
@@ -31,7 +32,7 @@ export class FirestoreNutritionSourceRepository implements NutritionSourceReposi
   }
 
   async add(s: NutritionSource) {
-    await setDoc(dRef(s.id), s)
+    await setDoc(dRef(s.id), cleanForFirestore(s))
   }
 
   async update(id: string, patch: Partial<NutritionSource>) {

@@ -3,6 +3,7 @@ import {
   query, orderBy, where,
 } from 'firebase/firestore'
 import { firestore } from '@/lib/firebase'
+import { cleanForFirestore } from '@/lib/utils/firestore'
 import type { QuantityPreset } from '@/types'
 
 const COLLECTION = 'quantityPresets'
@@ -38,7 +39,7 @@ export class FirestoreQuantityPresetRepository implements QuantityPresetReposito
   }
 
   async add(p: QuantityPreset) {
-    await setDoc(dRef(p.id), p)
+    await setDoc(dRef(p.id), cleanForFirestore(p))
   }
 
   async update(id: string, patch: Partial<QuantityPreset>) {

@@ -3,6 +3,7 @@ import {
   query, orderBy, where, limit,
 } from 'firebase/firestore'
 import { firestore } from '@/lib/firebase'
+import { cleanForFirestore } from '@/lib/utils/firestore'
 import type { Workout } from '@/types'
 
 const COLLECTION = 'workouts'
@@ -41,7 +42,7 @@ export class WorkoutRepository {
   }
 
   async add(workout: Workout) {
-    await setDoc(dRef(workout.id), workout)
+    await setDoc(dRef(workout.id), cleanForFirestore(workout))
   }
 
   async update(id: string, patch: Partial<Workout>) {

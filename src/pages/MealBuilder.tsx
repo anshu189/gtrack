@@ -51,17 +51,21 @@ const MealBuilder = () => {
     day: 'numeric',
   })
 
-  const handleCreateMeal = async () => {
-    const created = await mealStore.create({
+  const handleCreateMeal = () => {
+    const id = `meal:${Date.now()}-${Math.floor(Math.random() * 10000)}`
+    const meal: Meal = {
+      id,
       name: mealNameInput || 'Meal',
       loggedAt: `${selectedDate}T12:00:00Z`,
       items: [],
-    })
-    setCurrentMeal(created)
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
+    setCurrentMeal(meal)
     setMealNameInput('')
   }
 
-  const handleAddItem = (payload: { food: Food; quantity: number; unit?: string }) => {
+  const handleAddItem = (payload: { food: Food; quantity: number; unit?: string; gramsPerUnit: number }) => {
     if (!currentMeal) return
     const item: MealItem = {
       id: `item:${Date.now()}-${Math.random()}`,
@@ -70,6 +74,7 @@ const MealBuilder = () => {
       quantity: payload.quantity,
       unit: payload.unit,
       nutrition: payload.food.nutrition,
+      gramsPerUnit: payload.gramsPerUnit,
     }
     setCurrentMeal({
       ...currentMeal,
@@ -86,11 +91,25 @@ const MealBuilder = () => {
   }
 
   const handleSaveMeal = async () => {
-    if (!currentMeal || !currentMeal.id) return
-    await mealStore.update(currentMeal.id, {
-      name: currentMeal.name,
-      items: currentMeal.items,
-    })
+    if (!currentMeal) return
+    const existing = mealStore.meals.find((m) => m.id === currentMeal.id)
+    if (existing) {
+      await mealStore.update(currentMeal.id, {
+        name: currentMeal.name,
+        loggedAt: currentMeal.loggedAt,
+        items: currentMeal.items,
+        notes: currentMeal.notes,
+      })
+    } else {
+      await mealStore.create({
+        id: currentMeal.id,
+        name: currentMeal.name,
+        loggedAt: currentMeal.loggedAt,
+        items: currentMeal.items,
+        notes: currentMeal.notes,
+        createdAt: currentMeal.createdAt,
+      })
+    }
     setCurrentMeal(null)
   }
 

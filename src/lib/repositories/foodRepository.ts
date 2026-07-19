@@ -3,6 +3,7 @@ import {
   query, orderBy,
 } from 'firebase/firestore'
 import { firestore } from '@/lib/firebase'
+import { cleanForFirestore } from '@/lib/utils/firestore'
 import type { Food } from '@/types'
 import { foodSearchService } from '@/lib/search/foodSearch'
 
@@ -43,7 +44,7 @@ export class FirestoreFoodRepository implements FoodRepository {
   }
 
   async add(food: Food) {
-    await setDoc(dRef(food.id), food)
+    await setDoc(dRef(food.id), cleanForFirestore(food))
     await foodSearchService.refreshIfStale()
   }
 
@@ -66,7 +67,7 @@ export class FirestoreFoodRepository implements FoodRepository {
       createdAt: now,
       updatedAt: now,
     }
-    await setDoc(dRef(id), food)
+    await setDoc(dRef(id), cleanForFirestore(food))
     await foodSearchService.refreshIfStale()
     return food
   }

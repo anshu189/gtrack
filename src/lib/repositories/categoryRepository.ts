@@ -3,6 +3,7 @@ import {
   query, orderBy,
 } from 'firebase/firestore'
 import { firestore } from '@/lib/firebase'
+import { cleanForFirestore } from '@/lib/utils/firestore'
 import type { Category } from '@/types'
 
 const COLLECTION = 'categories'
@@ -31,7 +32,7 @@ export class FirestoreCategoryRepository implements CategoryRepository {
   }
 
   async add(category: Category) {
-    await setDoc(dRef(category.id), category)
+    await setDoc(dRef(category.id), cleanForFirestore(category))
   }
 
   async update(id: string, patch: Partial<Category>) {

@@ -19,6 +19,7 @@ import { PageContainer } from '@/components/ui/page-container'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { formatNum } from '@/lib/utils/format'
+import { mealItemGrams } from '@/lib/utils/nutrition'
 
 const DEFAULT_WATER_GOAL_ML = 2000
 
@@ -425,7 +426,7 @@ export default function History() {
                         <div className="border-t border-[#2D2D2D] px-3 pb-3 pt-2 space-y-1">
                           {meal.items.map((it) => {
                             const displayName = it.name ?? resolvedFoodNames[it.foodId] ?? it.foodId.split(':').pop()
-                            const multiplier = (it.quantity ?? 100) / 100
+                            const multiplier = mealItemGrams(it) / 100
                             const n = it.nutrition
                             return (
                               <div key={it.id} className="flex items-center justify-between text-xs py-1">

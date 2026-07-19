@@ -3,6 +3,7 @@ import {
   query, orderBy, where, limit,
 } from 'firebase/firestore'
 import { firestore } from '@/lib/firebase'
+import { cleanForFirestore } from '@/lib/utils/firestore'
 import type { WeightEntry } from '@/types'
 
 const COLLECTION = 'weights'
@@ -41,7 +42,7 @@ export class WeightRepository {
   }
 
   async add(entry: WeightEntry) {
-    await setDoc(dRef(entry.id), entry)
+    await setDoc(dRef(entry.id), cleanForFirestore(entry))
   }
 
   async update(id: string, patch: Partial<WeightEntry>) {

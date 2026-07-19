@@ -1,5 +1,6 @@
 import type { Meal, Nutrition, NutritionTargets } from '@/types'
 import { mealRepository } from '@/lib/repositories'
+import { mealItemGrams } from '@/lib/utils/nutrition'
 
 export interface NutritionStatus {
   actual: Nutrition
@@ -24,7 +25,7 @@ export class NutritionCalculationService {
 
     meal.items?.forEach((item) => {
       if (item.nutrition) {
-        const multiplier = (item.quantity ?? 100) / 100
+        const multiplier = mealItemGrams(item) / 100
         totals.calories += (item.nutrition.calories ?? 0) * multiplier
         totals.protein += (item.nutrition.protein ?? 0) * multiplier
         totals.carbs += (item.nutrition.carbs ?? 0) * multiplier

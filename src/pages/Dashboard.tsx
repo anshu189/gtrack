@@ -24,6 +24,7 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { foodRepository } from '@/lib/repositories/foodRepository'
 import { formatNum } from '@/lib/utils/format'
+import { mealItemGrams } from '@/lib/utils/nutrition'
 import type { DailyNote, WaterLog, WeightEntry, WorkoutType } from '@/types'
 
 const DEFAULT_WATER_GOAL_ML = 2000
@@ -132,6 +133,7 @@ const Dashboard = () => {
     setPendingWeightUnit('kg')
     setPendingWeightNotes('')
     weightStore.loadToday(selectedDate)
+    setResetKey((k) => k + 1)
     setSubmitted(true)
     setTimeout(() => setSubmitted(false), 3000)
   }
@@ -140,6 +142,7 @@ const Dashboard = () => {
   const [pendingWeightUnit, setPendingWeightUnit] = useState<WeightEntry['unit']>(weightStore.todayEntry?.unit ?? 'kg')
   const [pendingWeightNotes, setPendingWeightNotes] = useState(weightStore.todayEntry?.notes ?? '')
   const [submitted, setSubmitted] = useState(false)
+  const [resetKey, setResetKey] = useState(0)
   const [expandedMeals, setExpandedMeals] = useState<Set<string>>(new Set())
   const [resolvedFoodNames, setResolvedFoodNames] = useState<Record<string, string>>({})
 
@@ -244,7 +247,7 @@ const Dashboard = () => {
               mealStore.meals.map((meal) => {
                 const expanded = expandedMeals.has(meal.id)
                 const mealCalories = meal.items?.reduce((sum, item) => {
-                  const multiplier = (item.quantity ?? 100) / 100
+                  const multiplier = mealItemGrams(item) / 100
                   return sum + (item.nutrition?.calories ?? 0) * multiplier
                 }, 0) ?? 0
                 return (
@@ -266,7 +269,7 @@ const Dashboard = () => {
                       <div className="border-t border-[#2D2D2D] px-3 pb-3 pt-2 space-y-1">
                         {meal.items.map((it) => {
                           const displayName = it.name ?? resolvedFoodNames[it.foodId] ?? it.foodId.split(':').pop()
-                          const multiplier = (it.quantity ?? 100) / 100
+                          const multiplier = mealItemGrams(it) / 100
                           const n = it.nutrition
                           return (
                             <div key={it.id} className="flex items-center justify-between text-xs py-1">
@@ -310,7 +313,7 @@ const Dashboard = () => {
         </Card>
 
         <Card title="Water Intake">
-          <WaterLogging onAdd={handleAddWater} />
+          <WaterLogging key={`water-${resetKey}`} onAdd={handleAddWater} />
           <div className="mt-4">
             <WaterProgress current={waterStore.totalToday} goal={waterGoal} unit="ml" />
           </div>
@@ -348,7 +351,7 @@ const Dashboard = () => {
         </Card>
 
         <Card title="Daily Notes">
-          <DailyNoteEditor date={selectedDate} note={dailyNoteStore.note} onSave={handleSaveNote} />
+          <DailyNoteEditor key={`note-${resetKey}`} date={selectedDate} note={dailyNoteStore.note} onSave={handleSaveNote} />
         </Card>
 
         <Button onClick={handleSubmitDay} size="lg" className="w-full dark:bg-slate-200 dark:text-black">

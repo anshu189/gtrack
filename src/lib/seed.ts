@@ -1,5 +1,6 @@
-import { collection, getDocs, writeBatch, doc } from 'firebase/firestore'
+import { collection, getDocs, writeBatch, doc, query, limit } from 'firebase/firestore'
 import { firestore } from '@/lib/firebase'
+import { cleanForFirestore } from '@/lib/utils/firestore'
 import builtInFoods from '@/data/builtInFoods'
 import builtInCategories from '@/data/categories'
 import foodsSeed from '@/data/foodsSeed'
@@ -9,7 +10,7 @@ import nutritionSourcesSeed from '@/data/nutritionSources'
 import type { Food } from '@/types'
 
 async function isCollectionEmpty(name: string): Promise<boolean> {
-  const snap = await getDocs(collection(firestore, name))
+  const snap = await getDocs(query(collection(firestore, name), limit(1)))
   return snap.empty
 }
 
@@ -26,7 +27,7 @@ async function seedCategories() {
   const now = new Date().toISOString()
   for (const c of builtInCategories) {
     const ref = doc(firestore, 'categories', c.id)
-    batch.set(ref, { ...c, createdAt: c.createdAt ?? now, updatedAt: c.updatedAt ?? now })
+    batch.set(ref, cleanForFirestore({ ...c, createdAt: c.createdAt ?? now, updatedAt: c.updatedAt ?? now }))
   }
   await batch.commit()
 }
@@ -44,7 +45,7 @@ async function seedFoods() {
       ? { ...base, nutrition: { ...base.nutrition, ...override } }
       : base
     const ref = doc(firestore, 'foods', food.id)
-    batch.set(ref, food)
+    batch.set(ref, cleanForFirestore(food))
     count++
     if (count >= 490) {
       await batch.commit()
@@ -60,7 +61,7 @@ async function seedQuantityPresets() {
   const now = new Date().toISOString()
   for (const p of quantityPresetsSeed) {
     const ref = doc(firestore, 'quantityPresets', p.id)
-    batch.set(ref, { ...p, createdAt: p.createdAt ?? now, updatedAt: p.updatedAt ?? now })
+    batch.set(ref, cleanForFirestore({ ...p, createdAt: p.createdAt ?? now, updatedAt: p.updatedAt ?? now }))
   }
   await batch.commit()
 }
@@ -71,7 +72,7 @@ async function seedNutritionSources() {
   const now = new Date().toISOString()
   for (const s of nutritionSourcesSeed) {
     const ref = doc(firestore, 'nutritionSources', s.id)
-    batch.set(ref, { ...s, createdAt: s.createdAt ?? now, updatedAt: s.updatedAt ?? now })
+    batch.set(ref, cleanForFirestore({ ...s, createdAt: s.createdAt ?? now, updatedAt: s.updatedAt ?? now }))
   }
   await batch.commit()
 }

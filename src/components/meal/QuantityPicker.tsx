@@ -5,7 +5,9 @@ interface QuantityPickerProps {
   units?: string[]
 }
 
-const QuantityPicker = ({ value, unit = 'g', onChange, units = ['g', 'ml'] }: QuantityPickerProps) => {
+const ALL_UNITS = ['g', 'ml', 'piece', 'cup', 'tbsp', 'tsp', 'slice']
+
+const QuantityPicker = ({ value, unit = 'g', onChange, units = ALL_UNITS }: QuantityPickerProps) => {
   return (
     <div className="flex items-center gap-2">
       <input

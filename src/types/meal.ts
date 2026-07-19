@@ -15,6 +15,12 @@ export interface MealItem {
   note?: string
   /** Optional cached nutrition snapshot for the item */
   nutrition?: Nutrition
+  /**
+   * Grams per unit of this item (e.g. 50 for eggs where 1 piece = 50g).
+   * Computed from food.measures at creation time.
+   * Used to convert quantity → grams for nutrition calculations.
+   */
+  gramsPerUnit?: number
 }
 
 export interface Meal {

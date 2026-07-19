@@ -3,6 +3,7 @@ import {
   query, orderBy, where, writeBatch,
 } from 'firebase/firestore'
 import { firestore } from '@/lib/firebase'
+import { cleanForFirestore } from '@/lib/utils/firestore'
 import type { Meal, DeletedMealEntry } from '@/types'
 
 const MEALS = 'meals'
@@ -55,7 +56,7 @@ export class FirestoreMealRepository implements MealRepository {
   }
 
   async add(meal: Meal) {
-    await setDoc(dRef(MEALS, meal.id), meal)
+    await setDoc(dRef(MEALS, meal.id), cleanForFirestore(meal))
   }
 
   async create(input: Partial<Meal>): Promise<Meal> {
@@ -69,7 +70,7 @@ export class FirestoreMealRepository implements MealRepository {
       createdAt: now,
       updatedAt: now,
     }
-    await setDoc(dRef(MEALS, meal.id), meal)
+    await setDoc(dRef(MEALS, meal.id), cleanForFirestore(meal))
     return meal
   }
 
@@ -95,7 +96,7 @@ export class FirestoreMealRepository implements MealRepository {
       deletedAt: now,
       originalLoggedAt: meal.loggedAt,
     }
-    await setDoc(dRef(DELETED, meal.id), entry)
+    await setDoc(dRef(DELETED, meal.id), cleanForFirestore(entry))
     await deleteDoc(dRef(MEALS, meal.id))
   }
 
@@ -103,7 +104,7 @@ export class FirestoreMealRepository implements MealRepository {
     const snap = await getDoc(dRef(DELETED, deleteId))
     if (!snap.exists()) return
     const entry = snapTo<DeletedMealEntry>(snap)
-    await setDoc(dRef(MEALS, entry.meal.id), entry.meal)
+    await setDoc(dRef(MEALS, entry.meal.id), cleanForFirestore(entry.meal))
     await deleteDoc(dRef(DELETED, deleteId))
   }
 

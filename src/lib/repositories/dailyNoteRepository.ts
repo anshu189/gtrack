@@ -3,6 +3,7 @@ import {
   query, orderBy, where, limit,
 } from 'firebase/firestore'
 import { firestore } from '@/lib/firebase'
+import { cleanForFirestore } from '@/lib/utils/firestore'
 import type { DailyNote } from '@/types'
 
 const COLLECTION = 'dailyNotes'
@@ -29,7 +30,7 @@ export class DailyNoteRepository {
   }
 
   async add(note: DailyNote) {
-    await setDoc(dRef(note.id), note)
+    await setDoc(dRef(note.id), cleanForFirestore(note))
   }
 
   async update(id: string, patch: Partial<DailyNote>) {

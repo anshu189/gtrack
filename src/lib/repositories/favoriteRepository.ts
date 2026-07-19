@@ -3,6 +3,7 @@ import {
   query, orderBy,
 } from 'firebase/firestore'
 import { firestore } from '@/lib/firebase'
+import { cleanForFirestore } from '@/lib/utils/firestore'
 import type { Favorite } from '@/types'
 
 const COLLECTION = 'favorites'
@@ -28,7 +29,7 @@ export class FirestoreFavoriteRepository implements FavoriteRepository {
     const id = `fav:${foodId}`
     const now = new Date().toISOString()
     const fav = { id, foodId, createdAt: now }
-    await setDoc(dRef(id), fav)
+    await setDoc(dRef(id), cleanForFirestore(fav))
     return fav
   }
 

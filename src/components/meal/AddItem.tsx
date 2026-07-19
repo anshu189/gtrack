@@ -3,9 +3,10 @@ import type { Food } from '@/types'
 import FoodPicker from './FoodPicker'
 import QuantityPicker from './QuantityPicker'
 import { Button } from '@/components/ui/button'
+import { computeGramsPerUnit } from '@/lib/utils/nutrition'
 
 interface AddItemProps {
-  onAdd: (payload: { food: Food; quantity: number; unit?: string }) => void
+  onAdd: (payload: { food: Food; quantity: number; unit?: string; gramsPerUnit: number }) => void
 }
 
 const AddItem = ({ onAdd }: AddItemProps) => {
@@ -22,7 +23,7 @@ const AddItem = ({ onAdd }: AddItemProps) => {
 
   const handleConfirm = useCallback(() => {
     if (!selectedFood) return
-    onAdd({ food: selectedFood, quantity, unit })
+    onAdd({ food: selectedFood, quantity, unit, gramsPerUnit: computeGramsPerUnit(selectedFood, unit) })
     setSelectedFood(null)
     setAddedName(selectedFood.name)
     setTimeout(() => setAddedName(null), 2000)

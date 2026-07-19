@@ -3,6 +3,7 @@ import {
   query, orderBy, limit, writeBatch,
 } from 'firebase/firestore'
 import { firestore } from '@/lib/firebase'
+import { cleanForFirestore } from '@/lib/utils/firestore'
 import type { UserSettings } from '@/types'
 
 const COLLECTION = 'settings'
@@ -32,7 +33,7 @@ export class FirestoreSettingsRepository implements SettingsRepository {
   async save(s: UserSettings) {
     const now = new Date().toISOString()
     const payload = { ...s, updatedAt: now, createdAt: s.createdAt ?? now }
-    await setDoc(dRef(s.id ?? 'settings:default'), payload)
+    await setDoc(dRef(s.id ?? 'settings:default'), cleanForFirestore(payload))
   }
 
   async clear() {

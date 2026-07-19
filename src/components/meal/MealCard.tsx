@@ -3,6 +3,7 @@ import type { Meal } from '@/types'
 import { foodRepository } from '@/lib/repositories/foodRepository'
 import { Card } from '@/components/ui/card'
 import { formatNum } from '@/lib/utils/format'
+import { mealItemGrams } from '@/lib/utils/nutrition'
 
 interface MealCardProps {
   meal: Meal
@@ -44,7 +45,7 @@ const MealCard = ({ meal, onAddItem, onDelete }: MealCardProps) => {
         {meal.items && meal.items.length > 0 ? (
           meal.items.map((it) => {
             const displayName = it.name ?? resolvedNames[it.foodId] ?? it.foodId.split(':').pop()
-            const multiplier = (it.quantity ?? 100) / 100
+            const multiplier = mealItemGrams(it) / 100
             const n = it.nutrition
             return (
               <div key={it.id} className="border border-slate-100 p-2 dark:border-[#2D2D2D]">

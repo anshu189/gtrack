@@ -3,6 +3,7 @@ import {
   query, orderBy, where,
 } from 'firebase/firestore'
 import { firestore } from '@/lib/firebase'
+import { cleanForFirestore } from '@/lib/utils/firestore'
 import type { HistoryEntry } from '@/types'
 import { foodRepository } from './foodRepository'
 
@@ -40,7 +41,7 @@ export class FirestoreHistoryRepository implements HistoryRepository {
   }
 
   async add(entry: HistoryEntry) {
-    await setDoc(dRef(entry.id), entry)
+    await setDoc(dRef(entry.id), cleanForFirestore(entry))
   }
 
   async delete(id: string) {

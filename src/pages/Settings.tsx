@@ -3,6 +3,7 @@ import type { UserSettings } from '@/types'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { firestore } from '@/lib/firebase'
 import { collection, getDocs, setDoc, doc, writeBatch } from 'firebase/firestore'
+import { cleanForFirestore } from '@/lib/utils/firestore'
 import { PageContainer } from '@/components/ui/page-container'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -29,6 +30,8 @@ export default function Settings() {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [confirmReset, setConfirmReset] = useState(false)
+  const [resetPassword, setResetPassword] = useState('')
+  const [resetError, setResetError] = useState(false)
   const [importStatus, setImportStatus] = useState<string | null>(null)
   const [exportStatus, setExportStatus] = useState<string | null>(null)
 
@@ -127,7 +130,7 @@ export default function Settings() {
         const batch = writeBatch(firestore)
         let count = 0
         for (const item of items) {
-          batch.set(doc(firestore, name, item.id ?? `${name}:${Date.now()}-${count}`), item)
+          batch.set(doc(firestore, name, item.id ?? `${name}:${Date.now()}-${count}`), cleanForFirestore(item))
           count++
           if (count >= 490) {
             await batch.commit()
@@ -147,7 +150,12 @@ export default function Settings() {
   }
 
   const handleReset = async () => {
-    const collections = ['meals', 'history', 'favorites', 'workouts', 'waterLogs', 'weights', 'dailyNotes', 'settings'] as const
+    if (resetPassword !== 'godelete') {
+      setResetError(true)
+      return
+    }
+
+    const collections = ['meals', 'history', 'favorites', 'workouts', 'waterLogs', 'weights', 'dailyNotes', 'settings', 'deletedMeals'] as const
     for (const name of collections) {
       const snap = await getDocs(collection(firestore, name))
       if (snap.empty) continue
@@ -165,6 +173,8 @@ export default function Settings() {
     setTheme('light')
 
     setConfirmReset(false)
+    setResetPassword('')
+    setResetError(false)
   }
 
   return (
@@ -301,13 +311,23 @@ export default function Settings() {
               Reset All Data
             </Button>
           ) : (
-            <div className="flex items-center gap-3">
-              <Button variant="outline" size="sm" onClick={() => setConfirmReset(false)}>
-                Cancel
-              </Button>
-              <Button variant="danger" size="sm" onClick={handleReset}>
-                Confirm Reset
-              </Button>
+            <div className="space-y-3">
+              <input
+                type="password"
+                placeholder="Enter password"
+                className="w-full border border-slate-200 px-3 py-2 text-sm dark:border-[#2D2D2D] dark:bg-[#1F1F1F] dark:text-[#FDFDFD]"
+                value={resetPassword}
+                onChange={(e) => { setResetPassword(e.target.value); setResetError(false) }}
+              />
+              {resetError && <p className="text-xs text-red-400">Incorrect password</p>}
+              <div className="flex items-center gap-3">
+                <Button variant="outline" size="sm" onClick={() => { setConfirmReset(false); setResetPassword(''); setResetError(false) }}>
+                  Cancel
+                </Button>
+                <Button variant="danger" size="sm" onClick={handleReset}>
+                  Confirm Reset
+                </Button>
+              </div>
             </div>
           )}
         </Card>

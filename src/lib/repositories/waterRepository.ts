@@ -3,6 +3,7 @@ import {
   query, orderBy, where,
 } from 'firebase/firestore'
 import { firestore } from '@/lib/firebase'
+import { cleanForFirestore } from '@/lib/utils/firestore'
 import type { WaterLog } from '@/types'
 
 const COLLECTION = 'waterLogs'
@@ -34,7 +35,7 @@ export class WaterRepository {
   }
 
   async add(log: WaterLog) {
-    await setDoc(dRef(log.id), log)
+    await setDoc(dRef(log.id), cleanForFirestore(log))
   }
 
   async delete(id: string) {
