@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import type { UserSettings } from '@/types'
 import { useSettingsStore } from '@/stores/settingsStore'
-import db from '@/lib/db'
+import { firestore } from '@/lib/firebase'
+import { collection, getDocs, setDoc, doc, writeBatch } from 'firebase/firestore'
 import { PageContainer } from '@/components/ui/page-container'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -76,17 +77,17 @@ export default function Settings() {
   const handleExport = async () => {
     setExportStatus(null)
     try {
+      const collections = ['meals', 'history', 'favorites', 'workouts', 'waterLogs', 'weights', 'dailyNotes'] as const
+      const entries: Record<string, any[]> = {}
+      for (const name of collections) {
+        const snap = await getDocs(collection(firestore, name))
+        entries[name] = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+      }
       const data = {
         exportedAt: new Date().toISOString(),
         version: '1.0.0',
         settings: settingsStore.settings ?? null,
-        meals: await db.meals.toArray(),
-        history: await db.history.toArray(),
-        favorites: await db.favorites.toArray(),
-        workouts: await db.workouts.toArray(),
-        waterLogs: await db.waterLogs.toArray(),
-        weights: await db.weights.toArray(),
-        dailyNotes: await db.dailyNotes.toArray(),
+        ...entries,
       }
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
       const url = URL.createObjectURL(blob)
@@ -114,17 +115,27 @@ export default function Settings() {
         return
       }
 
+      const now = new Date().toISOString()
       if (data.settings) {
-        const now = new Date().toISOString()
-        await db.settings.put({ ...data.settings, updatedAt: now })
+        await setDoc(doc(firestore, 'settings', data.settings.id ?? 'settings:default'), { ...data.settings, updatedAt: now })
       }
-      if (data.meals?.length) await db.meals.bulkAdd(data.meals)
-      if (data.history?.length) await db.history.bulkAdd(data.history)
-      if (data.favorites?.length) await db.favorites.bulkAdd(data.favorites)
-      if (data.workouts?.length) await db.workouts.bulkAdd(data.workouts)
-      if (data.waterLogs?.length) await db.waterLogs.bulkAdd(data.waterLogs)
-      if (data.weights?.length) await db.weights.bulkAdd(data.weights)
-      if (data.dailyNotes?.length) await db.dailyNotes.bulkAdd(data.dailyNotes)
+
+      const collections = ['meals', 'history', 'favorites', 'workouts', 'waterLogs', 'weights', 'dailyNotes'] as const
+      for (const name of collections) {
+        const items = data[name]
+        if (!items?.length) continue
+        const batch = writeBatch(firestore)
+        let count = 0
+        for (const item of items) {
+          batch.set(doc(firestore, name, item.id ?? `${name}:${Date.now()}-${count}`), item)
+          count++
+          if (count >= 490) {
+            await batch.commit()
+            count = 0
+          }
+        }
+        if (count > 0) await batch.commit()
+      }
 
       setImportStatus('Import complete')
       settingsStore.load()
@@ -136,14 +147,14 @@ export default function Settings() {
   }
 
   const handleReset = async () => {
-    await db.meals.clear()
-    await db.history.clear()
-    await db.settings.clear()
-    await db.favorites.clear()
-    await db.workouts.clear()
-    await db.waterLogs.clear()
-    await db.weights.clear()
-    await db.dailyNotes.clear()
+    const collections = ['meals', 'history', 'favorites', 'workouts', 'waterLogs', 'weights', 'dailyNotes', 'settings'] as const
+    for (const name of collections) {
+      const snap = await getDocs(collection(firestore, name))
+      if (snap.empty) continue
+      const batch = writeBatch(firestore)
+      snap.docs.forEach((d) => batch.delete(d.ref))
+      await batch.commit()
+    }
 
     setCalories(DEFAULT_SETTINGS.nutritionTargets!.calories!)
     setProtein(DEFAULT_SETTINGS.nutritionTargets!.protein!)

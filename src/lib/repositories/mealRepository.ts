@@ -1,5 +1,15 @@
-import db from '@/lib/db'
+import {
+  collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc,
+  query, orderBy, where, writeBatch,
+} from 'firebase/firestore'
+import { firestore } from '@/lib/firebase'
 import type { Meal, DeletedMealEntry } from '@/types'
+
+const MEALS = 'meals'
+const DELETED = 'deletedMeals'
+
+function coll(name: string) { return collection(firestore, name) }
+function dRef(name: string, id: string) { return doc(firestore, name, id) }
 
 export interface MealRepository {
   getById(id: string): Promise<Meal | undefined>
@@ -17,31 +27,35 @@ export interface MealRepository {
 
 function generateId() {
   try {
-    // @ts-ignore
     if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return `meal:${crypto.randomUUID()}`
-  } catch (e) {
-    // ignore
-  }
+  } catch { /* ignore */ }
   return `meal:${Date.now()}-${Math.floor(Math.random() * 10000)}`
 }
 
-export class DexieMealRepository implements MealRepository {
+function snapTo<T>(d: any): T {
+  return { id: d.id, ...d.data() } as T
+}
+
+export class FirestoreMealRepository implements MealRepository {
   async getById(id: string) {
-    return db.meals.get(id)
+    const snap = await getDoc(dRef(MEALS, id))
+    return snap.exists() ? snapTo<Meal>(snap) : undefined
   }
 
   async listAll() {
-    return db.meals.orderBy('loggedAt').toArray()
+    const q = query(coll(MEALS), orderBy('loggedAt'))
+    const snap = await getDocs(q)
+    return snap.docs.map((d) => snapTo<Meal>(d))
   }
 
   async listByDateRange(fromIso: string, toIso: string) {
-    // loggedAt is an ISO string; do a filter in-memory for correctness and simplicity
-    const items = await db.meals.where('loggedAt').between(fromIso, toIso, true, true).toArray()
-    return items
+    const q = query(coll(MEALS), where('loggedAt', '>=', fromIso), where('loggedAt', '<=', toIso), orderBy('loggedAt'))
+    const snap = await getDocs(q)
+    return snap.docs.map((d) => snapTo<Meal>(d))
   }
 
   async add(meal: Meal) {
-    await db.meals.add(meal)
+    await setDoc(dRef(MEALS, meal.id), meal)
   }
 
   async create(input: Partial<Meal>): Promise<Meal> {
@@ -55,16 +69,16 @@ export class DexieMealRepository implements MealRepository {
       createdAt: now,
       updatedAt: now,
     }
-    await db.meals.add(meal)
+    await setDoc(dRef(MEALS, meal.id), meal)
     return meal
   }
 
   async update(id: string, patch: Partial<Meal>) {
-    await db.meals.update(id, { ...patch, updatedAt: new Date().toISOString() })
+    await updateDoc(dRef(MEALS, id), { ...patch, updatedAt: new Date().toISOString() })
   }
 
   async delete(id: string) {
-    await db.meals.delete(id)
+    await deleteDoc(dRef(MEALS, id))
   }
 
   getMidnight(): string {
@@ -81,26 +95,34 @@ export class DexieMealRepository implements MealRepository {
       deletedAt: now,
       originalLoggedAt: meal.loggedAt,
     }
-    await db.deletedMeals.put(entry)
-    await db.meals.delete(meal.id)
+    await setDoc(dRef(DELETED, meal.id), entry)
+    await deleteDoc(dRef(MEALS, meal.id))
   }
 
   async restoreDeleted(deleteId: string): Promise<void> {
-    const entry = await db.deletedMeals.get(deleteId)
-    if (!entry) return
-    await db.meals.add(entry.meal)
-    await db.deletedMeals.delete(deleteId)
+    const snap = await getDoc(dRef(DELETED, deleteId))
+    if (!snap.exists()) return
+    const entry = snapTo<DeletedMealEntry>(snap)
+    await setDoc(dRef(MEALS, entry.meal.id), entry.meal)
+    await deleteDoc(dRef(DELETED, deleteId))
   }
 
   async listDeleted(): Promise<DeletedMealEntry[]> {
     await this.purgeExpiredDeletions()
-    return db.deletedMeals.toArray()
+    const q = query(coll(DELETED), orderBy('deletedAt', 'desc'))
+    const snap = await getDocs(q)
+    return snap.docs.map((d) => snapTo<DeletedMealEntry>(d))
   }
 
   async purgeExpiredDeletions(): Promise<void> {
     const midnight = this.getMidnight()
-    await db.deletedMeals.where('deletedAt').below(midnight).delete()
+    const q = query(coll(DELETED), where('deletedAt', '<', midnight))
+    const snap = await getDocs(q)
+    if (snap.empty) return
+    const batch = writeBatch(firestore)
+    snap.docs.forEach((d) => batch.delete(d.ref))
+    await batch.commit()
   }
 }
 
-export const mealRepository = new DexieMealRepository()
+export const mealRepository = new FirestoreMealRepository()

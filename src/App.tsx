@@ -7,7 +7,8 @@ import MealBuilder from '@/pages/MealBuilder'
 import History from '@/pages/History'
 import Analytics from '@/pages/Analytics'
 import Settings from '@/pages/Settings'
-import { initDB } from '@/lib/db'
+import { ensureSignedIn } from '@/lib/firebase'
+import { seedIfEmpty } from '@/lib/seed'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { BarChart3, Clock, Home, UtensilsCrossed, Settings2 } from 'lucide-react'
 
@@ -23,10 +24,11 @@ function App() {
   const [ready, setReady] = useState(false)
 
   useEffect(() => {
-    initDB()
+    ensureSignedIn()
+      .then(() => seedIfEmpty())
       .then(() => setReady(true))
       .catch((error) => {
-        console.error('Failed to initialize database', error)
+        console.error('Failed to initialize', error)
         setReady(true)
       })
   }, [])

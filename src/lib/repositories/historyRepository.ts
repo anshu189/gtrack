@@ -1,5 +1,15 @@
-import db from '@/lib/db'
+import {
+  collection, doc, getDoc, getDocs, setDoc, deleteDoc,
+  query, orderBy, where,
+} from 'firebase/firestore'
+import { firestore } from '@/lib/firebase'
 import type { HistoryEntry } from '@/types'
+import { foodRepository } from './foodRepository'
+
+const COLLECTION = 'history'
+function coll() { return collection(firestore, COLLECTION) }
+function dRef(id: string) { return doc(firestore, COLLECTION, id) }
+function snapTo<T>(d: any): T { return { id: d.id, ...d.data() } as T }
 
 export interface HistoryRepository {
   getById(id: string): Promise<HistoryEntry | undefined>
@@ -7,43 +17,44 @@ export interface HistoryRepository {
   listByType(type: string): Promise<HistoryEntry[]>
   add(entry: HistoryEntry): Promise<void>
   delete(id: string): Promise<void>
+  listRecentFoodIds(limit?: number): Promise<string[]>
+  listRecentFoods(limit?: number): Promise<any[]>
 }
 
-export class DexieHistoryRepository implements HistoryRepository {
+export class FirestoreHistoryRepository implements HistoryRepository {
   async getById(id: string) {
-    return db.history.get(id)
+    const snap = await getDoc(dRef(id))
+    return snap.exists() ? snapTo<HistoryEntry>(snap) : undefined
   }
 
   async listAll() {
-    return db.history.orderBy('loggedAt').reverse().toArray()
+    const q = query(coll(), orderBy('loggedAt', 'desc'))
+    const snap = await getDocs(q)
+    return snap.docs.map((d) => snapTo<HistoryEntry>(d))
   }
 
   async listByType(type: string) {
-    return db.history.where('type').equals(type).toArray()
+    const q = query(coll(), where('type', '==', type))
+    const snap = await getDocs(q)
+    return snap.docs.map((d) => snapTo<HistoryEntry>(d))
   }
 
   async add(entry: HistoryEntry) {
-    await db.history.add(entry)
+    await setDoc(dRef(entry.id), entry)
   }
 
   async delete(id: string) {
-    await db.history.delete(id)
+    await deleteDoc(dRef(id))
   }
 
-  /**
-   * List recent distinct food IDs derived from meal history ordered by most recent occurrence.
-   * Returns up to `limit` distinct food IDs.
-   */
   async listRecentFoodIds(limit = 20): Promise<string[]> {
-    const all = await db.history.orderBy('loggedAt').reverse().toArray()
-    const allMeals = all.filter((e) => (e as any).type === 'meal')
+    const q = query(coll(), where('type', '==', 'meal'), orderBy('loggedAt', 'desc'))
+    const snap = await getDocs(q)
     const seen = new Set<string>()
     const result: string[] = []
-
-    for (const entry of allMeals) {
-      // mealSnapshot should exist for meal history entries
-      // @ts-ignore - runtime shape check
-      const meal = (entry as any).mealSnapshot
+    for (const d of snap.docs) {
+      const entry = snapTo<any>(d)
+      const meal = entry.mealSnapshot
       if (!meal || !Array.isArray(meal.items)) continue
       for (const item of meal.items) {
         if (!item || !item.foodId) continue
@@ -54,24 +65,18 @@ export class DexieHistoryRepository implements HistoryRepository {
         }
       }
     }
-
     return result
   }
 
-  /**
-   * Resolve recent foods (Food objects) using Food repository
-   */
   async listRecentFoods(limit = 20) {
     const ids = await this.listRecentFoodIds(limit)
-    const foods = [] as any[]
+    const foods: any[] = []
     for (const id of ids) {
-      // fetch each food; if missing skip
-      // eslint-disable-next-line no-await-in-loop
-      const f = await db.foods.get(id)
+      const f = await foodRepository.getById(id)
       if (f) foods.push(f)
     }
     return foods
   }
 }
 
-export const historyRepository = new DexieHistoryRepository()
+export const historyRepository = new FirestoreHistoryRepository()

@@ -1,5 +1,14 @@
-import db from '@/lib/db'
+import {
+  collection, doc, getDocs, setDoc,
+  query, orderBy, limit, writeBatch,
+} from 'firebase/firestore'
+import { firestore } from '@/lib/firebase'
 import type { UserSettings } from '@/types'
+
+const COLLECTION = 'settings'
+function coll() { return collection(firestore, COLLECTION) }
+function dRef(id: string) { return doc(firestore, COLLECTION, id) }
+function snapTo<T>(d: any): T { return { id: d.id, ...d.data() } as T }
 
 export interface SettingsRepository {
   get(): Promise<UserSettings | undefined>
@@ -7,10 +16,11 @@ export interface SettingsRepository {
   clear(): Promise<void>
 }
 
-export class DexieSettingsRepository implements SettingsRepository {
+export class FirestoreSettingsRepository implements SettingsRepository {
   async get() {
-    const all = await db.settings.toArray()
-    if (all.length) return all[0]
+    const q = query(coll(), orderBy('__name__'), limit(1))
+    const snap = await getDocs(q)
+    if (!snap.empty) return snapTo<UserSettings>(snap.docs[0])
     return {
       id: 'settings:default',
       unitSystem: 'metric' as const,
@@ -22,17 +32,15 @@ export class DexieSettingsRepository implements SettingsRepository {
   async save(s: UserSettings) {
     const now = new Date().toISOString()
     const payload = { ...s, updatedAt: now, createdAt: s.createdAt ?? now }
-    if (s.id) {
-      await db.settings.put(payload)
-    } else {
-      // generate simple id if missing
-      await db.settings.add({ ...payload, id: `settings:default` })
-    }
+    await setDoc(dRef(s.id ?? 'settings:default'), payload)
   }
 
   async clear() {
-    await db.settings.clear()
+    const snap = await getDocs(coll())
+    const batch = writeBatch(firestore)
+    snap.docs.forEach((d) => batch.delete(d.ref))
+    await batch.commit()
   }
 }
 
-export const settingsRepository = new DexieSettingsRepository()
+export const settingsRepository = new FirestoreSettingsRepository()

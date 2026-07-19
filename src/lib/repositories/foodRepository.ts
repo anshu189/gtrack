@@ -1,6 +1,15 @@
-import db from '@/lib/db'
+import {
+  collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc,
+  query, orderBy,
+} from 'firebase/firestore'
+import { firestore } from '@/lib/firebase'
 import type { Food } from '@/types'
 import { foodSearchService } from '@/lib/search/foodSearch'
+
+const COLLECTION = 'foods'
+function coll() { return collection(firestore, COLLECTION) }
+function dRef(id: string) { return doc(firestore, COLLECTION, id) }
+function snapTo<T>(d: any): T { return { id: d.id, ...d.data() } as T }
 
 export type FoodSearchResult = Pick<Food, 'id' | 'name' | 'category' | 'nutrition'>
 
@@ -16,27 +25,25 @@ export interface FoodRepository {
 
 function generateId() {
   try {
-    // browser crypto
-    // @ts-ignore
     if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return `food:custom:${crypto.randomUUID()}`
-  } catch (e) {
-    // ignore
-  }
+  } catch { /* ignore */ }
   return `food:custom:${Date.now()}-${Math.floor(Math.random() * 10000)}`
 }
 
-export class DexieFoodRepository implements FoodRepository {
+export class FirestoreFoodRepository implements FoodRepository {
   async getById(id: string) {
-    return db.foods.get(id)
+    const snap = await getDoc(dRef(id))
+    return snap.exists() ? snapTo<Food>(snap) : undefined
   }
 
   async listAll() {
-    return db.foods.orderBy('name').toArray()
+    const q = query(coll(), orderBy('name'))
+    const snap = await getDocs(q)
+    return snap.docs.map((d) => snapTo<Food>(d))
   }
 
   async add(food: Food) {
-    await db.foods.add(food)
-    // refresh search index
+    await setDoc(dRef(food.id), food)
     await foodSearchService.refreshIfStale()
   }
 
@@ -59,41 +66,29 @@ export class DexieFoodRepository implements FoodRepository {
       createdAt: now,
       updatedAt: now,
     }
-    await db.foods.put(food)
+    await setDoc(dRef(id), food)
     await foodSearchService.refreshIfStale()
     return food
   }
 
   async update(id: string, patch: Partial<Food>) {
-    await db.foods.update(id, { ...patch, updatedAt: new Date().toISOString() })
+    await updateDoc(dRef(id), { ...patch, updatedAt: new Date().toISOString() })
     await foodSearchService.refreshIfStale()
-    // persist override to localStorage
-    if (patch.nutrition) {
-      try {
-        const stored = localStorage.getItem('gtrak:macroOverrides')
-        const overrides: Record<string, import('@/types').Nutrition> = stored ? JSON.parse(stored) : {}
-        overrides[id] = { ...(overrides[id] ?? {}), ...patch.nutrition }
-        localStorage.setItem('gtrak:macroOverrides', JSON.stringify(overrides))
-      } catch (e) {
-        // ignore storage errors
-      }
-    }
   }
 
   async delete(id: string) {
-    await db.foods.delete(id)
+    await deleteDoc(dRef(id))
     await foodSearchService.refreshIfStale()
   }
 
   async searchByName(q: string) {
     const term = q.trim().toLowerCase()
     if (!term) return []
-    // Simple in-memory filter for now — can be optimized with an index or full-text later
-    const all = await db.foods.toArray()
+    const all = await this.listAll()
     return all
       .filter((f) => f.name.toLowerCase().includes(term) || (f.aliases || []).some((a) => a.toLowerCase().includes(term)))
       .map((f) => ({ id: f.id, name: f.name, category: f.category, nutrition: f.nutrition }))
   }
 }
 
-export const foodRepository = new DexieFoodRepository()
+export const foodRepository = new FirestoreFoodRepository()

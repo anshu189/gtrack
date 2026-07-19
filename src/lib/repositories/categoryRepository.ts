@@ -1,5 +1,14 @@
-import db from '@/lib/db'
+import {
+  collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc,
+  query, orderBy,
+} from 'firebase/firestore'
+import { firestore } from '@/lib/firebase'
 import type { Category } from '@/types'
+
+const COLLECTION = 'categories'
+function coll() { return collection(firestore, COLLECTION) }
+function dRef(id: string) { return doc(firestore, COLLECTION, id) }
+function snapTo<T>(d: any): T { return { id: d.id, ...d.data() } as T }
 
 export interface CategoryRepository {
   getById(id: string): Promise<Category | undefined>
@@ -9,26 +18,29 @@ export interface CategoryRepository {
   delete(id: string): Promise<void>
 }
 
-export class DexieCategoryRepository implements CategoryRepository {
+export class FirestoreCategoryRepository implements CategoryRepository {
   async getById(id: string) {
-    return db.categories.get(id)
+    const snap = await getDoc(dRef(id))
+    return snap.exists() ? snapTo<Category>(snap) : undefined
   }
 
   async listAll() {
-    return db.categories.orderBy('name').toArray()
+    const q = query(coll(), orderBy('name'))
+    const snap = await getDocs(q)
+    return snap.docs.map((d) => snapTo<Category>(d))
   }
 
   async add(category: Category) {
-    await db.categories.add(category)
+    await setDoc(dRef(category.id), category)
   }
 
   async update(id: string, patch: Partial<Category>) {
-    await db.categories.update(id, { ...patch, updatedAt: new Date().toISOString() })
+    await updateDoc(dRef(id), { ...patch, updatedAt: new Date().toISOString() })
   }
 
   async delete(id: string) {
-    await db.categories.delete(id)
+    await deleteDoc(dRef(id))
   }
 }
 
-export const categoryRepository = new DexieCategoryRepository()
+export const categoryRepository = new FirestoreCategoryRepository()

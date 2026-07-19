@@ -1,5 +1,14 @@
-import db from '@/lib/db'
+import {
+  collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc,
+  query, orderBy,
+} from 'firebase/firestore'
+import { firestore } from '@/lib/firebase'
 import type { NutritionSource } from '@/types'
+
+const COLLECTION = 'nutritionSources'
+function coll() { return collection(firestore, COLLECTION) }
+function dRef(id: string) { return doc(firestore, COLLECTION, id) }
+function snapTo<T>(d: any): T { return { id: d.id, ...d.data() } as T }
 
 export interface NutritionSourceRepository {
   getById(id: string): Promise<NutritionSource | undefined>
@@ -9,26 +18,29 @@ export interface NutritionSourceRepository {
   delete(id: string): Promise<void>
 }
 
-export class DexieNutritionSourceRepository implements NutritionSourceRepository {
+export class FirestoreNutritionSourceRepository implements NutritionSourceRepository {
   async getById(id: string) {
-    return db.nutritionSources.get(id)
+    const snap = await getDoc(dRef(id))
+    return snap.exists() ? snapTo<NutritionSource>(snap) : undefined
   }
 
   async listAll() {
-    return db.nutritionSources.orderBy('name').toArray()
+    const q = query(coll(), orderBy('name'))
+    const snap = await getDocs(q)
+    return snap.docs.map((d) => snapTo<NutritionSource>(d))
   }
 
   async add(s: NutritionSource) {
-    await db.nutritionSources.add(s)
+    await setDoc(dRef(s.id), s)
   }
 
   async update(id: string, patch: Partial<NutritionSource>) {
-    await db.nutritionSources.update(id, { ...patch, updatedAt: new Date().toISOString() })
+    await updateDoc(dRef(id), { ...patch, updatedAt: new Date().toISOString() })
   }
 
   async delete(id: string) {
-    await db.nutritionSources.delete(id)
+    await deleteDoc(dRef(id))
   }
 }
 
-export const nutritionSourceRepository = new DexieNutritionSourceRepository()
+export const nutritionSourceRepository = new FirestoreNutritionSourceRepository()

@@ -1,5 +1,14 @@
-import db from '@/lib/db'
+import {
+  collection, doc, getDoc, getDocs, setDoc, deleteDoc,
+  query, orderBy,
+} from 'firebase/firestore'
+import { firestore } from '@/lib/firebase'
 import type { Favorite } from '@/types'
+
+const COLLECTION = 'favorites'
+function coll() { return collection(firestore, COLLECTION) }
+function dRef(id: string) { return doc(firestore, COLLECTION, id) }
+function snapTo<T>(d: any): T { return { id: d.id, ...d.data() } as T }
 
 export interface FavoriteRepository {
   listAll(): Promise<Favorite[]>
@@ -8,29 +17,29 @@ export interface FavoriteRepository {
   isFavorite(foodId: string): Promise<boolean>
 }
 
-export class DexieFavoriteRepository implements FavoriteRepository {
+export class FirestoreFavoriteRepository implements FavoriteRepository {
   async listAll() {
-    return db.favorites.orderBy('createdAt').reverse().toArray()
+    const q = query(coll(), orderBy('createdAt', 'desc'))
+    const snap = await getDocs(q)
+    return snap.docs.map((d) => snapTo<Favorite>(d))
   }
 
   async add(foodId: string) {
     const id = `fav:${foodId}`
     const now = new Date().toISOString()
     const fav = { id, foodId, createdAt: now }
-    await db.favorites.put(fav)
+    await setDoc(dRef(id), fav)
     return fav
   }
 
   async removeByFoodId(foodId: string) {
-    const id = `fav:${foodId}`
-    await db.favorites.delete(id)
+    await deleteDoc(dRef(`fav:${foodId}`))
   }
 
   async isFavorite(foodId: string) {
-    const id = `fav:${foodId}`
-    const hit = await db.favorites.get(id)
-    return !!hit
+    const snap = await getDoc(dRef(`fav:${foodId}`))
+    return snap.exists()
   }
 }
 
-export const favoriteRepository = new DexieFavoriteRepository()
+export const favoriteRepository = new FirestoreFavoriteRepository()
