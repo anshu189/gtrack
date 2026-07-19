@@ -91,7 +91,7 @@ const MealBuilder = () => {
   }
 
   const handleSaveMeal = async () => {
-    if (!currentMeal) return
+    if (!currentMeal || !currentMeal.id) return
     const existing = mealStore.meals.find((m) => m.id === currentMeal.id)
     if (existing) {
       await mealStore.update(currentMeal.id, {
