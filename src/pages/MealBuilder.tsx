@@ -6,6 +6,7 @@ import { MealCard, AddItem, FoodMacroEditor, UndoBanner } from '@/components/mea
 import { Button } from '@/components/ui/button'
 import { PageContainer } from '@/components/ui/page-container'
 import { Card } from '@/components/ui/card'
+import { cleanForFirestore } from '@/lib/utils/firestore'
 
 function getTodayIso() {
   return new Date().toISOString().split('T')[0]
@@ -94,21 +95,21 @@ const MealBuilder = () => {
     if (!currentMeal || !currentMeal.id) return
     const existing = mealStore.meals.find((m) => m.id === currentMeal.id)
     if (existing) {
-      await mealStore.update(currentMeal.id, {
+      await mealStore.update(currentMeal.id, cleanForFirestore({
         name: currentMeal.name,
         loggedAt: currentMeal.loggedAt,
         items: currentMeal.items,
         notes: currentMeal.notes,
-      })
+      }))
     } else {
-      await mealStore.create({
+      await mealStore.create(cleanForFirestore({
         id: currentMeal.id,
         name: currentMeal.name,
         loggedAt: currentMeal.loggedAt,
         items: currentMeal.items,
         notes: currentMeal.notes,
         createdAt: currentMeal.createdAt,
-      })
+      }))
     }
     setCurrentMeal(null)
   }
