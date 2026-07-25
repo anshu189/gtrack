@@ -80,7 +80,7 @@ export default function Settings() {
   const handleExport = async () => {
     setExportStatus(null)
     try {
-      const collections = ['meals', 'history', 'favorites', 'workouts', 'waterLogs', 'weights', 'dailyNotes'] as const
+      const collections = ['meals', 'history', 'favorites', 'workouts', 'waterLogs', 'weights', 'dailyNotes', 'tretinoinLogs', 'respectLogs'] as const
       const entries: Record<string, any[]> = {}
       for (const name of collections) {
         const snap = await getDocs(collection(firestore, name))
@@ -123,7 +123,7 @@ export default function Settings() {
         await setDoc(doc(firestore, 'settings', data.settings.id ?? 'settings:default'), { ...data.settings, updatedAt: now })
       }
 
-      const collections = ['meals', 'history', 'favorites', 'workouts', 'waterLogs', 'weights', 'dailyNotes'] as const
+      const collections = ['meals', 'history', 'favorites', 'workouts', 'waterLogs', 'weights', 'dailyNotes', 'tretinoinLogs', 'respectLogs'] as const
       for (const name of collections) {
         const items = data[name]
         if (!items?.length) continue
@@ -155,7 +155,7 @@ export default function Settings() {
       return
     }
 
-    const collections = ['meals', 'history', 'favorites', 'workouts', 'waterLogs', 'weights', 'dailyNotes', 'settings', 'deletedMeals'] as const
+    const collections = ['meals', 'history', 'favorites', 'workouts', 'waterLogs', 'weights', 'dailyNotes', 'tretinoinLogs', 'respectLogs', 'settings', 'deletedMeals'] as const
     for (const name of collections) {
       const snap = await getDocs(collection(firestore, name))
       if (snap.empty) continue

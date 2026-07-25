@@ -6,6 +6,8 @@ import { useWorkoutStore } from '@/stores/workoutStore'
 import { useWaterStore } from '@/stores/waterStore'
 import { useWeightStore } from '@/stores/weightStore'
 import { useDailyNoteStore } from '@/stores/dailyNoteStore'
+import { useTretinoinStore } from '@/stores/tretinoinStore'
+import { useRespectStore } from '@/stores/respectStore'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { DailySummary } from '@/components/dashboard'
 import { NutritionSummary } from '@/components/nutrition'
@@ -18,6 +20,8 @@ import {
   WeightLogging,
   WeightHistory,
   DailyNoteEditor,
+  TretinoinTracker,
+  RespectTracker,
 } from '@/components/tracking'
 import { PageContainer } from '@/components/ui/page-container'
 import { Card } from '@/components/ui/card'
@@ -25,7 +29,8 @@ import { Button } from '@/components/ui/button'
 import { foodRepository } from '@/lib/repositories/foodRepository'
 import { formatNum } from '@/lib/utils/format'
 import { mealItemGrams } from '@/lib/utils/nutrition'
-import type { DailyNote, WaterLog, WeightEntry, WorkoutType } from '@/types'
+import { getLastAppliedDate, isScheduledNight } from '@/lib/utils/tretinoin'
+import type { DailyNote, RespectLog, WaterLog, WeightEntry, WorkoutType } from '@/types'
 
 const DEFAULT_WATER_GOAL_ML = 2000
 
@@ -41,6 +46,8 @@ const Dashboard = () => {
   const waterStore = useWaterStore()
   const weightStore = useWeightStore()
   const dailyNoteStore = useDailyNoteStore()
+  const tretinoinStore = useTretinoinStore()
+  const respectStore = useRespectStore()
   const settingsStore = useSettingsStore()
   const { status: dailyStatus } = useDailyNutritionProgress(selectedDate)
 
@@ -55,6 +62,8 @@ const Dashboard = () => {
     waterStore.error,
     weightStore.error,
     dailyNoteStore.error,
+    tretinoinStore.error,
+    respectStore.error,
     settingsStore.error,
   ].filter(Boolean) as string[]
 
@@ -66,6 +75,9 @@ const Dashboard = () => {
     weightStore.loadToday(selectedDate)
     weightStore.loadRecent(7)
     dailyNoteStore.loadByDate(selectedDate)
+    tretinoinStore.loadByDate(selectedDate)
+    tretinoinStore.loadAll()
+    respectStore.loadByDate(selectedDate)
     settingsStore.load()
   }, [selectedDate])
 
@@ -115,6 +127,14 @@ const Dashboard = () => {
   const handleSaveNote = useCallback(async (note: DailyNote) => {
     await useDailyNoteStore.getState().save(note)
   }, [])
+
+  const handleTretinoinToggle = async (applied: boolean) => {
+    await tretinoinStore.setApplied(selectedDate, applied)
+  }
+
+  const handleRespectUpsert = async (patch: Partial<RespectLog>) => {
+    await respectStore.upsert({ ...patch, date: selectedDate })
+  }
 
   const handleSubmitDay = async () => {
     if (pendingWeight > 0) {
@@ -331,6 +351,15 @@ const Dashboard = () => {
           )}
         </Card>
 
+        <Card title="Tretinoin">
+          {(() => {
+            const lastApplied = getLastAppliedDate(tretinoinStore.logs)
+            const scheduled = isScheduledNight(selectedDate, lastApplied)
+            if (!scheduled && lastApplied) return null
+            return <TretinoinTracker todayLog={tretinoinStore.todayLog} onToggle={handleTretinoinToggle} />
+          })()}
+        </Card>
+
         <Card title="Weight">
           <WeightLogging
             todayEntry={weightStore.todayEntry}
@@ -348,6 +377,10 @@ const Dashboard = () => {
             <p className="mb-2 text-sm font-medium text-slate-500 dark:text-slate-200">Weight history</p>
             <WeightHistory entries={weightStore.recentEntries} excludeDate={selectedDate} />
           </div>
+        </Card>
+
+        <Card title="Respect/Trust Score">
+          <RespectTracker log={respectStore.todayLog} onUpsert={handleRespectUpsert} />
         </Card>
 
         <Card title="Daily Notes">

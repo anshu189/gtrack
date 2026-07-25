@@ -5,6 +5,8 @@ import { workoutRepository } from '@/lib/repositories/workoutRepository'
 import { waterRepository } from '@/lib/repositories/waterRepository'
 import { weightRepository } from '@/lib/repositories/weightRepository'
 import { dailyNoteRepository } from '@/lib/repositories/dailyNoteRepository'
+import { tretinoinRepository } from '@/lib/repositories/tretinoinRepository'
+import { respectRepository } from '@/lib/repositories/respectRepository'
 import { foodRepository } from '@/lib/repositories/foodRepository'
 import { nutritionCalculationService } from '@/lib/services/nutritionCalculation'
 import { useDailyNutritionProgress } from '@/hooks/useNutrition'
@@ -14,12 +16,15 @@ import { NutritionSummary } from '@/components/nutrition'
 import { WorkoutLogging } from '@/components/tracking'
 import { WaterLogging, WaterProgress } from '@/components/tracking'
 import { WeightLogging } from '@/components/tracking'
+import { TretinoinTracker } from '@/components/tracking'
+import { RespectTracker } from '@/components/tracking'
 import { UndoBanner } from '@/components/meal'
 import { PageContainer } from '@/components/ui/page-container'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { formatNum } from '@/lib/utils/format'
 import { mealItemGrams } from '@/lib/utils/nutrition'
+import type { TretinoinLog } from '@/types'
 
 const DEFAULT_WATER_GOAL_ML = 2000
 
@@ -35,11 +40,14 @@ export default function History() {
   const [waterTotal, setWaterTotal] = useState(0)
   const [weightEntry, setWeightEntry] = useState<WeightEntry | undefined>()
   const [dailyNote, setDailyNote] = useState<DailyNote | undefined>()
+  const [tretinoinLogs, setTretinoinLogs] = useState<TretinoinLog[]>([])
+  const [respectLog, setRespectLog] = useState<RespectLog | undefined>()
   const [loading, setLoading] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
 
   const [editing, setEditing] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
+  const [respectPatch, setRespectPatch] = useState<Partial<RespectLog> | null>(null)
   const [editWorkout, setEditWorkout] = useState<WorkoutType | null>(null)
   const [editWeight, setEditWeight] = useState(0)
   const [editWeightUnit, setEditWeightUnit] = useState<WeightEntry['unit']>('kg')
@@ -70,13 +78,15 @@ export default function History() {
       const dayStart = dateIso.split('T')[0]
       const dayEnd = `${dayStart}T23:59:59.999Z`
 
-      const [loadedMeals, loadedWorkout, loadedWaterLogs, loadedTotal, loadedWeight, loadedNote] = await Promise.all([
+      const [loadedMeals, loadedWorkout, loadedWaterLogs, loadedTotal, loadedWeight, loadedNote, loadedTretinoin, loadedRespect] = await Promise.all([
         mealRepository.listByDateRange(dayStart, dayEnd),
         workoutRepository.getByDate(dayStart),
         waterRepository.listByDate(dayStart),
         waterRepository.getTotalForDate(dayStart),
         weightRepository.getByDate(dayStart),
         dailyNoteRepository.getByDate(dayStart),
+        tretinoinRepository.listByDate(dayStart),
+        respectRepository.getByDate(dayStart),
       ])
 
       setMeals(loadedMeals)
@@ -85,6 +95,8 @@ export default function History() {
       setWaterTotal(loadedTotal)
       setWeightEntry(loadedWeight)
       setDailyNote(loadedNote)
+      setTretinoinLogs(loadedTretinoin)
+      setRespectLog(loadedRespect)
 
       mealStore.loadDeleted()
     } finally {
@@ -126,8 +138,22 @@ export default function History() {
     }
     await waterRepository.add(entry)
     setWaterLogs((prev) => [...prev, entry])
-    setWaterTotal((prev) => prev + entry.amount)
-    if (editing) setWaterChanged(true)
+    setWaterTotal((prev) => prev + log.amount)
+  }
+
+  const handleTretinoinToggleInHistory = async (applied: boolean) => {
+    const now = new Date().toISOString()
+    const id = `tret:${selectedDate}`
+    const entry: TretinoinLog = {
+      id,
+      date: selectedDate,
+      applied,
+      timestamp: now,
+      createdAt: now,
+      updatedAt: now,
+    }
+    await tretinoinRepository.add(entry)
+    setTretinoinLogs([entry])
   }
 
   const handleDeleteWaterLog = async (id: string) => {
@@ -199,8 +225,8 @@ export default function History() {
       editWeightNotes !== (weightEntry?.notes ?? '')
     const workoutChanged = editWorkout !== workout
     const noteChanged = editNoteContent !== (dailyNote?.content ?? '')
-    setHasChanges(weightChanged || workoutChanged || noteChanged || waterChanged)
-  }, [editing, editWorkout, editWeight, editWeightUnit, editWeightNotes, editNoteContent, workout, weightEntry, dailyNote, waterChanged])
+    setHasChanges(weightChanged || workoutChanged || noteChanged || waterChanged || respectPatch !== null)
+  }, [editing, editWorkout, editWeight, editWeightUnit, editWeightNotes, editNoteContent, workout, weightEntry, dailyNote, waterChanged, respectPatch])
 
   const toggleMealExpand = (mealId: string) => {
     setExpandedMeals((prev) => {
@@ -280,15 +306,22 @@ export default function History() {
       }))
     }
 
+    if (respectPatch) {
+      await respectRepository.upsert(respectPatch)
+      setRespectPatch(null)
+    }
+
     setEditing(false)
     setHasChanges(false)
     setWaterChanged(false)
   }
 
-  const handleCancelEdit = () => {
+  const handleCancelEdit = async () => {
     setEditing(false)
     setHasChanges(false)
     setWaterChanged(false)
+    setRespectPatch(null)
+    await loadDateData(selectedDate)
   }
 
   const isToday = selectedDate === getTodayIso()
@@ -491,6 +524,19 @@ export default function History() {
             ) : (
               renderWaterLogs()
             )}
+          </Card>
+
+          {tretinoinLogs.length > 0 && (
+            <Card title="Tretinoin">
+              <TretinoinTracker
+                todayLog={tretinoinLogs[0]}
+                onToggle={editing ? handleTretinoinToggleInHistory : () => {}}
+              />
+            </Card>
+          )}
+
+          <Card title="Respect/Trust Score">
+            <RespectTracker log={respectLog ?? null} onUpsert={(patch) => { setRespectPatch(patch); setHasChanges(true) }} readOnly={!editing} />
           </Card>
 
           <Card title="Weight">
