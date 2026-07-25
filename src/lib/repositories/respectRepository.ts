@@ -1,5 +1,5 @@
 import {
-  collection, doc, getDoc, getDocs, setDoc,
+  collection, doc, getDocs, setDoc,
   query, orderBy, where,
 } from 'firebase/firestore'
 import { firestore } from '@/lib/firebase'

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import type { Meal, WaterLog, WeightEntry, DailyNote, WorkoutType } from '@/types'
+import type { Meal, WaterLog, WeightEntry, DailyNote, WorkoutType, RespectLog } from '@/types'
 import { mealRepository } from '@/lib/repositories/mealRepository'
 import { workoutRepository } from '@/lib/repositories/workoutRepository'
 import { waterRepository } from '@/lib/repositories/waterRepository'
@@ -138,7 +138,7 @@ export default function History() {
     }
     await waterRepository.add(entry)
     setWaterLogs((prev) => [...prev, entry])
-    setWaterTotal((prev) => prev + log.amount)
+    setWaterTotal((prev) => prev + (log.amount ?? 0))
   }
 
   const handleTretinoinToggleInHistory = async (applied: boolean) => {
