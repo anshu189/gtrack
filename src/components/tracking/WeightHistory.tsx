@@ -1,8 +1,17 @@
 import type { WeightEntry } from '@/types'
+import { Table, proportional } from '@astryxdesign/core/Table'
+import type { TableColumn } from '@astryxdesign/core/Table'
 
 interface WeightHistoryProps {
   entries: WeightEntry[]
   excludeDate?: string
+}
+
+interface WeightRow extends Record<string, unknown> {
+  id: string
+  date: string
+  weight: string
+  trend: { label: string; tone: 'success' | 'error' | 'neutral' } | null
 }
 
 function formatDate(dateIso: string) {
@@ -16,37 +25,46 @@ function formatDate(dateIso: string) {
 function getTrend(current: WeightEntry, previous?: WeightEntry) {
   if (!previous) return null
   const delta = current.weight - previous.weight
-  if (delta === 0) return { label: 'No change', className: 'text-slate-500' }
-  if (delta > 0) return { label: `+${delta.toFixed(1)} ${current.unit}`, className: 'text-red-600' }
-  return { label: `${delta.toFixed(1)} ${current.unit}`, className: 'text-green-600' }
+  if (delta === 0) return { label: 'No change', tone: 'neutral' as const }
+  if (delta > 0) return { label: `+${delta.toFixed(1)} ${current.unit}`, tone: 'error' as const }
+  return { label: `${delta.toFixed(1)} ${current.unit}`, tone: 'success' as const }
 }
 
 export const WeightHistory = ({ entries, excludeDate }: WeightHistoryProps) => {
   const items = entries.filter((e) => e.date !== excludeDate)
 
   if (items.length === 0) {
-    return <p className="text-sm text-slate-500 dark:text-slate-300">Log today&apos;s weight to begin tracking.</p>
+    return <p className="text-sm text-[var(--color-muted)]">Log today&apos;s weight to begin tracking.</p>
   }
 
-  return (
-    <ul className="divide-y divide-slate-100 border border-slate-200">
-      {items.map((entry, index) => {
-        const previous = items[index + 1]
-        const trend = getTrend(entry, previous)
-        return (
-          <li key={entry.id} className="flex items-center justify-between px-3 py-2 text-sm">
-            <span className="text-slate-500 dark:text-slate-300">{formatDate(entry.date)}</span>
-            <div className="flex items-center gap-3">
-              <span className="font-medium text-slate-950 dark:text-slate-300">
-                {entry.weight} {entry.unit}
-              </span>
-              {trend && <span className={`text-xs ${trend.className}`}>{trend.label}</span>}
-            </div>
-          </li>
-        )
-      })}
-    </ul>
-  )
+  const rows: WeightRow[] = items.map((entry, index) => ({
+    id: entry.id,
+    date: formatDate(entry.date),
+    weight: `${entry.weight} ${entry.unit}`,
+    trend: getTrend(entry, items[index + 1]),
+  }))
+
+  const columns: TableColumn<WeightRow>[] = [
+    { key: 'date', header: 'Date', width: proportional(2) },
+    { key: 'weight', header: 'Weight', width: proportional(1) },
+    {
+      key: 'trend',
+      header: 'Change',
+      width: proportional(1),
+      renderCell: (row) => {
+        if (!row.trend) return null
+        const toneClass =
+          row.trend.tone === 'success'
+            ? 'text-[var(--color-success)]'
+            : row.trend.tone === 'error'
+              ? 'text-[var(--color-error)]'
+              : 'text-[var(--color-muted)]'
+        return <span className={`text-sm ${toneClass}`}>{row.trend.label}</span>
+      },
+    },
+  ]
+
+  return <Table data={rows} columns={columns} idKey="id" density="compact" dividers="rows" />
 }
 
 export default WeightHistory

@@ -7,6 +7,7 @@ import { cleanForFirestore } from '@/lib/utils/firestore'
 import { PageContainer } from '@/components/ui/page-container'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { NumberInput } from '@astryxdesign/core'
 
 const DEFAULT_SETTINGS: UserSettings = {
   id: 'settings:default',
@@ -186,76 +187,58 @@ export default function Settings() {
       <div className="space-y-6">
         <Card title="Nutrition Targets">
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-[#FDFDFD]/70">Calories (kcal)</label>
-              <input
-                type="number"
-                className="w-full border border-slate-200 px-3 py-2 text-sm dark:border-[#2D2D2D] dark:bg-[#1F1F1F] dark:text-[#FDFDFD]"
-                value={calories}
-                onChange={(e) => setCalories(Number(e.target.value))}
-                min={0}
-                step={50}
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-[#FDFDFD]/70">Protein (g)</label>
-              <input
-                type="number"
-                className="w-full border border-slate-200 px-3 py-2 text-sm dark:border-[#2D2D2D] dark:bg-[#1F1F1F] dark:text-[#FDFDFD]"
-                value={protein}
-                onChange={(e) => setProtein(Number(e.target.value))}
-                min={0}
-                step={5}
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-[#FDFDFD]/70">Carbs (g)</label>
-              <input
-                type="number"
-                className="w-full border border-slate-200 px-3 py-2 text-sm dark:border-[#2D2D2D] dark:bg-[#1F1F1F] dark:text-[#FDFDFD]"
-                value={carbs}
-                onChange={(e) => setCarbs(Number(e.target.value))}
-                min={0}
-                step={5}
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-[#FDFDFD]/70">Fat (g)</label>
-              <input
-                type="number"
-                className="w-full border border-slate-200 px-3 py-2 text-sm dark:border-[#2D2D2D] dark:bg-[#1F1F1F] dark:text-[#FDFDFD]"
-                value={fat}
-                onChange={(e) => setFat(Number(e.target.value))}
-                min={0}
-                step={5}
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-[#FDFDFD]/70">Fiber (g)</label>
-              <input
-                type="number"
-                className="w-full border border-slate-200 px-3 py-2 text-sm dark:border-[#2D2D2D] dark:bg-[#1F1F1F] dark:text-[#FDFDFD]"
-                value={fiber}
-                onChange={(e) => setFiber(Number(e.target.value))}
-                min={0}
-                step={1}
-              />
-            </div>
+            <NumberInput
+              label="Calories (kcal)"
+              value={calories}
+              onChange={(v) => setCalories(v)}
+              min={0}
+              step={50}
+              size="sm"
+            />
+            <NumberInput
+              label="Protein (g)"
+              value={protein}
+              onChange={(v) => setProtein(v)}
+              min={0}
+              step={5}
+              size="sm"
+            />
+            <NumberInput
+              label="Carbs (g)"
+              value={carbs}
+              onChange={(v) => setCarbs(v)}
+              min={0}
+              step={5}
+              size="sm"
+            />
+            <NumberInput
+              label="Fat (g)"
+              value={fat}
+              onChange={(v) => setFat(v)}
+              min={0}
+              step={5}
+              size="sm"
+            />
+            <NumberInput
+              label="Fiber (g)"
+              value={fiber}
+              onChange={(v) => setFiber(v)}
+              min={0}
+              step={1}
+              size="sm"
+            />
           </div>
         </Card>
 
         <Card title="Water Goal">
-          <div>
-            <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-[#FDFDFD]/70">Daily target (ml)</label>
-            <input
-              type="number"
-              className="w-full border border-slate-200 px-3 py-2 text-sm dark:border-[#2D2D2D] dark:bg-[#1F1F1F] dark:text-[#FDFDFD]"
-              value={waterGoal}
-              onChange={(e) => setWaterGoal(Number(e.target.value))}
-              min={0}
-              step={100}
-            />
-          </div>
+          <NumberInput
+            label="Daily target (ml)"
+            value={waterGoal}
+            onChange={(v) => setWaterGoal(v)}
+            min={0}
+            step={100}
+            size="sm"
+          />
         </Card>
 
         <Card title="Theme">

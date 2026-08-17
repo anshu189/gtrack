@@ -1,6 +1,5 @@
 import type { WorkoutType } from '@/types'
 import { WORKOUT_TYPES, WORKOUT_LABELS } from '@/types/workout'
-import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils/cn'
 
 interface WorkoutLoggingProps {
@@ -12,17 +11,19 @@ export const WorkoutLogging = ({ selectedType, onSelect }: WorkoutLoggingProps) 
   return (
     <div className="grid grid-cols-2 gap-2">
       {WORKOUT_TYPES.map((type) => (
-        <Button
+        <button
           key={type}
-          variant="outline"
+          type="button"
           className={cn(
-            'w-full',
-            selectedType === type && 'border-black text-white bg-black dark:border-[#FDFDFD] dark:text-[#FDFDFD] dark:bg-[#1F1F1F]',
+            'w-full py-2 px-4 rounded-lg text-sm font-medium border transition-colors',
+            selectedType === type
+              ? 'bg-[#E8F1F6] text-[#101314] border-[#E8F1F6]'
+              : 'bg-transparent text-[#E8F1F6] border-[#24292D] hover:bg-[#24292D]',
           )}
           onClick={() => onSelect(type)}
         >
           {WORKOUT_LABELS[type]}
-        </Button>
+        </button>
       ))}
     </div>
   )

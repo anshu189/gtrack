@@ -29,8 +29,8 @@ export function BottomNavigation({ items }: BottomNavigationProps) {
                   className={cn(
                     'flex h-9 w-9 items-center justify-center transition-colors',
                     item.active
-                      ? 'bg-black text-white'
-                      : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-[#FDFDFD]/60 dark:hover:bg-[#2D2D2D] dark:hover:text-[#FDFDFD]',
+                      ? 'bg-[#1a1d20] text-[#E8F1F6]'
+                      : 'text-[#96A0AB] hover:bg-[#1a1d20] hover:text-[#E8F1F6]',
                   )}
                 >
                   <Icon className="h-4 w-4" />
@@ -39,8 +39,8 @@ export function BottomNavigation({ items }: BottomNavigationProps) {
                   className={cn(
                     'text-[10px] font-medium',
                     item.active
-                      ? 'text-black dark:text-[#FDFDFD]'
-                      : 'text-slate-500 dark:text-[#FDFDFD]/60',
+                      ? 'text-[#E8F1F6]'
+                      : 'text-[#96A0AB]',
                   )}
                 >
                   {item.label}

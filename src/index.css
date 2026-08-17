@@ -1,4 +1,12 @@
-﻿@import "tailwindcss";
+﻿@layer reset, theme, base, astryx-base, astryx-theme, components, utilities;
+
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/preflight.css" layer(base);
+@import "@astryxdesign/core/reset.css";
+@import "@astryxdesign/core/astryx.css";
+@import "@astryxdesign/theme-gothic/theme.css";
+@import "@astryxdesign/core/tailwind-theme.css";
+@import "tailwindcss/utilities.css" layer(utilities);
 
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -18,16 +26,31 @@
 
 .dark {
   color-scheme: dark;
-  --color-bg: #121212;
-  --color-surface: #1F1F1F;
-  --color-border: #2D2D2D;
-  --color-text: #FDFDFD;
-  --color-muted: #888888;
-  --color-primary: #FDFDFD;
+  --color-bg: #101314;
+  --color-surface: #1a1d20;
+  --color-border: #24292D;
+  --color-text: #E8F1F6;
+  --color-muted: #96A0AB;
+  --color-primary: #E8F1F6;
   --color-primary-strong: #cccccc;
-  --color-success: #22c55e;
-  --color-error: #ef4444;
-  --color-warning: #f97316;
+  --color-success: #b3c79a;
+  --color-error: #c6a6a2;
+  --color-warning: #d3c490;
+  --color-accent: #a3b5d6;
+  --color-accent-muted: #a3b5d633;
+  --color-on-accent: #101314;
+  --color-background-surface: #1a1d20;
+  --color-background-body: #101314;
+  --color-background-muted: #24292D;
+  --color-text-primary: #E8F1F6;
+  --color-text-secondary: #96A0AB;
+  --color-text-accent: #a3b5d6;
+  --color-icon-primary: #E8F1F6;
+  --color-icon-secondary: #96A0AB;
+  --color-icon-accent: #a3b5d6;
+  --color-success-muted: #b3c79a33;
+  --color-error-muted: #c6a6a233;
+  --color-warning-muted: #d3c49033;
 }
 
 * {
@@ -38,7 +61,7 @@ html {
   min-height: 100%;
   background: var(--color-bg);
   color: var(--color-text);
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Poppins', 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 body {
@@ -46,6 +69,12 @@ body {
   margin: 0;
   background: var(--color-bg);
   color: var(--color-text);
+  font-family: 'Poppins', 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+:root {
+  --font-family-body: 'Poppins', 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-family-heading: 'Poppins', 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 button, input, textarea, select {
@@ -60,4 +89,24 @@ a {
 ::selection {
   background: rgba(0, 0, 0, 0.12);
   color: var(--color-text);
+}
+
+.dark [data-astryx-progressbar-fill] {
+  background-color: var(--fill-color, #a3b5d6);
+}
+
+.dark [data-astryx-progressbar-fill][data-variant="accent"] {
+  --fill-color: #a3b5d6;
+}
+
+.dark [data-astryx-progressbar-fill][data-variant="success"] {
+  --fill-color: #b3c79a;
+}
+
+.dark [data-astryx-progressbar-fill][data-variant="warning"] {
+  --fill-color: #d3c490;
+}
+
+.dark [data-astryx-progressbar-fill][data-variant="error"] {
+  --fill-color: #c89aab;
 }

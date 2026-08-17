@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { NumberInput, Button } from '@astryxdesign/core'
 import type { WaterLog } from '@/types'
 
 interface WaterLoggingProps {
@@ -8,13 +9,12 @@ interface WaterLoggingProps {
 const QUICK_AMOUNTS = [250, 350, 500, 750]
 
 export const WaterLogging = ({ onAdd }: WaterLoggingProps) => {
-  const [custom, setCustom] = useState('')
+  const [custom, setCustom] = useState<number | null>(null)
 
   const handleCustomAdd = () => {
-    const amount = parseInt(custom, 10)
-    if (isNaN(amount) || amount <= 0) return
-    onAdd({ amount, unit: 'ml' })
-    setCustom('')
+    if (!custom || custom <= 0) return
+    onAdd({ amount: custom, unit: 'ml' })
+    setCustom(null)
   }
 
   return (
@@ -25,28 +25,33 @@ export const WaterLogging = ({ onAdd }: WaterLoggingProps) => {
             key={amount}
             type="button"
             onClick={() => onAdd({ amount, unit: 'ml' })}
-            className="border border-slate-300 px-3 py-1.5 !text-sm text-slate-950 hover:bg-slate-100 dark:border-[#2D2D2D] dark:text-[#FDFDFD] dark:hover:bg-[#2D2D2D]"
+            className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 !text-sm text-[var(--color-text)] hover:bg-[var(--color-surface)] transition-colors"
           >
             {amount} ml
           </button>
         ))}
       </div>
       <div className="mt-2 flex items-center gap-2">
-        <input
-          type="number"
-          className="flex-1 border border-slate-200 px-3 py-1.5 text-sm dark:border-[#2D2D2D] dark:bg-[#1F1F1F] dark:text-[#FDFDFD]"
-          placeholder="Custom amount (ml)"
-          value={custom}
-          onChange={(e) => setCustom(e.target.value)}
-        />
-        <button
-          type="button"
+        <div className="flex-1">
+          <NumberInput
+            label="Custom amount"
+            isLabelHidden
+            value={custom}
+            onChange={(val) => setCustom(val)}
+            placeholder="Custom amount (ml)"
+            min={0}
+            size="sm"
+            className="h-10"
+          />
+        </div>
+        <Button
+          label="Add"
+          variant="primary"
+          size="lg"
+          className="h-10"
           onClick={handleCustomAdd}
-          disabled={!custom || parseInt(custom, 10) <= 0}
-          className="bg-black px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          Add
-        </button>
+          isDisabled={!custom || custom <= 0}
+        />
       </div>
     </div>
   )

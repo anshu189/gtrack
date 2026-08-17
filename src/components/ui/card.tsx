@@ -12,7 +12,7 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
       <div
         ref={ref}
         className={cn(
-          'border border-slate-200 bg-white dark:border-[#2D2D2D] dark:bg-[#000]',
+          'border border-slate-200 bg-white dark:border-[#24292D] dark:bg-[#1a1d20]',
           title || description ? 'p-5' : 'p-4',
           className,
         )}

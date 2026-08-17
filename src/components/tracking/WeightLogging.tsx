@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { NumberInput, TextInput, Button } from '@astryxdesign/core'
 import type { WeightEntry } from '@/types'
 
 interface WeightLoggingProps {
@@ -59,55 +60,58 @@ export const WeightLogging = ({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-center gap-2">
-        <input
-          type="number"
-          className="flex-1 border border-slate-200 px-3 py-2 text-sm dark:border-[#2D2D2D] dark:bg-[#1F1F1F] dark:text-[#FDFDFD]"
-          placeholder="Weight"
-          value={weight || ''}
-          onChange={(e) => {
-            const v = Number(e.target.value)
-            if (isControlled) onWeightChange?.(v)
-            else setInternalWeight(v)
-          }}
-          step={0.1}
-          min={0}
-          aria-label="Weight value"
-        />
-        <select
-          className="border border-slate-200 px-3 py-2 text-sm dark:border-[#2D2D2D] dark:bg-[#1F1F1F] dark:text-[#FDFDFD]"
-          value={unit}
-          onChange={(e) => {
-            const u = e.target.value as WeightEntry['unit']
-            if (isControlled) onUnitChange?.(u)
-            else setInternalUnit(u)
-          }}
-          aria-label="Weight unit"
-        >
-          <option value="kg">kg</option>
-          <option value="lbs">lbs</option>
-        </select>
+      <div className="flex items-end gap-2">
+        <div className="flex-1">
+          <NumberInput
+            label="Weight"
+            isLabelHidden
+            value={weight || null}
+            onChange={(v) => {
+              if (isControlled) onWeightChange?.(v)
+              else setInternalWeight(v)
+            }}
+            placeholder="Weight"
+            min={0}
+            step={0.1}
+            size="lg"
+            className="h-10"
+          />
+        </div>
+        <div className="w-20">
+          <select
+            className="w-full rounded-md border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 cursor-pointer text-sm text-[var(--color-text)]"
+            value={unit}
+            onChange={(e) => {
+              const u = e.target.value as WeightEntry['unit']
+              if (isControlled) onUnitChange?.(u)
+              else setInternalUnit(u)
+            }}
+            aria-label="Weight unit"
+          >
+            <option value="kg">kg</option>
+            <option value="lbs">lbs</option>
+          </select>
+        </div>
       </div>
-      <input
-        type="text"
-        className="border border-slate-200 px-3 py-2 text-sm dark:border-[#2D2D2D] dark:bg-[#1F1F1F] dark:text-[#FDFDFD]"
-        placeholder="Notes (optional)"
+      <TextInput
+        label="Notes"
+        isLabelHidden
         value={notes}
-        onChange={(e) => {
-          if (isControlled) onNotesChange?.(e.target.value)
-          else setInternalNotes(e.target.value)
+        onChange={(v) => {
+          if (isControlled) onNotesChange?.(v)
+          else setInternalNotes(v)
         }}
-        aria-label="Weight notes"
+        placeholder="Notes (optional)"
+        size="lg"
+        className="h-10"
       />
       {showButton && (
-        <button
-          type="button"
+        <Button
+          label={todayEntry ? 'Update Weight' : 'Log Weight'}
+          variant="primary"
           onClick={handleSave}
-          disabled={weight <= 0}
-          className="inline-flex items-center justify-center gap-2 bg-black px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {todayEntry ? 'Update Weight' : 'Log Weight'}
-        </button>
+          isDisabled={weight <= 0}
+        />
       )}
     </div>
   )

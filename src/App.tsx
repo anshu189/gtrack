@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
+import { Theme } from '@astryxdesign/core'
+import { gothicTheme } from '@astryxdesign/theme-gothic'
 import { AppShell } from '@/components/ui/app-shell'
 import { BottomNavigation } from '@/components/ui/bottom-navigation'
 import Dashboard from '@/pages/Dashboard'
@@ -34,10 +36,10 @@ function App() {
   }, [])
 
   if (!ready) {
-    return <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-[#111111]"><p className="text-sm text-slate-500 dark:text-[#FDFDFD]/70">Loading...</p></div>
+    return <Theme theme={gothicTheme}><div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-[#111111]"><p className="text-sm text-slate-500 dark:text-[#FDFDFD]/70">Loading...</p></div></Theme>
   }
 
-  return <AppLayout />
+  return <Theme theme={gothicTheme}><AppLayout /></Theme>
 }
 
 function AppLayout() {
@@ -67,10 +69,10 @@ function AppLayout() {
     <AppShell
       header={
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 rounded-bl-2xl items-center justify-center bg-black text-2xl font-bold text-white">G</div>
+          <div className="flex h-9 w-9 rounded-sm rounded-bl-2xl items-center justify-center bg-black text-2xl font-bold text-white p-6">G</div>
           <div>
-            <p className="text-xl font-medium uppercase tracking-tight text-black dark:text-[#FDFDFD]">GTrak</p>
-            <h1 className="text-xs font-semibold text-slate-950 dark:text-[#FDFDFD]/70">Growth Tracker for G's</h1>
+            <p className="text-xl font-bold tracking-tight text-black dark:text-[#E8F1F6]">Gtrak</p>
+            <p className="text-[12px] text-[#96A0AB]">Growth Tracker for G's</p>
           </div>
         </div>
       }

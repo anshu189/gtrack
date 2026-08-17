@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { TextArea } from '@astryxdesign/core'
 import type { DailyNote } from '@/types'
 import { useDebounce } from '@/hooks/useDebounce'
 
@@ -35,13 +36,13 @@ export const DailyNoteEditor = ({ date, note, onSave }: DailyNoteEditorProps) =>
   }, [debouncedContent, date, note?.content, note?.createdAt, note?.id])
 
   return (
-    <textarea
-      className="w-full resize-none border border-slate-200 dark:border-slate-500 px-3 py-2 text-sm"
-      placeholder="No notes for today."
+    <TextArea
+      label="Daily note"
+      isLabelHidden
       value={content}
-      onChange={(e) => setContent(e.target.value)}
+      onChange={(val) => setContent(val)}
+      placeholder="No notes for today."
       rows={4}
-      aria-label="Daily note"
     />
   )
 }
