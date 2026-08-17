@@ -1,12 +1,12 @@
 
-
 # GTrak – Product Requirements Document (PRD)
 
-**Version:** 1.0.0  
+**Version:** 1.1.0  
 **Status:** In Development  
 **Owner:** Neo  
-**Project Type:** Offline-first Nutrition & Fitness Tracker  
-**Platform:** Progressive Web Application (PWA)
+**Project Type:** Nutrition & Fitness Tracker  
+**Platform:** Progressive Web Application (PWA)  
+**Backend:** Firebase Firestore (cloud) + Anonymous Auth
 
 ---
 
@@ -14,7 +14,7 @@
 
 ## 1.1 Vision
 
-GTrak is a lightweight, offline-first nutrition and fitness tracker designed for people who want complete control over their meals, workouts and progress without relying on cloud services, subscriptions or bloated applications.
+GTrak is a lightweight nutrition and fitness tracker designed for people who want complete control over their meals, workouts, habits and progress without relying on bloated applications.
 
 The application focuses on speed, simplicity and flexibility while maintaining accurate nutritional calculations using authentic food composition data.
 
@@ -26,13 +26,12 @@ Unlike traditional calorie trackers that force users into predefined meals, GTra
 
 Build the fastest, cleanest and most customizable nutrition tracker that:
 
-- works completely offline
 - loads instantly
-- requires zero login
-- stores all data locally
+- requires zero manual login (anonymous auth)
 - is installable as a PWA
 - is mobile-first
 - remains lightweight while supporting advanced tracking features
+- keeps the user's data exportable, importable and resettable at any time
 
 ---
 
@@ -58,6 +57,7 @@ The interface should prioritize:
 
 - nutrition
 - workouts
+- habits
 - progress
 - trends
 
@@ -75,27 +75,21 @@ Every interaction should be optimized for thumb navigation.
 
 ---
 
-## Offline First
+## Speed First
 
-The application must function without internet access.
+Every interaction should update instantly.
 
-Internet should never be required for:
-
-- logging meals
-- viewing history
-- nutrition calculations
-- searching foods
-- analytics
+No action should ever require manual calculation or a page reload.
 
 ---
 
-## Local Ownership
+## User Ownership
 
 Users own their data.
 
-Nothing is uploaded automatically.
+Export and import are first-class features.
 
-Everything is stored locally unless the user explicitly exports it.
+No analytics collection and no telemetry.
 
 ---
 
@@ -130,8 +124,7 @@ Primary goals:
 
 The first version of GTrak will NOT include:
 
-- User authentication
-- Cloud synchronization
+- Manual user accounts (anonymous auth only)
 - Social features
 - Community feed
 - Chat
@@ -167,8 +160,7 @@ Users generally:
 - want accurate nutrition
 - dislike bloated calorie trackers
 - prefer privacy
-- may have intermittent internet connectivity
-- frequently reuse similar meals
+- want a quick way to log daily habits and accountability scores
 
 ---
 
@@ -181,11 +173,10 @@ Existing nutrition trackers often suffer from one or more of the following:
 - slow interfaces
 - excessive advertisements
 - subscription paywalls
-- internet dependency
-- inaccurate regional food data
 - cluttered interfaces
+- no built-in habit or accountability tracking
 
-GTrak solves these problems by providing a fast, local-first and highly customizable tracking experience.
+GTrak solves these problems by providing a fast, customizable tracking experience that covers nutrition, workouts, body weight, hydration, habits (tretinoin) and accountability (respect score) in one place.
 
 ---
 
@@ -196,8 +187,7 @@ The application should allow a user to:
 - log a complete day's meals in under 2 minutes
 - search any food within milliseconds
 - instantly update nutrition totals
-- work without internet
-- load quickly on low-end Android devices
+- log workout, water, weight, tretinoin and respect score in seconds
 - export all personal data at any time
 
 ---
@@ -227,20 +217,35 @@ Brand values:
 
 Visual style should remain consistent throughout the application.
 
-Colors:
+Fully square, flat design:
 
-- White
-- Black
-- Blue
+- No rounded corners (except the brand "G" mark).
+- No shadows.
+- No opacity.
+- Solid, flat colors.
 
-Use red and green only for functional status indicators.
+Light theme:
+
+- White background, `#e2e8f0` borders, black text.
+
+Dark theme:
+
+- `#111111` background, `#1F1F1F` surfaces, `#2D2D2D` borders, `#FDFDFD` text.
+
+Functional colors:
+
+- Green: success / positive values
+- Red: errors, negative values, delete actions
+- Orange: warnings
+
+There is **no blue** in the application.
 
 Avoid:
 
 - gradients
 - glassmorphism
 - neumorphism
-- excessive shadows
+- shadows
 - decorative illustrations
 
 The interface should resemble a professional productivity tool rather than a social media application.
@@ -253,7 +258,7 @@ The interface should resemble a professional productivity tool rather than a soc
 
 GTrak is designed to solve one problem exceptionally well:
 
-> Help users consistently track nutrition, workouts and body progress with minimal effort.
+> Help users consistently track nutrition, workouts, body progress and daily habits with minimal effort.
 
 To achieve this, every feature must contribute to at least one of the following objectives.
 
@@ -285,8 +290,7 @@ Users must be able to:
 - remove food items
 - edit quantities
 - change foods at any time
-
-without affecting the application's performance.
+- build meals for any past date
 
 ---
 
@@ -298,23 +302,23 @@ The application should encourage consistency by storing historical data includin
 - workouts
 - weight
 - water intake
-- nutrition summaries
+- daily notes
+- tretinoin application
+- respect/trust score
 
-Future analytics will be generated from this data.
+Analytics are generated from this data.
 
 ---
 
-### O5. Offline Reliability
+### O5. Habit & Accountability Tracking
 
-Every primary feature must function without internet access.
-
-No feature should depend on external APIs for daily use.
+Users should be able to track daily habits (tretinoin) and an accountability score (respect/trust score) alongside nutrition and fitness data.
 
 ---
 
 # 2.2 Core Features (MVP)
 
-The first release of GTrak will focus on six core modules.
+The first release of GTrak focuses on the following core modules.
 
 ---
 
@@ -327,19 +331,11 @@ Allow users to build every meal dynamically using individual food items.
 Capabilities:
 
 - Unlimited food items per meal
-- Dynamic quantity selection
+- Dynamic quantity selection with unit conversion (g / ml / piece / cup / tbsp / tsp / slice)
 - Instant nutrition calculation
 - Edit or delete foods
-- Meal completion status
-
-Meals included:
-
-- Post Workout
-- Morning Snack
-- Lunch
-- Evening Snack
-- Dinner
-- Before Bed
+- Food Macro Editor for custom food nutrition
+- 24-hour undo on deleted meals
 
 ---
 
@@ -426,6 +422,40 @@ Example:
 
 ---
 
+## Module 7 — Tretinoin Tracking
+
+Track daily tretinoin application.
+
+Capabilities:
+
+- Yes/No daily toggle
+- Every-3rd-night schedule reminder (surfaces only on scheduled nights)
+- History review (editable)
+- Analytics adherence chart
+
+---
+
+## Module 8 — Respect/Trust Score
+
+Track an accountability score using three factors.
+
+Factors:
+
+- Do What You Said (±1)
+- Excuse (±1)
+- Flake / Ignored (±3)
+
+Total = sum of the three factors.
+
+Display:
+
+- Counter buttons (editable on Dashboard at all times)
+- Progress bar (max 50, green when positive, red when negative)
+- History edit-mode editing (changes buffered; saved on Save, discarded on Cancel)
+- Analytics trend chart
+
+---
+
 # 2.3 Feature Priorities
 
 Priority 1 (Critical)
@@ -453,7 +483,8 @@ Priority 3 (Medium)
 - Charts
 - Analytics
 - Food Favorites
-- Meal Templates
+- Tretinoin Tracking
+- Respect/Trust Score
 
 ---
 
@@ -461,7 +492,7 @@ Priority 4 (Future)
 
 - Barcode Scanner
 - AI Meal Suggestions
-- Cloud Backup
+- Cloud Backup (explicit)
 - Wearable Integration
 - Multi-device Sync
 
@@ -494,11 +525,12 @@ The application must:
 - Support unlimited meal items.
 - Allow editing any meal after saving.
 - Calculate nutrition instantly.
-- Persist all data locally.
-- Work without internet.
+- Support unit conversion through `gramsPerUnit` / measures.
+- Persist all data to Firestore.
 - Load previous sessions automatically.
 - Export and import user data.
-- Support future custom foods.
+- Support custom foods via the Food Macro Editor.
+- Track tretinoin and respect/trust score.
 
 ---
 
@@ -515,7 +547,7 @@ Reliability
 
 - No data loss after refresh.
 - Safe storage.
-- Graceful recovery from corrupted data.
+- Graceful recovery from failures.
 
 Maintainability
 
@@ -545,10 +577,11 @@ Version 1.0 of GTrak is considered complete when all of the following are functi
 - Water tracking
 - Weight tracking
 - Daily history
-- Charts
+- Charts / Analytics
 - Export / Import
 - Custom foods
-- Offline support
+- Tretinoin tracking
+- Respect/Trust score
 - PWA installation
 
 ---
@@ -569,48 +602,6 @@ Every interaction in GTrak should follow these principles.
 
 Users should complete common actions using as few interactions as possible.
 
-Example:
-
-❌ Bad
-
-Open Meal
-
-↓
-
-Open Dialog
-
-↓
-
-Choose Food
-
-↓
-
-Save
-
-↓
-
-Repeat
-
----
-
-✅ Good
-
-Tap Meal
-
-↓
-
-Choose Food
-
-↓
-
-Choose Quantity
-
-↓
-
-Done
-
----
-
 ## 2. Zero Manual Calculations
 
 The application performs all nutrition calculations automatically.
@@ -623,36 +614,15 @@ The user should never calculate:
 - Fat
 - Fiber
 
----
-
 ## 3. Progressive Disclosure
 
 Only display information when needed.
 
 Example:
 
-Meal collapsed
+Meal collapsed → Meal Name, Meal Nutrition, Completion
 
-↓
-
-Shows
-
-- Meal Name
-- Meal Nutrition
-- Completion
-
-Expand
-
-↓
-
-Shows
-
-- Food Items
-- Add Item Button
-- Delete Item
-- Quantity Picker
-
----
+Expand → Food Items, Add Item Button, Delete Item, Quantity Picker
 
 ## 4. Consistency
 
@@ -661,8 +631,6 @@ Every meal behaves exactly the same.
 Every card follows the same interaction pattern.
 
 Every action uses consistent terminology.
-
----
 
 ## 5. Instant Feedback
 
@@ -673,25 +641,23 @@ Every interaction immediately updates:
 - Progress Bars
 - Completion Status
 
-No Save button is required.
-
 ---
 
 # 3.2 Primary Navigation
 
 The application uses Bottom Navigation.
 
-Tabs:
+Tabs (5):
 
-Dashboard
-
-History
-
-Analytics
-
-Settings
+- Dashboard
+- Meals
+- History
+- Analytics
+- Settings
 
 The Dashboard is the default landing screen.
+
+The active tab indicator is a square.
 
 ---
 
@@ -709,11 +675,11 @@ Order of sections:
 
 ↓
 
-3. Nutrition Summary
+3. Nutrition
 
 ↓
 
-4. Meals
+4. Today's Meals
 
 ↓
 
@@ -725,11 +691,19 @@ Order of sections:
 
 ↓
 
-7. Weight
+7. Tretinoin
 
 ↓
 
-8. Notes
+8. Weight
+
+↓
+
+9. Respect/Trust Score
+
+↓
+
+10. Daily Notes
 
 This order should remain consistent.
 
@@ -739,15 +713,11 @@ This order should remain consistent.
 
 Example:
 
-User opens Lunch.
+User opens the Meals tab.
 
 ↓
 
-Lunch expands.
-
-↓
-
-One empty meal item is displayed.
+User taps "New Meal" or opens an existing meal.
 
 ↓
 
@@ -755,7 +725,7 @@ User selects Food.
 
 ↓
 
-Quantity options update automatically.
+Quantity options update automatically (with unit conversion).
 
 ↓
 
@@ -789,7 +759,7 @@ Food Picker
 
 ↓
 
-Search
+Search (fuzzy, Fuse.js)
 
 ↓
 
@@ -799,21 +769,6 @@ Categories
 
 Foods
 
-Categories:
-
-- Fruits
-- Vegetables
-- Grains
-- Dairy
-- Meat
-- Fish
-- Eggs
-- Pulses
-- Beverages
-- Nuts
-- Oils
-- Others
-
 Foods are sorted alphabetically inside each category.
 
 ---
@@ -822,53 +777,17 @@ Foods are sorted alphabetically inside each category.
 
 Quantity options depend on the selected food.
 
-Examples:
+Units:
 
-Egg
+- g
+- ml
+- piece
+- cup
+- tbsp
+- tsp
+- slice
 
-1
-
-2
-
-3
-
-4
-
-5
-
-6
-
----
-
-Milk
-
-100ml
-
-150ml
-
-200ml
-
-250ml
-
-300ml
-
----
-
-Rice
-
-100g
-
-150g
-
-200g
-
-250g
-
-300g
-
-350g
-
-400g
+Non-weight units convert to grams through the food's `measures` array (`gramsPerUnit`).
 
 Users should never see invalid quantity options.
 
@@ -878,15 +797,11 @@ Users should never see invalid quantity options.
 
 Every completed meal contributes to:
 
-Daily Calories
-
-Daily Protein
-
-Daily Carbs
-
-Daily Fat
-
-Daily Fiber
+- Daily Calories
+- Daily Protein
+- Daily Carbs
+- Daily Fat
+- Daily Fiber
 
 The Dashboard updates immediately after any change.
 
@@ -918,35 +833,23 @@ Users can review previous days.
 
 Each history record displays:
 
-Date
+- Nutrition
+- Meals
+- Workout
+- Water
+- Tretinoin
+- Respect/Trust Score
+- Weight
+- Daily Notes
 
-↓
+Edit mode:
 
-Nutrition Summary
+- Editing enables interactive controls (workout, water, weight, notes, tretinoin, respect).
+- Changes are buffered.
+- "Save Changes" persists; "Cancel" discards and reloads original data.
+- Delete buttons appear only in edit mode.
 
-↓
-
-Workout
-
-↓
-
-Weight
-
-↓
-
-Meals
-
-↓
-
-Notes
-
-Users can:
-
-- View
-- Edit
-- Delete
-
-History entries.
+Deleting a meal moves it to a 24-hour undo window.
 
 ---
 
@@ -954,9 +857,7 @@ History entries.
 
 Users may log bodyweight once per day.
 
-If today's weight already exists,
-
-editing replaces the previous value.
+If today's weight already exists, editing replaces the previous value.
 
 Weight history is visualized in Analytics.
 
@@ -968,21 +869,39 @@ Users can quickly log water intake.
 
 Water contributes to:
 
-Today's completion
-
-↓
-
-Analytics
-
-↓
-
-History
-
-Future reminder notifications may be added.
+- Today's completion
+- Analytics
+- History
 
 ---
 
-# 3.12 Notes
+# 3.12 Tretinoin Flow
+
+Users toggle Yes/No for tretinoin application each day.
+
+The tracker surfaces only on scheduled nights (every 3rd night from the last application).
+
+History shows the toggle per day (editable in edit mode).
+
+---
+
+# 3.13 Respect/Trust Score Flow
+
+Users update three counters throughout the day from the Dashboard:
+
+- Do What You Said
+- Excuse
+- Flake
+
+Each tap updates the total instantly.
+
+Progress bar max is 50.
+
+History edit mode allows adjusting past days (buffered, saved on Save).
+
+---
+
+# 3.14 Notes
 
 Users can write optional notes.
 
@@ -995,11 +914,9 @@ Examples:
 - Energy
 - General observations
 
-Notes are searchable in future versions.
-
 ---
 
-# 3.13 Error Prevention
+# 3.15 Error Prevention
 
 The interface should prevent mistakes whenever possible.
 
@@ -1012,45 +929,32 @@ Examples:
 
 ---
 
-# 3.14 Empty States
+# 3.16 Empty States
 
 The application should provide meaningful empty states.
 
 Examples:
 
-No meals logged.
+No meals logged → "Start by adding your first food."
 
-↓
+No weight history → "Log today's weight to begin tracking."
 
-"Start by adding your first food."
-
-No weight history.
-
-↓
-
-"Log today's weight to begin tracking."
-
-No notes.
-
-↓
-
-"No notes for today."
+No notes → "No notes for today."
 
 ---
 
-# 3.15 Future User Flows
+# 3.17 Future User Flows
 
 The architecture should support future additions without redesigning existing screens.
 
 Examples:
 
-- Favorite Foods
-- Recent Foods
 - Meal Templates
+- Copy Previous Day
+- Duplicate Meal
 - Barcode Scanner
 - AI Suggestions
 - Voice Logging
-- Camera Food Recognition
 
 ---
 
@@ -1059,8 +963,6 @@ Examples:
 This section defines every core module of GTrak.
 
 These specifications are the single source of truth for implementation.
-
-Every future feature must comply with these requirements.
 
 ---
 
@@ -1080,12 +982,14 @@ The Dashboard contains the following sections in order.
 
 1. Header
 2. Daily Summary
-3. Nutrition Summary
-4. Meals
+3. Nutrition
+4. Today's Meals
 5. Workout
 6. Water Intake
-7. Weight
-8. Daily Notes
+7. Tretinoin
+8. Weight
+9. Respect/Trust Score
+10. Daily Notes
 
 This order should remain consistent throughout the application.
 
@@ -1098,7 +1002,6 @@ Displays today's overview.
 Includes:
 
 - Current Date
-- Current Streak
 - Meals Completed
 - Calories Consumed
 - Workout Status
@@ -1138,26 +1041,9 @@ Nutrition is calculated from their food items.
 
 ---
 
-## Default Meals
-
-The application includes six default meals.
-
-- Post Workout
-- Morning Snack
-- Lunch
-- Evening Snack
-- Dinner
-- Before Bed
-
-These meals cannot be deleted.
-
-Future versions may allow additional custom meals.
-
----
-
 ## Meal Card
 
-Each meal is displayed as an accordion.
+Each meal is displayed as a card.
 
 Collapsed state displays:
 
@@ -1183,13 +1069,11 @@ Food Selector
 
 ↓
 
-Quantity Selector
+Quantity + Unit Selector
 
 ↓
 
 Delete Button
-
-Each meal always contains at least one meal item.
 
 ---
 
@@ -1199,21 +1083,11 @@ Users may add unlimited food items.
 
 Every new item starts as:
 
-Food
+Food → "Select Food"
 
-↓
+Quantity → Disabled
 
-"Select Food"
-
-Quantity
-
-↓
-
-Disabled
-
-Once a food is selected,
-
-the quantity selector becomes active.
+Once a food is selected, the quantity selector becomes active.
 
 ---
 
@@ -1221,11 +1095,7 @@ the quantity selector becomes active.
 
 Users may remove any food item.
 
-However,
-
-at least one empty meal item should always remain.
-
-Meals should never become visually empty.
+Deletion is protected by a 24-hour undo banner.
 
 ---
 
@@ -1239,6 +1109,12 @@ A meal is considered completed when:
 No manual "Complete" button is required.
 
 Completion is automatic.
+
+---
+
+## Date Navigator
+
+Meals can be built for any date (past or present) via the date navigator.
 
 ---
 
@@ -1259,9 +1135,8 @@ Every food contains:
 - Name
 - Category
 - Unit
-- Available Quantities
 - Nutrition Per 100 Units
-- Search Keywords
+- Measures (gramsPerUnit conversion for non-weight units)
 - Aliases
 - Data Source
 
@@ -1319,77 +1194,45 @@ Search should support:
 - Misspellings
 - Aliases
 
-Example
+Example:
 
-Typing
+Typing "chk" should find Chicken.
 
-"chk"
+Typing "mlk" should find Milk.
 
-should find
+---
 
-Chicken
+## Food Macro Editor
 
-Typing
+Users can create custom foods.
 
-"mlk"
+Capabilities:
 
-should find
-
-Milk
+- Enter name, category, unit
+- Enter nutrition values per 100g
+- Optionally select a serving quantity and unit
+- Values are re-scaled to per-100g automatically
+- The food's `measures` array is updated on save
 
 ---
 
 # 4.4 Quantity System
 
-Every food defines its own quantities.
+Every food defines its own measures.
 
-Examples
+Units:
 
-Egg
-
-1
-
-2
-
-3
-
-4
-
-5
-
-6
-
-Milk
-
-100ml
-
-150ml
-
-200ml
-
-250ml
-
-300ml
-
-Rice
-
-100g
-
-150g
-
-200g
-
-250g
-
-300g
-
-350g
-
-400g
+- g
+- ml
+- piece
+- cup
+- tbsp
+- tsp
+- slice
 
 Users should never manually enter quantities.
 
-Selections come from predefined options.
+Non-weight selections convert to grams for calculation.
 
 ---
 
@@ -1403,7 +1246,11 @@ Food
 
 ↓
 
-Quantity
+Quantity + Unit
+
+↓
+
+Grams
 
 ↓
 
@@ -1429,11 +1276,11 @@ Nutrition is always calculated.
 
 Nutrition is calculated using:
 
-Nutrition Per 100 Units
+Nutrition Per 100g
 
 ×
 
-Selected Quantity
+Grams (converted from the selected quantity/unit)
 
 Meal totals are calculated from all meal items.
 
@@ -1447,15 +1294,12 @@ No duplicate calculations should exist.
 
 Track one workout per day.
 
-Workout Types
+Workout Types:
 
-Push
-
-Pull
-
-Legs
-
-Rest
+- Push
+- Pull
+- Legs
+- Rest
 
 Future workout types should be supported without code changes.
 
@@ -1497,124 +1341,104 @@ Each day supports one note.
 
 There is no character limit for MVP.
 
-Markdown is not required.
-
-Rich text is not required.
-
 Plain text only.
 
 ---
 
-# 4.10 History
+# 4.10 Tretinoin
 
-History stores complete daily snapshots.
+One entry per day: applied (Yes/No).
 
-Each record contains:
+Schedule: every 3rd night from the last applied date.
 
-Meals
-
-↓
-
-Nutrition
-
-↓
-
-Workout
-
-↓
-
-Water
-
-↓
-
-Weight
-
-↓
-
-Notes
-
-History records are editable.
-
-Deleting history permanently removes that day's data.
+The tracker card appears on Dashboard only on scheduled nights.
 
 ---
 
-# 4.11 Analytics
+# 4.11 Respect/Trust Score
+
+Three counters updated through the day:
+
+- Do What You Said (±1)
+- Excuse (±1)
+- Flake (±3)
+
+Total = sum.
+
+Progress bar max = 50.
+
+Editable on Dashboard at all times.
+
+Editable in History edit mode (buffered, saved on Save, discarded on Cancel).
+
+---
+
+# 4.12 History
+
+History stores complete daily records.
+
+Each record contains:
+
+- Nutrition
+- Meals
+- Workout
+- Water
+- Tretinoin
+- Respect/Trust Score
+- Weight
+- Daily Notes
+
+History records are editable in edit mode.
+
+Deleting a meal moves it to a 24-hour undo window.
+
+---
+
+# 4.13 Analytics
 
 Analytics should visualize:
 
-Daily Calories
-
-Protein
-
-Carbs
-
-Fat
-
-Weight
-
-Water
-
-Workout Consistency
-
-Meal Consistency
+- Daily Calories
+- Protein
+- Carbs
+- Fat
+- Weight
+- Water
+- Workout Consistency
+- Meal Consistency
+- Tretinoin Adherence
+- Respect/Trust Score Trend
 
 Future analytics should reuse existing history data.
 
 ---
 
-# 4.12 Settings
+# 4.14 Settings
 
 Settings include:
 
-Daily Nutrition Targets
-
-Water Goal
-
-Theme
-
-Measurement Units
-
-Import
-
-Export
-
-Reset Application
-
-Future settings should be easily extendable.
+- Daily Nutrition Targets
+- Water Goal
+- Theme (light / dark / system)
+- Export
+- Import
+- Reset Application (password-protected)
 
 ---
 
-# 4.13 Custom Foods (Future Ready)
-
-Users will eventually be able to:
-
-Create Food
-
-Edit Food
-
-Delete Food
-
-Custom foods should behave exactly like built-in foods.
-
-The application architecture should support this from day one.
-
----
-
-# 4.14 Performance Requirements
+# 4.15 Performance Requirements
 
 The application should remain responsive with:
 
 - 500+ foods
 - 5+ years of history
 - Thousands of meal records
-- Hundreds of custom foods
 
 Users should never experience noticeable lag during normal operation.
 
 ---
 
-# 4.15 Success Criteria
+# 4.16 Success Criteria
 
 The feature implementation is considered complete when:
 
@@ -1628,7 +1452,7 @@ The feature implementation is considered complete when:
 
 ✓ Analytics match history.
 
-✓ Offline functionality works.
+✓ Export / import works.
 
 ✓ No duplicated business logic exists.
 
@@ -1639,8 +1463,6 @@ The feature implementation is considered complete when:
 This section defines the implementation rules for GTrak.
 
 These rules are mandatory and must be followed throughout development.
-
-The objective is to keep the application fast, maintainable, scalable and consistent.
 
 ---
 
@@ -1673,29 +1495,15 @@ The interface should be optimized for:
 
 Desktop layouts are secondary.
 
-Desktop should feel like an expanded mobile experience rather than a completely different application.
-
 ---
 
-# 5.3 Offline First
+# 5.3 Data Layer
 
-The application must function completely offline.
+GTrak persists data to Firebase Firestore using anonymous authentication.
 
-Internet access is never required for:
+All writes go through repositories and are sanitized with `cleanForFirestore()` (strips `undefined`).
 
-- Adding meals
-- Editing meals
-- Nutrition calculations
-- History
-- Analytics
-- Workout tracking
-- Weight tracking
-- Water tracking
-
-The only time internet is required is:
-
-- Initial application download
-- Future application updates
+Optional numeric fields must be read with `??` (nullish) so zero values are preserved.
 
 ---
 
@@ -1721,10 +1529,6 @@ Navigation
 
 Instant
 
-Meal Expansion
-
-Smooth
-
 Animation Duration
 
 100–150ms maximum
@@ -1739,17 +1543,12 @@ The application must prevent invalid data.
 
 Examples:
 
-Meal cannot contain invalid food.
-
-Quantity cannot exist without food.
-
-Negative nutrition values are impossible.
-
-Negative water values are impossible.
-
-Negative body weight is impossible.
-
-Invalid records should never be stored.
+- Meal cannot contain invalid food.
+- Quantity cannot exist without food.
+- Negative nutrition values are impossible.
+- Negative water values are impossible.
+- Negative body weight is impossible.
+- Invalid records should never be stored.
 
 ---
 
@@ -1757,17 +1556,12 @@ Invalid records should never be stored.
 
 Every piece of information should exist only once.
 
-Examples
+Examples:
 
-Food nutrition exists only in:
-
-Food Database
-
-Meal nutrition is always calculated.
-
-Daily nutrition is always calculated.
-
-History stores snapshots only.
+- Food nutrition exists only in the Food Database.
+- Meal nutrition is always calculated.
+- Daily nutrition is always calculated.
+- Meal items snapshot food name and gramsPerUnit for stable history.
 
 Avoid duplicated business logic.
 
@@ -1779,25 +1573,16 @@ Users should never manually calculate anything.
 
 The application automatically calculates:
 
-Calories
-
-Protein
-
-Carbohydrates
-
-Fat
-
-Fiber
-
-Meal totals
-
-Daily totals
-
-Progress
-
-Completion
-
-Analytics
+- Calories
+- Protein
+- Carbohydrates
+- Fat
+- Fiber
+- Meal totals
+- Daily totals
+- Progress
+- Completion
+- Analytics
 
 ---
 
@@ -1811,8 +1596,6 @@ Every button behaves the same.
 
 Every delete action behaves the same.
 
-Every confirmation dialog follows the same style.
-
 The user should never have to guess how something works.
 
 ---
@@ -1821,17 +1604,12 @@ The user should never have to guess how something works.
 
 Prevent errors before they happen.
 
-Examples
+Examples:
 
-Disable invalid actions.
-
-Disable quantity selector until food is selected.
-
-Prevent duplicate custom food names.
-
-Prevent invalid imports.
-
-Prevent corrupted data from crashing the application.
+- Disable invalid actions.
+- Disable quantity selector until food is selected.
+- Prevent invalid imports.
+- Prevent corrupted data from crashing the application.
 
 ---
 
@@ -1839,21 +1617,13 @@ Prevent corrupted data from crashing the application.
 
 Every future feature should integrate into the existing architecture without requiring major rewrites.
 
-Examples
+Examples:
 
-Favorites
-
-Meal Templates
-
-Barcode Scanner
-
-Cloud Sync
-
-Notifications
-
-AI Suggestions
-
-Voice Logging
+- Meal Templates
+- Barcode Scanner
+- Cloud Backup (explicit)
+- Notifications
+- AI Suggestions
 
 These features should extend existing modules instead of replacing them.
 
@@ -1865,13 +1635,11 @@ Users own all of their data.
 
 The application must provide:
 
-Export
+- Export
+- Import
+- Reset
 
-Import
-
-Reset
-
-No automatic uploads.
+No automatic uploads beyond the anonymous Firestore store.
 
 No analytics collection.
 
@@ -1887,35 +1655,36 @@ Privacy is a core product value.
 
 The interface should remain minimal.
 
-Primary Colors
+Light theme:
 
-White
+- White background
+- Black text
+- `#e2e8f0` borders
 
-Black
+Dark theme:
 
-Blue
+- `#111111` background
+- `#1F1F1F` surfaces
+- `#2D2D2D` borders
+- `#FDFDFD` text
 
-Functional Colors
+Functional colors:
 
-Green
+- Green: success / positive
+- Red: errors / negative / delete
+- Orange: warning
 
-Red
+No blue.
 
-Neutral Gray
+Avoid:
 
-Avoid
-
-Gradients
-
-Glassmorphism
-
-Heavy Shadows
-
-Animated Backgrounds
-
-Decorative Illustrations
-
-Rounded elements should remain subtle.
+- Gradients
+- Glassmorphism
+- Neumorphism
+- Shadows
+- Rounded corners
+- Animated backgrounds
+- Decorative illustrations
 
 Spacing should be generous.
 
@@ -1927,21 +1696,15 @@ Typography should be readable.
 
 The application should remain usable for everyone.
 
-Requirements
+Requirements:
 
-Readable font sizes
-
-High color contrast
-
-Large touch targets
-
-Keyboard support where practical
-
-Semantic HTML
-
-Visible focus states
-
-Screen reader friendly labels where applicable
+- Readable font sizes
+- High color contrast
+- Large touch targets
+- Keyboard support where practical
+- Semantic HTML
+- Visible focus states
+- Screen reader friendly labels where applicable
 
 Accessibility is not optional.
 
@@ -1951,13 +1714,9 @@ Accessibility is not optional.
 
 The architecture should comfortably support:
 
-1000+ Foods
-
-10+ Years of History
-
-Thousands of Daily Logs
-
-Unlimited Custom Foods
+- 1000+ Foods
+- 10+ Years of History
+- Thousands of Daily Logs
 
 Future modules should not require rewriting existing ones.
 
@@ -1967,41 +1726,21 @@ Future modules should not require rewriting existing ones.
 
 Every completed feature must satisfy:
 
-Functional
+Functional — Works correctly.
 
-Works correctly.
+Reliable — Produces consistent results.
 
-Reliable
+Reusable — Can be reused elsewhere.
 
-Produces consistent results.
+Typed — No loose typing.
 
-Reusable
+Maintainable — Easy to understand.
 
-Can be reused elsewhere.
+Responsive — Works on phones first.
 
-Typed
+Accessible — Usable by all users.
 
-No loose typing.
-
-Maintainable
-
-Easy to understand.
-
-Responsive
-
-Works on phones first.
-
-Accessible
-
-Usable by all users.
-
-Performant
-
-No noticeable lag.
-
-Documented
-
-Self-explanatory code.
+Performant — No noticeable lag.
 
 ---
 
@@ -2009,17 +1748,12 @@ Self-explanatory code.
 
 A feature is ready to be implemented when:
 
-Requirements are clear.
-
-UI is defined.
-
-Data model exists.
-
-Dependencies are available.
-
-Architecture supports it.
-
-No assumptions remain.
+- Requirements are clear.
+- UI is defined.
+- Data model exists.
+- Dependencies are available.
+- Architecture supports it.
+- No assumptions remain.
 
 ---
 
@@ -2036,8 +1770,6 @@ A feature is complete only if:
 ✓ Responsive
 
 ✓ Mobile tested
-
-✓ Offline compatible
 
 ✓ Strong typing
 
@@ -2059,17 +1791,12 @@ GTrak should feel like a premium native application despite being a web applicat
 
 The user should experience:
 
-Fast interactions.
-
-Reliable data.
-
-Simple workflows.
-
-Professional interface.
-
-Accurate nutrition.
-
-Long-term maintainability.
+- Fast interactions.
+- Reliable data.
+- Simple workflows.
+- Professional interface.
+- Accurate nutrition.
+- Long-term maintainability.
 
 Every future feature should strengthen these principles rather than compromise them.
 
@@ -2077,7 +1804,7 @@ Every future feature should strengthen these principles rather than compromise t
 
 # 6. Future Scope & Product Evolution
 
-This section outlines features that are intentionally excluded from the MVP but have been considered during the architectural design. The application's foundation should support these enhancements without requiring significant refactoring.
+This section outlines features that are intentionally excluded from the MVP but have been considered during the architectural design.
 
 ---
 
@@ -2085,13 +1812,9 @@ This section outlines features that are intentionally excluded from the MVP but 
 
 Future features should extend the existing architecture rather than replace it.
 
-The application should evolve through modular additions while maintaining backwards compatibility with existing user data.
-
 ---
 
 # 6.2 Phase 2 Features
-
-These features are planned immediately after the MVP.
 
 ## Favorite Foods
 
@@ -2113,22 +1836,11 @@ This reduces search time for frequently repeated meals.
 
 Users can save an entire meal as a reusable template.
 
-Examples:
-
-- Lean Bulk Lunch
-- High Protein Breakfast
-- Cheat Meal
-- Cutting Dinner
-
-Templates should populate meal items instantly.
-
 ---
 
 ## Copy Previous Day
 
 Allow users to duplicate yesterday's meals into today.
-
-Individual meals remain editable after copying.
 
 ---
 
@@ -2136,32 +1848,13 @@ Individual meals remain editable after copying.
 
 Allow users to duplicate one meal into another.
 
-Example:
-
-Lunch
-
-↓
-
-Copy to Dinner
-
 ---
 
 # 6.3 Nutrition Enhancements
 
 Future nutrition improvements include:
 
-Micronutrients
-
-- Sodium
-- Potassium
-- Calcium
-- Iron
-- Magnesium
-- Zinc
-- Vitamin A
-- Vitamin C
-- Vitamin D
-- Vitamin B12
+- Micronutrients (sodium, potassium, calcium, iron, magnesium, zinc, vitamins)
 
 The nutrition engine should be designed to support these without architectural changes.
 
@@ -2171,33 +1864,16 @@ The nutrition engine should be designed to support these without architectural c
 
 Future analytics may include:
 
-Weekly averages
-
-Monthly averages
-
-Nutrition consistency
-
-Protein distribution
-
-Calorie trends
-
-Weight trends
-
-Workout frequency
-
-Water consistency
-
-Meal timing
-
-Average meal size
-
-Most consumed foods
-
-Favorite categories
-
-Nutrition score
-
-Consistency score
+- Weekly averages
+- Monthly averages
+- Nutrition consistency
+- Protein distribution
+- Calorie trends
+- Weight trends
+- Workout frequency
+- Water consistency
+- Most consumed foods
+- Consistency score
 
 ---
 
@@ -2207,212 +1883,127 @@ The initial database focuses on commonly consumed foods.
 
 Future versions should support:
 
-Regional Indian foods
-
-International foods
-
-Packaged foods
-
-Restaurant meals
-
-Branded products
-
-Homemade recipes
-
-Custom recipes
-
-Barcode-based products
+- Regional Indian foods
+- International foods
+- Packaged foods
+- Restaurant meals
+- Branded products
+- Homemade recipes
+- Barcode-based products
 
 ---
 
-# 6.6 Custom Foods
-
-Users will eventually be able to:
-
-Create custom foods
-
-Edit custom foods
-
-Delete custom foods
-
-Assign categories
-
-Specify nutrition values
-
-Choose quantity options
-
-Custom foods should behave exactly like built-in foods.
-
----
-
-# 6.7 Custom Recipes
+# 6.6 Custom Recipes
 
 Users should eventually create recipes composed of multiple foods.
 
-Example
-
-Chicken Rice Bowl
-
-↓
-
-Rice
-
-Chicken
-
-Curd
-
-Ghee
-
-Vegetables
-
 The recipe should automatically calculate nutrition from its ingredients.
-
-Recipes become selectable like normal foods.
 
 ---
 
-# 6.8 PWA Enhancements
+# 6.7 PWA Enhancements
 
 Future releases should support:
 
-Offline installation
-
-Application updates
-
-App shortcuts
-
-Home screen installation
-
-Offline assets
-
-Background synchronization (optional)
+- Offline installation
+- Application updates
+- App shortcuts
+- Home screen installation
+- Offline assets
 
 ---
 
-# 6.9 Notifications
+# 6.8 Notifications
 
 Optional reminders.
 
 Examples:
 
-Meal reminder
-
-Water reminder
-
-Workout reminder
-
-Weight reminder
+- Meal reminder
+- Water reminder
+- Workout reminder
+- Weight reminder
 
 Notifications must always be optional.
 
 ---
 
-# 6.10 Import & Export
+# 6.9 Import & Export
 
 Support exporting:
 
-JSON
-
-CSV
+- JSON (primary)
+- CSV (selected datasets)
 
 Future support:
 
-PDF summaries
-
-Nutrition reports
-
-Backup archives
+- PDF summaries
+- Nutrition reports
+- Backup archives
 
 ---
 
-# 6.11 AI Features (Future)
+# 6.10 AI Features (Future)
 
 Artificial Intelligence is intentionally excluded from the MVP.
 
 Potential future features:
 
-Meal suggestions
-
-Nutrition recommendations
-
-Weekly summaries
-
-Goal adjustments
-
-Natural language food logging
-
-Recipe generation
+- Meal suggestions
+- Nutrition recommendations
+- Weekly summaries
+- Natural language food logging
+- Recipe generation
 
 These should remain optional and must never replace manual tracking.
 
 ---
 
-# 6.12 Cloud Sync (Optional)
+# 6.11 Cloud Sync (Optional)
 
-The application should remain fully functional without cloud services.
+Cloud synchronization should always be explicit and opt-in.
 
-Future cloud synchronization may include:
+The app already stores data in Firestore; future sync should target:
 
-Google Drive
-
-Dropbox
-
-GitHub Gist
-
-Personal cloud storage
-
-Cloud synchronization should always be opt-in.
+- Google Drive
+- Dropbox
+- Personal cloud storage
 
 ---
 
-# 6.13 Integrations
+# 6.12 Integrations
 
 Potential future integrations:
 
-Google Fit
-
-Apple Health
-
-Samsung Health
-
-Garmin
-
-Fitbit
-
-Health Connect
+- Google Fit
+- Apple Health
+- Samsung Health
+- Garmin
+- Fitbit
 
 These integrations should remain isolated modules.
 
 ---
 
-# 6.14 Long-Term Vision
+# 6.13 Long-Term Vision
 
 GTrak aims to become a complete personal fitness operating system.
 
 The long-term vision includes:
 
-Nutrition Tracking
-
-Workout Tracking
-
-Body Progress
-
-Habit Tracking
-
-Recovery Tracking
-
-Sleep Tracking
-
-Analytics
-
-Custom Reports
-
-Personal Insights
+- Nutrition Tracking
+- Workout Tracking
+- Body Progress
+- Habit Tracking
+- Recovery Tracking
+- Sleep Tracking
+- Analytics
+- Custom Reports
+- Personal Insights
 
 While expanding, the application must continue to uphold its original principles:
 
 - Fast
-- Offline-first
 - Private
 - Lightweight
 - Accurate
@@ -2439,3 +2030,5 @@ This document defines **what GTrak should be**.
 Technical implementation details are intentionally excluded and are documented separately in **ARCHITECTURE.md**.
 
 ---
+
+**End of PRD**

@@ -1,8 +1,9 @@
 # GTrak – Architecture Document
 
-**Version:** 1.0.0  
+**Version:** 1.1.0  
 **Status:** Active  
-**Framework:** React + Vite + TypeScript
+**Framework:** React + Vite + TypeScript  
+**Backend:** Firebase Firestore (cloud) + Anonymous Auth
 
 ---
 
@@ -30,7 +31,7 @@ Every implementation should follow this document.
 The project follows these principles:
 
 - Mobile-first
-- Offline-first
+- Cloud-backed (Firestore) with a local-first UI
 - Component-driven
 - Feature-based architecture
 - Strong typing
@@ -63,11 +64,7 @@ Repository Layer
 
 ↓
 
-Dexie Database
-
-↓
-
-IndexedDB
+Firebase Firestore
 ```
 
 Each layer has a single responsibility.
@@ -109,7 +106,7 @@ Responsible for:
 - Writing data
 - Database abstraction
 
-Components never access Dexie directly.
+Components never access Firestore directly.
 
 ---
 
@@ -117,8 +114,8 @@ Components never access Dexie directly.
 
 Responsible for:
 
-- Persistent storage
-- Versioning
+- Cloud persistence (Firestore)
+- Seeding built-in data
 - Queries
 
 Only repositories communicate with the database.
@@ -146,7 +143,7 @@ Repository
 
 ↓
 
-Database
+Firestore
 
 ↓
 
@@ -199,9 +196,9 @@ it should probably be split into smaller modules.
 | Framework | React + Vite |
 | Language | TypeScript |
 | Styling | Tailwind CSS |
-| UI Components | shadcn/ui |
 | State Management | Zustand |
-| Local Database | Dexie (IndexedDB) |
+| Database | Firebase Firestore |
+| Authentication | Firebase Anonymous Auth |
 | Charts | Recharts |
 | Search | Fuse.js |
 | Forms | React Hook Form |
@@ -216,15 +213,12 @@ it should probably be split into smaller modules.
 ```
 src/
 
-app/
-assets/
 components/
 data/
 hooks/
 lib/
 pages/
-store/
-styles/
+stores/
 types/
 ```
 
@@ -233,34 +227,6 @@ Each folder has one responsibility.
 ---
 
 ## Folder Responsibilities
-
-### app/
-
-Contains application bootstrap.
-
-Examples:
-
-- App.tsx
-- Providers
-- Router
-- Global initialization
-
----
-
-### assets/
-
-Static assets.
-
-Examples:
-
-- Images
-- Logos
-- Icons
-- Fonts
-
-No application logic.
-
----
 
 ### components/
 
@@ -271,15 +237,11 @@ Structure:
 ```
 components/
 
-common/
-ui/
-
-dashboard/
-meal/
-nutrition/
-history/
-analytics/
-settings/
+ui/          Generic UI primitives (Button, Card, etc.)
+meal/        Meal builder components
+nutrition/   Nutrition display components
+tracking/    Workout, water, weight, notes, tretinoin, respect
+dashboard/   Dashboard summary + progress cards
 ```
 
 Feature components should remain inside their respective folders.
@@ -288,13 +250,16 @@ Feature components should remain inside their respective folders.
 
 ### data/
 
-Static application data.
+Static seed data (the single source of truth for the built-in dataset).
 
 Examples:
 
-- Built-in food database
-- Categories
-- Quantity presets
+- `builtInFoods.ts`
+- `foodsSeed.ts`
+- `categories.ts`
+- `quantityPresets.ts`
+- `nutritionSources.ts`
+- `macroOverrides.ts`
 
 No business logic.
 
@@ -306,10 +271,10 @@ Reusable custom hooks.
 
 Examples:
 
-- useDebounce
-- useLocalStorage
-- useSearch
-- useNutrition
+- `useDebounce`
+- `useFoodSearch`
+- `useMealAutoComplete`
+- `useNutrition`
 
 Hooks should never render UI.
 
@@ -319,13 +284,16 @@ Hooks should never render UI.
 
 Shared business logic.
 
-Examples:
+```
+lib/
 
-- Nutrition Engine
-- Search Engine
-- Utility functions
-- Constants
-- Repository layer
+firebase.ts        Firebase init + anonymous auth
+seed.ts            Seeds built-in data when collections are empty
+repositories/      One repository per domain
+services/          nutritionCalculation, mealAutoCompletion
+search/            foodSearch
+utils/             cn, date, format, firestore, nutrition, tretinoin
+```
 
 This folder contains the application's core logic.
 
@@ -337,13 +305,11 @@ Top-level screens.
 
 Examples:
 
-Dashboard
-
-History
-
-Analytics
-
-Settings
+- Dashboard
+- MealBuilder
+- History
+- Analytics
+- Settings
 
 Pages compose components.
 
@@ -351,37 +317,22 @@ Pages should contain very little business logic.
 
 ---
 
-### store/
+### stores/
 
-Global Zustand stores.
+Global Zustand stores, one per domain.
 
 Examples:
 
-Meal Store
-
-History Store
-
-Settings Store
-
-Food Store
+- mealStore
+- foodStore
+- historyStore
+- settingsStore
+- waterStore, weightStore, workoutStore
+- tretinoinStore, respectStore
+- dailyNoteStore, favoriteStore
+- categoryStore, quantityPresetStore, nutritionSourceStore
 
 Each store should manage only one domain.
-
----
-
-### styles/
-
-Global styling.
-
-Examples:
-
-Tailwind overrides
-
-Global styles
-
-Theme variables
-
-No component-specific CSS.
 
 ---
 
@@ -391,15 +342,14 @@ Shared TypeScript models.
 
 Examples:
 
-Food
-
-Meal
-
-History
-
-Nutrition
-
-Settings
+- food.ts
+- meal.ts
+- history.ts
+- nutrition.ts
+- settings.ts
+- tretinoin.ts
+- respect.ts
+- water.ts, weight.ts, workout.ts, dailyNote.ts
 
 Every shared model belongs here.
 
@@ -509,18 +459,18 @@ Repository
 
 ↓
 
-Database
+Firestore
 ```
 
 Lower layers must never import higher layers.
 
 Example:
 
-Database ❌ imports Store
+Firestore ❌ imports Store
 
 Store ❌ imports Components
 
-Component ❌ imports Database
+Component ❌ imports Firestore
 
 ---
 
@@ -547,16 +497,15 @@ GTrak uses **Zustand** for global state management.
 
 ---
 
-## Planned Stores
+## Stores
 
 ### mealStore
 
 Responsible for:
 
-- Today's meals
+- Meals for the selected date
 - Meal items
-- Meal completion
-- Meal updates
+- Saving/updating/deleting meals
 
 ---
 
@@ -588,8 +537,21 @@ Responsible for:
 
 - User preferences
 - Nutrition targets
+- Water goal
 - Theme
-- Units
+
+---
+
+### trackingStores
+
+Separate stores for:
+
+- tretinoinStore
+- respectStore
+- waterStore
+- weightStore
+- workoutStore
+- dailyNoteStore
 
 ---
 
@@ -625,6 +587,7 @@ Use React state for:
 - Expanded accordions
 - Input focus
 - Temporary form values
+- Unsaved edit-mode buffers (e.g. `respectPatch` in History)
 
 Do not move temporary UI state into Zustand.
 
@@ -649,7 +612,7 @@ Repository
 
 ↓
 
-Database
+Firestore
 
 ↓
 
@@ -668,34 +631,32 @@ Communication should happen through shared services or repositories.
 
 # 4. Database Design
 
-GTrak stores all persistent data locally using **Dexie (IndexedDB)**.
+GTrak persists all data to **Firebase Firestore** using **anonymous authentication**.
 
-No backend is required.
+On startup, `App.tsx` runs `ensureSignedIn()` (anonymous sign-in) then `seedIfEmpty()`.
 
 ---
 
-## Database Tables
-
-Initial tables:
+## Firestore Collections
 
 ```
-foods
+foods              Built-in + seeded foods (read-only at runtime)
+categories         Food categories
+quantityPresets    Quantity presets
+nutritionSources   Nutrition data sources (IFCT 2017, USDA, FSSAI, Brand)
 
-customFoods
+meals              Daily meal records (one doc per meal per date)
+workouts           One workout per day
+waterLogs          Water intake entries
+weights            One weight entry per day
+dailyNotes         One note per day
 
-dailyLogs
+tretinoinLogs      Tretinoin application logs
+respectLogs        Respect/Trust score logs (upserted per date)
 
-settings
-```
-
-Future tables may include:
-
-```
-templates
-
-favorites
-
-analyticsCache
+deletedMeals       Soft-deleted meals for the 24h undo window
+favorites          User favorite foods
+settings           Single app settings document
 ```
 
 ---
@@ -710,56 +671,59 @@ Fields:
 - name
 - category
 - unit
-- nutritionPer100
-- quantityOptions
+- nutrition (per 100g / 100ml)
+- measures (discrete measures with `gramsPerUnit` for conversion)
 - aliases
 - source
 
-This table is read-only.
+This collection is seeded from `src/data` and is read-only at runtime.
 
 ---
 
-## customFoods
+## meals
 
-Contains user-created foods.
+Daily meal records.
 
-Same structure as `foods`.
+Fields:
 
-Users can:
+- id
+- date
+- name
+- items[] (foodId, name snapshot, gramsPerUnit, quantity, unit, nutrition)
+- createdAt / updatedAt
 
-- Add
-- Edit
-- Delete
+Meal items snapshot the food name and `gramsPerUnit` so history stays stable even if the food database changes.
 
 ---
 
-## dailyLogs
+## tretinoinLogs
 
-One record per day.
+- id
+- date
+- applied (boolean)
+- createdAt / updatedAt
 
-Contains:
+The tracker surfaces on scheduled nights (every 3rd night from the last `applied = true` date).
 
-- Meals
-- Nutrition totals
-- Workout
-- Water
-- Weight
-- Notes
+---
 
-Historical data should never be overwritten except when editing the same date.
+## respectLogs
+
+- id
+- date
+- didWhatSaid (number)
+- excuse (number)
+- flake (number)
+- total (derived sum)
+- createdAt / updatedAt
+
+One log per date (upsert).
 
 ---
 
 ## settings
 
 Contains application preferences.
-
-Examples:
-
-- Nutrition targets
-- Water goal
-- Theme
-- Measurement system
 
 Only one settings record should exist.
 
@@ -771,39 +735,41 @@ Only one settings record should exist.
 - Never duplicate food nutrition in the database.
 - Nutrition should be calculated, not stored redundantly.
 - Validate data before saving.
+- Strip `undefined` fields before any write via `cleanForFirestore()`.
+- Use `??` (nullish) when reading optional numerics so zero values survive.
 
 ---
 
-## Versioning
+## Seeding
 
-Dexie schema versions should be used for future migrations.
+`seedIfEmpty()` seeds each collection only when it is empty:
 
-Never modify an existing schema without a migration plan.
+- Categories
+- Foods (builtInFoods + foodsSeed, with macroOverrides applied)
+- Quantity presets
+- Nutrition sources
 
 ---
 
 ## Backup Strategy
 
-Export format:
+Settings provides:
 
-- JSON (primary)
-- CSV (selected datasets)
-
-Import should validate the incoming data before writing it to the database.
+- Export: downloads all user data as JSON.
+- Import: reads a previously exported JSON file (existing data is preserved).
+- Reset: clears all user data; requires the confirmation password `godelete`. Built-in foods remain.
 
 ---
 
 ## Data Ownership
 
-All data belongs to the user.
+All user data is owned by the user.
 
 The application:
 
-- does not upload data
-- does not collect analytics
-- does not require login
-
-User privacy is a core design principle.
+- requires no explicit login (anonymous auth only)
+- provides export/import/reset
+- does not collect analytics or telemetry
 
 ---
 
@@ -811,7 +777,7 @@ User privacy is a core design principle.
 
 The Repository Layer separates business logic from data storage.
 
-Components and stores should never communicate directly with Dexie.
+Components and stores should never communicate directly with Firestore.
 
 Instead, all database operations go through repositories.
 
@@ -832,16 +798,28 @@ Repositories should not contain UI logic.
 
 ---
 
-## Planned Repositories
+## Repositories
+
+One repository per domain in `src/lib/repositories/`:
 
 ```
 foodRepository.ts
-
 mealRepository.ts
+categoryRepository.ts
+quantityPresetRepository.ts
+nutritionSourceRepository.ts
 
 historyRepository.ts
-
 settingsRepository.ts
+favoriteRepository.ts
+
+waterRepository.ts
+weightRepository.ts
+workoutRepository.ts
+dailyNoteRepository.ts
+
+tretinoinRepository.ts
+respectRepository.ts
 ```
 
 ---
@@ -861,7 +839,7 @@ Repository
 
 ↓
 
-Dexie
+Firestore
 
 ↓
 
@@ -885,7 +863,6 @@ Repositories act as the single gateway to persistent data.
 - Easy testing
 - Cleaner stores
 - Replaceable database layer
-- Future cloud sync support
 - Reduced duplicated logic
 
 ---
@@ -942,51 +919,21 @@ Page Components
 
 ## UI Components
 
-Generic reusable components.
+Generic reusable components in `components/ui/`.
 
 Examples
 
 ```
 Button
-
 Card
-
-Badge
-
-Input
-
-Dialog
-
-Accordion
-
-Progress
-
-Select
+Section
+Typography
+AppShell
+BottomNavigation
+PageContainer
 ```
 
 These should never know anything about GTrak.
-
----
-
-## Layout Components
-
-Responsible for page structure.
-
-Examples
-
-```
-AppShell
-
-Header
-
-BottomNavigation
-
-PageContainer
-
-Section
-```
-
-No business logic.
 
 ---
 
@@ -997,19 +944,14 @@ Specific to GTrak.
 Examples
 
 ```
-MealCard
-
-MealItem
-
-NutritionCard
-
-WorkoutCard
-
-WaterCard
-
-WeightCard
-
-HistoryCard
+MealCard, MealItem, AddItem, FoodPicker, QuantityPicker, FoodMacroEditor, UndoBanner
+NutritionSummary, MealNutritionCard
+WorkoutCard, WorkoutLogging, WorkoutHistory
+WaterLogging, WaterProgress
+WeightLogging, WeightHistory
+DailyNoteEditor
+TretinoinTracker
+RespectTracker
 ```
 
 Feature components may use stores and hooks.
@@ -1024,11 +966,9 @@ Examples
 
 ```
 Dashboard
-
+MealBuilder
 History
-
 Analytics
-
 Settings
 ```
 
@@ -1055,30 +995,6 @@ Child
 Avoid deeply nested prop chains.
 
 Use Zustand only when state is shared across multiple features.
-
----
-
-## File Structure
-
-Example
-
-```
-MealCard/
-
-MealCard.tsx
-
-MealCardHeader.tsx
-
-MealCardBody.tsx
-
-MealCardFooter.tsx
-
-hooks.ts
-
-types.ts
-```
-
-Split large components into logical subcomponents.
 
 ---
 
@@ -1131,28 +1047,6 @@ Keep JSX focused on rendering.
 
 ---
 
-## Custom Hooks
-
-Reusable logic belongs in hooks.
-
-Examples
-
-```
-useMeal()
-
-useNutrition()
-
-useSearch()
-
-useHistory()
-
-useWater()
-```
-
-Hooks should encapsulate behavior, not UI.
-
----
-
 ## Rendering Rules
 
 Render only what changes.
@@ -1197,11 +1091,15 @@ Food
 
 ↓
 
-Quantity
+Quantity + Unit
 
 ↓
 
-Nutrition Per 100 Units
+Grams (via gramsPerUnit / measures)
+
+↓
+
+Nutrition Per 100g
 
 ↓
 
@@ -1218,9 +1116,27 @@ Dashboard
 
 ---
 
+## Unit Conversion
+
+- All nutrition is stored **per 100g / 100ml**.
+- Non-weight units (piece, cup, tbsp, tsp, slice) are converted through the food's `measures` array.
+- `computeGramsPerUnit(food, unit)` returns the conversion factor for a unit.
+- `mealItemGrams(item)` returns the total grams for a meal item.
+- Each meal item stores its resolved `gramsPerUnit` so history is stable.
+
+Fallback defaults when a measure is unknown:
+
+- piece = 50g
+- cup = 240g
+- tbsp = 15g
+- tsp = 5g
+- slice = 30g
+
+---
+
 ## Calculation Rules
 
-Every food contains nutrition values per 100g, 100ml or per piece.
+Every food contains nutrition values per 100g or 100ml.
 
 When a quantity changes:
 
@@ -1255,9 +1171,7 @@ History
 Analytics
 ```
 
-Never calculate analytics directly from meal items.
-
-Analytics should always use historical daily summaries.
+Analytics should always use historical records, not raw meal items.
 
 ---
 
@@ -1277,7 +1191,7 @@ Future nutrients can be added without changing the calculation flow.
 
 ## Targets
 
-Targets are user configurable.
+Targets are user configurable in Settings.
 
 Examples
 
@@ -1308,27 +1222,9 @@ Fiber
 Every nutrient has one status.
 
 ```
-Below Target
-
-↓
-
-Incomplete
-```
-
-```
-Equal Target
-
-↓
-
-Complete
-```
-
-```
-Above Target
-
-↓
-
-Over Target
+Below Target → Incomplete
+Equal Target → Complete
+Above Target → Over Target
 ```
 
 Status should update instantly.
@@ -1339,21 +1235,8 @@ Status should update instantly.
 
 - No duplicated calculations.
 - Use shared utility functions.
-- Round values only for display.
+- Round values only for display (`formatNum` — max 2 decimals, trailing zeros stripped).
 - Keep internal precision.
-
----
-
-## Future Support
-
-The engine should easily support:
-
-- Micronutrients
-- Custom nutrients
-- Recipes
-- Supplement tracking
-
-without architectural changes.
 
 ---
 
@@ -1374,8 +1257,7 @@ Each food should contain:
 - Category
 - Unit
 - Nutrition Per 100
-- Quantity Options
-- Search Keywords
+- Measures (with gramsPerUnit for non-weight units)
 - Aliases
 - Source
 
@@ -1383,7 +1265,7 @@ Each food should contain:
 
 ## Categories
 
-Initial categories include:
+Seeded categories include:
 
 - Fruits
 - Vegetables
@@ -1402,137 +1284,48 @@ Initial categories include:
 - Beverages
 - Others
 
-Categories should be sorted alphabetically.
+Categories are sorted alphabetically.
 
-Foods within each category should also be sorted alphabetically.
+Foods within each category are also sorted alphabetically.
 
 ---
 
 ## Search
 
-Food search should be:
+Food search is:
 
 - Instant
-- Fuzzy
+- Fuzzy (Fuse.js)
 - Case insensitive
 
 Supported searches:
 
 ```
-milk
-
-↓
-
-Milk
+milk → Milk
+mlk → Milk
+chk → Chicken
 ```
-
-```
-mlk
-
-↓
-
-Milk
-```
-
-```
-chk
-
-↓
-
-Chicken
-```
-
----
-
-## Quantity Options
-
-Every food owns its quantity options.
-
-Examples
-
-Egg
-
-```
-1
-2
-3
-4
-5
-6
-```
-
-Milk
-
-```
-100ml
-150ml
-200ml
-250ml
-300ml
-```
-
-Rice
-
-```
-100g
-150g
-200g
-250g
-300g
-350g
-400g
-```
-
-The UI should never display invalid quantities.
 
 ---
 
 ## Food Sources
 
-Nutrition data should primarily come from:
+Nutrition data source priority:
 
-- ICMR–NIN Indian Food Composition Tables
-- FSSAI
-- USDA (only if Indian data is unavailable)
+1. IFCT 2017 (ICMR–NIN)
+2. Brand labels
+3. USDA (only if Indian data is unavailable)
+4. FSSAI
 
-Every food should store its data source.
-
----
-
-## Custom Foods
-
-Custom foods should use the exact same model as built-in foods.
-
-The rest of the application should not distinguish between them.
+Every food stores its data source.
 
 ---
 
-## Future Expansion
+## Macro Overrides
 
-The database should support:
+`src/data/macroOverrides.ts` lets specific foods override seeded macro values at seed time.
 
-- Regional Indian foods
-- International foods
-- Recipes
-- Packaged products
-- Barcode products
-- User-created foods
-
-without requiring schema changes.
-
----
-
-## Search Optimization
-
-Initialize the search index once during application startup.
-
-Rebuild the index only when:
-
-- Custom food added
-- Custom food edited
-- Custom food deleted
-
-Avoid rebuilding on every search.
+Overrides are applied once during seeding.
 
 ---
 
@@ -1569,23 +1362,41 @@ Every screen should feel familiar.
 
 ---
 
+## Design Language
+
+Fully square, flat design:
+
+- No rounded corners (except the brand "G" mark).
+- No shadows.
+- No opacity.
+- Solid, flat colors only.
+
+---
+
 ## Color Palette
 
-Primary
+Light theme
 
-- Blue
+- Background: white
+- Border: `#e2e8f0`
+- Text: black
+- Muted: `#64748b`
 
-Neutral
+Dark theme
 
-- White
-- Black
-- Gray
+- Background: `#111111`
+- Surface: `#1F1F1F`
+- Border: `#2D2D2D`
+- Text: `#FDFDFD`
+- Muted: `#888888`
 
 Functional
 
-- Green (Success)
-- Red (Error)
-- Orange (Warning)
+- Green: success / positive
+- Red: errors, negative values, delete actions
+- Orange: warnings
+
+There is **no blue** in the application.
 
 Avoid using colors for decoration.
 
@@ -1595,39 +1406,17 @@ Every color should communicate information.
 
 ## Border Radius
 
-Use subtle rounded corners.
+None.
 
-Avoid overly rounded ("pill") components unless required.
+Everything is square.
 
 ---
 
 ## Shadows
 
-Keep shadows minimal.
+None.
 
-Borders should define components instead of shadows.
-
----
-
-## Spacing
-
-Use a consistent spacing scale.
-
-Example
-
-```
-4
-8
-12
-16
-20
-24
-32
-40
-48
-```
-
-Avoid arbitrary spacing values.
+Borders define components, not shadows.
 
 ---
 
@@ -1661,22 +1450,9 @@ Avoid unnecessary font weights.
 
 ## Cards
 
-Every feature is presented inside a card.
+Every feature is presented inside a card (`components/ui/card.tsx`).
 
-Examples
-
-- Meal Card
-- Nutrition Card
-- History Card
-- Analytics Card
-- Settings Card
-
-Cards should have consistent:
-
-- Padding
-- Borders
-- Radius
-- Header spacing
+Cards have consistent padding and borders.
 
 ---
 
@@ -1696,7 +1472,9 @@ Danger
 
 Icon
 
-Every button style should have a single reusable component.
+Every button style lives in a single reusable `Button` component.
+
+Delete actions use red text.
 
 ---
 
@@ -1710,49 +1488,17 @@ Avoid decorative icons.
 
 ---
 
-## Animations
-
-Animations should communicate state.
-
-Examples
-
-Accordion expand
-
-Dialog open
-
-Success feedback
-
-Avoid decorative animations.
-
-Target duration
-
-100–150ms
-
----
-
 ## Empty States
 
 Every empty state should help the user.
 
 Examples
 
-No history
+No meals → "Add your first food."
 
-↓
+No notes → "No notes for today."
 
-"Start tracking today."
-
-No meals
-
-↓
-
-"Add your first food."
-
-No analytics
-
-↓
-
-"Track a few days to see trends."
+No analytics → "Track a few days to see trends."
 
 ---
 
@@ -1774,17 +1520,11 @@ Do not design desktop-first.
 
 ## Accessibility
 
-Touch targets
-
-Minimum 44px
-
-Readable contrast
-
-Visible focus states
-
-Semantic HTML
-
-Keyboard support where appropriate
+- Touch targets minimum 44px
+- Readable contrast
+- Visible focus states
+- Semantic HTML
+- Keyboard support where appropriate
 
 ---
 
@@ -1802,48 +1542,6 @@ Consistency is more important than personal preference.
 - No `any`
 - No duplicated logic
 - Small reusable functions
-
----
-
-## Naming
-
-Components
-
-```
-MealCard.tsx
-```
-
-Hooks
-
-```
-useNutrition.ts
-```
-
-Stores
-
-```
-mealStore.ts
-```
-
-Repositories
-
-```
-foodRepository.ts
-```
-
-Types
-
-```
-food.ts
-```
-
-Constants
-
-```
-FOOD_CATEGORIES
-```
-
-Use descriptive names.
 
 ---
 
@@ -1865,42 +1563,11 @@ Function names should explain what they do.
 
 ---
 
-## Components
-
-Each component should have one responsibility.
-
-If a component exceeds ~300 lines,
-
-consider splitting it.
-
----
-
-## Hooks
-
-Custom hooks should encapsulate reusable logic.
-
-Hooks should not render UI.
-
----
-
 ## Comments
 
 Write comments only when they explain intent.
 
 Avoid commenting obvious code.
-
-Good
-
-```ts
-// Calculate nutrition before persisting to history
-```
-
-Bad
-
-```ts
-// Increment i
-i++
-```
 
 ---
 
@@ -1908,25 +1575,11 @@ i++
 
 Order imports consistently.
 
-1.
-
-React
-
-2.
-
-Third-party libraries
-
-3.
-
-Internal modules
-
-4.
-
-Types
-
-5.
-
-Styles
+1. React
+2. Third-party libraries
+3. Internal modules
+4. Types
+5. Styles
 
 ---
 
@@ -1946,11 +1599,8 @@ Recommended format
 
 ```
 feat: add meal builder
-
 fix: nutrition rounding
-
 refactor: split meal card
-
 docs: update architecture
 ```
 
@@ -1975,31 +1625,29 @@ Before merging any feature verify:
 
 Performance is a core feature of GTrak.
 
-The application should remain smooth even with years of user data.
-
 ---
 
 ## Performance Goals
 
 Initial Load
 
-- Under 2 seconds
+Under 2 seconds
 
 Food Search
 
-- Under 100ms
+Under 100ms
 
 Meal Update
 
-- Instant
+Instant
 
 Navigation
 
-- Instant
+Instant
 
 Charts
 
-- Smooth rendering
+Smooth rendering
 
 ---
 
@@ -2025,23 +1673,7 @@ Avoid premature optimization.
 
 Initialize the search index once.
 
-Rebuild only when:
-
-- Custom food added
-- Custom food edited
-- Custom food deleted
-
 Never rebuild during every search.
-
----
-
-## Database
-
-Only query the data required.
-
-Avoid loading unnecessary records.
-
-Cache frequently accessed data when appropriate.
 
 ---
 
@@ -2056,8 +1688,6 @@ Do not compute analytics on every Dashboard render.
 ## Bundle Size
 
 Keep dependencies minimal.
-
-Avoid introducing libraries for problems already solved by the current stack.
 
 Before adding a dependency, evaluate whether native React or existing utilities are sufficient.
 
@@ -2103,47 +1733,18 @@ Before shipping a feature:
 
 # 12. Development Workflow & Deployment
 
-This section defines how GTrak is developed and released.
-
 ---
 
 ## Development Process
 
 Every feature follows this sequence:
 
-1.
-
-Requirements
-
-↓
-
-2.
-
-Architecture
-
-↓
-
-3.
-
-Implementation
-
-↓
-
-4.
-
-Review
-
-↓
-
-5.
-
-Testing
-
-↓
-
-6.
-
-Merge
+1. Requirements
+2. Architecture
+3. Implementation
+4. Review
+5. Testing
+6. Merge
 
 Never skip architecture.
 
@@ -2180,13 +1781,9 @@ Recommended:
 
 ```
 main
-
 feature/meal-builder
-
 feature/nutrition-engine
-
 feature/history
-
 feature/analytics
 ```
 
@@ -2225,9 +1822,9 @@ Every push to the main branch should create a production deployment.
 
 ## Environment
 
-No environment variables are required for the MVP.
+Firebase configuration lives in `src/lib/firebase.ts`.
 
-If introduced later, they should never contain sensitive user data.
+No secrets or sensitive values should be added outside the Firebase config.
 
 ---
 
@@ -2235,15 +1832,10 @@ If introduced later, they should never contain sensitive user data.
 
 Use Semantic Versioning.
 
-Examples
-
 ```
 v1.0.0
-
 v1.1.0
-
 v1.2.3
-
 v2.0.0
 ```
 
@@ -2269,7 +1861,6 @@ Every implementation should satisfy these goals:
 - Simple
 - Fast
 - Accurate
-- Offline-first
 - Mobile-first
 - Privacy-focused
 - Maintainable

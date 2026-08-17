@@ -1,6 +1,6 @@
 # GTrak – Development Roadmap
 
-**Version:** 1.0.0
+**Version:** 1.1.0
 
 This roadmap tracks the development progress of GTrak.
 
@@ -21,11 +21,9 @@ Status
 
 ☑ Tailwind CSS
 
-☑ shadcn/ui
-
 ☑ Zustand
 
-☑ Dexie
+☑ Firebase (Firestore + Anonymous Auth)
 
 ☑ Project Structure
 
@@ -39,7 +37,7 @@ None
 
 ## Design System
 
-☑ Theme
+☑ Theme (light + dark)
 
 ☑ Typography
 
@@ -49,7 +47,7 @@ None
 
 ☑ Buttons
 
-☑ Navigation
+☑ Navigation (5-tab bottom nav)
 
 Dependencies
 
@@ -61,15 +59,21 @@ Project Setup
 
 ## Domain Models
 
-☐ Food Types
+☑ Food Types
 
-☐ Meal Types
+☑ Meal Types
 
-☐ Nutrition Types
+☑ Nutrition Types
 
-☐ History Types
+☑ History Types
 
-☐ Settings Types
+☑ Settings Types
+
+☑ Tracking Types (water, weight, workout, notes)
+
+☑ Tretinoin Types
+
+☑ Respect Types
 
 Dependencies
 
@@ -79,13 +83,15 @@ Foundation
 
 ## Database
 
-☐ Dexie Schema
+☑ Firebase Firestore Setup
 
-☐ Database Initialization
+☑ Database Initialization
 
-☐ Migrations
+☑ Seeding Built-in Foods
 
-☐ Seed Built-in Foods
+☑ Seeding Categories / Presets / Sources
+
+☑ Seeding Macro Overrides
 
 Dependencies
 
@@ -95,13 +101,21 @@ Domain Models
 
 ## Repository Layer
 
-☐ Food Repository
+☑ Food Repository
 
-☐ Meal Repository
+☑ Meal Repository
 
-☐ History Repository
+☑ History Repository
 
-☐ Settings Repository
+☑ Settings Repository
+
+☑ Water / Weight / Workout / DailyNote Repositories
+
+☑ Tretinoin Repository
+
+☑ Respect Repository
+
+☑ cleanForFirestore utility (strips undefined before writes)
 
 Dependencies
 
@@ -111,13 +125,17 @@ Database
 
 ## State Management
 
-☐ mealStore
+☑ mealStore
 
-☐ foodStore
+☑ foodStore
 
-☐ historyStore
+☑ historyStore
 
-☐ settingsStore
+☑ settingsStore
+
+☑ waterStore / weightStore / workoutStore / dailyNoteStore
+
+☑ tretinoinStore / respectStore
 
 Dependencies
 
@@ -129,13 +147,13 @@ Repositories
 
 ## Food Database
 
-☐ Categories
+☑ Categories
 
-☐ Foods
+☑ Foods (IFCT 2017 + USDA + FSSAI)
 
-☐ Quantity Presets
+☑ Quantity Presets
 
-☐ Nutrition Sources
+☑ Nutrition Sources
 
 Dependencies
 
@@ -145,13 +163,13 @@ Repositories
 
 ## Search
 
-☐ Fuzzy Search
+☑ Fuzzy Search
 
-☐ Category Filter
+☑ Category Filter
 
-☐ Recent Foods
+☑ Recent Foods
 
-☐ Favorites
+☑ Favorites
 
 Dependencies
 
@@ -161,11 +179,7 @@ Food Database
 
 ## Custom Foods
 
-☐ Create
-
-☐ Edit
-
-☐ Delete
+☑ Food Macro Editor (create / edit nutrition values)
 
 Dependencies
 
@@ -177,17 +191,17 @@ Food Database
 
 ## Meal Components
 
-☐ Meal Card
+☑ Meal Card
 
-☐ Meal Item
+☑ Meal Item
 
-☐ Food Picker
+☑ Food Picker
 
-☐ Quantity Picker
+☑ Quantity Picker
 
-☐ Add Item
+☑ Add Item
 
-☐ Delete Item
+☑ Delete Item
 
 Dependencies
 
@@ -199,13 +213,17 @@ Search
 
 ## Meal Logic
 
-☐ Create Meals
+☑ Create Meals
 
-☐ Update Meals
+☑ Update Meals
 
-☐ Delete Meals
+☑ Delete Meals (with 24h undo)
 
-☐ Auto Completion
+☑ Auto Completion
+
+☑ Unit-aware calculation (gramsPerUnit / measures)
+
+☑ Date navigator (build meals for any date)
 
 Dependencies
 
@@ -217,13 +235,13 @@ Meal Components
 
 ## Calculations
 
-☐ Meal Nutrition
+☑ Meal Nutrition
 
-☐ Daily Nutrition
+☑ Daily Nutrition
 
-☐ Progress
+☑ Progress
 
-☐ Status
+☑ Status
 
 Dependencies
 
@@ -233,11 +251,11 @@ Meal Builder
 
 ## Dashboard
 
-☐ Daily Summary
+☑ Daily Summary
 
-☐ Nutrition Summary
+☑ Nutrition Summary
 
-☐ Progress Cards
+☑ Progress Cards
 
 Dependencies
 
@@ -249,41 +267,61 @@ Nutrition Engine
 
 ## Workout
 
-☐ Workout Card
+☑ Workout Card
 
-☐ Workout Logging
+☑ Workout Logging
 
-☐ Workout History
+☑ Workout History
 
 ---
 
 ## Water
 
-☐ Water Logging
+☑ Water Logging
 
-☐ Water Goal
+☑ Water Goal
 
-☐ Progress
+☑ Progress
 
 ---
 
 ## Weight
 
-☐ Daily Weight
+☑ Daily Weight
 
-☐ Weight History
+☑ Weight History
 
-☐ Trends
+☑ Trends
 
 ---
 
 ## Notes
 
-☐ Daily Notes
+☑ Daily Notes
 
 Dependencies
 
 Dashboard
+
+---
+
+## Tretinoin
+
+☑ Tretinoin Tracker (every 3rd night schedule)
+
+☑ History integration (editable in edit mode)
+
+---
+
+## Respect/Trust Score
+
+☑ Respect Tracker (3 factors: Do What You Said / Excuse / Flake)
+
+☑ Progress bar (max 50)
+
+☑ Dashboard editable counters
+
+☑ History edit-mode editing with buffered save/cancel
 
 ---
 
@@ -293,9 +331,15 @@ Dashboard
 
 ☑ History Details
 
-☑ Edit History
+☑ Edit History (edit mode with Save/Cancel)
 
 ☑ Delete History
+
+☑ Undo Banner (24h soft-delete window)
+
+☑ Expanded food items
+
+☑ Tretinoin + Respect display
 
 Dependencies
 
@@ -317,6 +361,10 @@ Tracking
 
 ☑ Monthly Summary
 
+☑ Tretinoin Adherence chart
+
+☑ Respect/Trust Score trend chart
+
 Dependencies
 
 History
@@ -335,7 +383,7 @@ History
 
 ☑ Export
 
-☑ Reset
+☑ Reset (password-protected, clears user data)
 
 Dependencies
 
@@ -472,6 +520,22 @@ The objective of this phase is **not to redesign the application**, but to refin
 Dependencies
 
 Phase 10 — Polish
+
+---
+
+# Phase 12 — Infrastructure
+
+## Firebase Migration
+
+☑ Firestore repositories (replaced Dexie)
+
+☑ Anonymous authentication
+
+☑ Seeding pipeline (`seedIfEmpty`)
+
+☑ `cleanForFirestore` write sanitization
+
+☑ Vercel production deployment
 
 ---
 

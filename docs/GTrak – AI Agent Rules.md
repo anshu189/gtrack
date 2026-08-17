@@ -1,10 +1,10 @@
 # GTrak – Copilot Implementation Rules
 
-**Version:** 1.0.0
+**Version:** 1.1.0
 
-This document defines how GitHub Copilot should contribute to the project.
+This document defines how coding agents should contribute to the project.
 
-Copilot is an implementation assistant, **not** the software architect.
+Agents are implementation assistants, **not** the software architect.
 
 Architecture decisions come from the project documentation.
 
@@ -16,8 +16,9 @@ Before implementing any feature:
 
 1. Read `PRD.md`
 2. Read `ARCHITECTURE.md`
-3. Follow existing patterns.
-4. Implement only the requested feature.
+3. Read the Development Roadmap.
+4. Follow existing patterns.
+5. Implement only the requested feature.
 
 Never redesign existing architecture.
 
@@ -25,7 +26,7 @@ Never redesign existing architecture.
 
 # 2. Primary Responsibilities
 
-Copilot should:
+Agents should:
 
 - Write clean code.
 - Follow existing architecture.
@@ -88,6 +89,8 @@ any
 
 unless explicitly approved.
 
+Every `update()`/`create()` payload must be wrapped with `cleanForFirestore()` (see section 7) so `undefined` fields are never written to Firestore.
+
 ---
 
 # 6. Zustand Rules
@@ -100,12 +103,14 @@ Use Zustand for:
 - History
 - Foods
 - Settings
+- Tracking (tretinoin, respect, water, weight, workout, notes)
 
 Do NOT use Zustand for:
 
 - Dialog visibility
 - Input focus
 - Temporary form state
+- Unsaved edit-mode buffers (use React state)
 
 Use React state instead.
 
@@ -113,7 +118,9 @@ Use React state instead.
 
 # 7. Database Rules
 
-Never access Dexie directly from components.
+GTrak uses **Firebase Firestore** as its cloud database with **anonymous authentication**.
+
+Never access Firestore directly from components.
 
 Always use:
 
@@ -129,11 +136,35 @@ Store
 Component
 ```
 
+## Rules
+
+- All Firestore writes must use `setDoc`/`updateDoc`/`addDoc` through a repository.
+- Every write payload must be cleaned with `cleanForFirestore()` (from `src/lib/utils/firestore.ts`) to strip `undefined` values before persisting.
+- Use `nullish coalescing` (`??`) instead of falsy checks (`||`) when reading optional numeric fields so legitimate zero values (e.g. `fiber: 0`) are not dropped.
+- Repositories are the only code that imports `firebase/firestore`.
+
 ---
 
 # 8. File Organization
 
 Every new file must belong in an existing module.
+
+```
+src/
+  components/     UI (feature + ui + tracking + meal + nutrition + dashboard)
+  data/           Static seed data (foods, categories, presets)
+  hooks/          Custom React hooks
+  lib/
+    repositories/ Firestore repositories (one per domain)
+    services/     Business logic (nutrition, meal auto-completion)
+    search/       Food search engine
+    utils/        Helpers (cn, date, format, firestore, nutrition, tretinoin)
+    firebase.ts   Firebase init + anonymous auth
+    seed.ts       Seeds built-in data if collections are empty
+  pages/          Top-level screens
+  stores/         Zustand stores
+  types/          Shared TypeScript models
+```
 
 Do not create random folders.
 
@@ -181,21 +212,27 @@ Names should clearly describe purpose.
 
 Follow the GTrak design language.
 
-Use:
+Fully **square** design:
 
-- White
-- Black
-- Blue
+- No rounded corners (except the brand "G" mark).
+- No shadows.
+- No opacity.
+- Solid, flat colors only.
 
-Minimal borders.
+Palette:
 
-Minimal shadows.
+- Light: white background, `#e2e8f0` borders, black text.
+- Dark: `#111111` background, `#1F1F1F` surface, `#2D2D2D` borders, `#FDFDFD` text.
 
-No gradients.
+Functional colors:
 
-No glassmorphism.
+- Green: success / positive values
+- Red: errors, negative values, and delete actions
+- Orange: warnings
 
-No decorative animations.
+There is **no blue** in the application. Do not introduce blue.
+
+Avoid gradients, glassmorphism, neumorphism, decorative animations, and excessive borders.
 
 ---
 
@@ -216,9 +253,9 @@ Optimize only when necessary.
 
 Every completed feature should satisfy:
 
-✓ TypeScript passes
+✓ TypeScript passes (`npm run build` / `tsc -b`)
 
-✓ Build passes
+✓ Lint passes (`npm run lint`)
 
 ✓ Mobile responsive
 
