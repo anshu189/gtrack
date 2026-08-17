@@ -15,7 +15,7 @@ export const WaterProgress = ({ current, goal, unit = 'ml' }: WaterProgressProps
         <span>{current} {unit} / {goal} {unit}</span>
         <span>{pct}%</span>
       </div>
-      <ProgressBar value={pct} max={100} />
+      <ProgressBar label="Water intake" isLabelHidden value={pct} max={100} />
     </div>
   )
 }

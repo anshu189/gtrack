@@ -11,8 +11,6 @@ interface NutritionProgressBarProps {
 }
 
 const NutritionProgressBar = ({ label, actual, target, unit = 'g' }: NutritionProgressBarProps) => {
-  const percentage = Math.min((actual / target) * 100, 100)
-
   return (
     <div>
       <ProgressBar label={label} value={actual} max={target} />
