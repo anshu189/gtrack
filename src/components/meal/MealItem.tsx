@@ -5,10 +5,9 @@ import { formatNum } from '@/lib/utils/format'
 
 interface MealItemProps {
   item: MealItem
-  onDelete?: (id: string) => void
 }
 
-const MealItem = ({ item, onDelete }: MealItemProps) => {
+const MealItem = ({ item }: MealItemProps) => {
   const [resolvedName, setResolvedName] = useState<string | null>(null)
 
   useEffect(() => {
