@@ -69,7 +69,12 @@ function AppLayout() {
     <AppShell
       header={
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 rounded-sm rounded-bl-2xl items-center justify-center bg-black text-2xl font-bold text-white p-6">G</div>
+          {/* <img src="../public/favicon.png" alt="Gtrak - Growth Tracker for G's" className='cursor-pointer' /> */}
+          <div className='flex px-auto items-center justify-center gap-[6px] w-12 h-12 bg-[#0c0c0c]'>
+            <div className="w-[5px] h-[5px] bg-white rounded-full"></div>
+            <div className="w-[5px] h-[5px] bg-white rounded-full"></div>
+            <div className="w-[5px] h-[5px] bg-white rounded-full"></div>
+          </div>
           <div>
             <p className="text-xl font-bold tracking-tight text-black dark:text-[#E8F1F6]">Gtrak</p>
             <p className="text-[12px] text-[#96A0AB]">Growth Tracker for G's</p>
