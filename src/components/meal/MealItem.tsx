@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import type { MealItem } from '@/types'
 import { foodRepository } from '@/lib/repositories/foodRepository'
-import { Button } from '@/components/ui/button'
 import { formatNum } from '@/lib/utils/format'
 
 interface MealItemProps {
@@ -24,18 +23,16 @@ const MealItem = ({ item, onDelete }: MealItemProps) => {
   const displayName = item.name ?? resolvedName ?? item.foodId
 
   return (
-    <div className="flex items-center justify-between border border-slate-100 p-2 dark:border-[#2D2D2D]">
-      <div className="flex items-center gap-3">
-        <span className="text-sm font-medium text-slate-950 dark:text-[#FDFDFD]">{displayName}</span>
-        <span className="text-xs text-slate-500 dark:text-[#FDFDFD]/70">{item.quantity} {item.unit}</span>
+    <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-sm font-medium text-[var(--color-text)]">{displayName}</span>
+        <span className="text-sm text-[var(--color-muted)]">{item.quantity} {item.unit}</span>
       </div>
-      <div className="flex items-center gap-2">
-        <span className="text-xs text-slate-500 dark:text-[#FDFDFD]/70">{formatNum(item.nutrition?.calories ?? 0)} kcal</span>
-        {onDelete && (
-          <Button size="sm" variant="ghost" className="text-red-600 dark:text-red-400" onClick={() => onDelete(item.id)}>
-            Remove
-          </Button>
-        )}
+      <div className="flex items-center gap-3 text-sm">
+        <span className="text-[var(--color-text)]">{formatNum(item.nutrition?.calories ?? 0)} kcal</span>
+        <span className="text-[var(--color-accent)]">{formatNum(item.nutrition?.protein ?? 0)}g P</span>
+        <span className="text-[var(--color-warning)]">{formatNum(item.nutrition?.carbs ?? 0)}g C</span>
+        <span className="text-[var(--color-error)]">{formatNum(item.nutrition?.fat ?? 0)}g F</span>
       </div>
     </div>
   )

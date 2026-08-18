@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useLocation } from 'react-router-dom'
 import type { Food, Meal, MealItem } from '@/types'
 import { useMealStore } from '@/stores/mealStore'
-import { MealCard, AddItem, FoodMacroEditor, UndoBanner } from '@/components/meal'
+import { MealCard, AddItem, QuantityPicker, FoodMacroEditor, UndoBanner } from '@/components/meal'
 import { Button } from '@/components/ui/button'
 import { PageContainer } from '@/components/ui/page-container'
-import { Card } from '@/components/ui/card'
+import { DateInput } from '@astryxdesign/core'
 import { cleanForFirestore } from '@/lib/utils/firestore'
 
 function getTodayIso() {
@@ -15,15 +15,17 @@ function getTodayIso() {
 const MealBuilder = () => {
   const location = useLocation()
   const mealStore = useMealStore()
+  const dateInputRef = useRef<HTMLInputElement>(null)
   const [currentMeal, setCurrentMeal] = useState<Partial<Meal> | null>(null)
   const [mealNameInput, setMealNameInput] = useState('')
   const [showEditor, setShowEditor] = useState(false)
   const [selectedDate, setSelectedDate] = useState<string>(
     (location.state as any)?.date ?? getTodayIso()
   )
+  const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set())
+  const [editItemId, setEditItemId] = useState<string | null>(null)
 
   const isToday = selectedDate === getTodayIso()
-  const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     mealStore.loadByDateRange(`${selectedDate}T00:00:00Z`, `${selectedDate}T23:59:59Z`)
@@ -42,10 +44,6 @@ const MealBuilder = () => {
     setSelectedDate(next.toISOString().split('T')[0])
   }
 
-  const handleToday = () => {
-    setSelectedDate(getTodayIso())
-  }
-
   const formattedDate = new Date(`${selectedDate}T12:00:00`).toLocaleDateString('en-US', {
     weekday: 'short',
     month: 'short',
@@ -53,10 +51,12 @@ const MealBuilder = () => {
   })
 
   const handleCreateMeal = () => {
+    const name = mealNameInput.trim()
+    if (!name) return
     const id = `meal:${Date.now()}-${Math.floor(Math.random() * 10000)}`
     const meal: Meal = {
       id,
-      name: mealNameInput || 'Meal',
+      name,
       loggedAt: `${selectedDate}T12:00:00Z`,
       items: [],
       createdAt: new Date().toISOString(),
@@ -114,6 +114,19 @@ const MealBuilder = () => {
     setCurrentMeal(null)
   }
 
+  const handleEditItem = (itemId: string) => {
+    setEditItemId(itemId)
+  }
+
+  const handleSaveItem = () => {
+    if (!editItemId || !currentMeal) return
+    setEditItemId(null)
+  }
+
+  const handleCancelEdit = () => {
+    setEditItemId(null)
+  }
+
   const handleDeleteMeal = async (id: string) => {
     await mealStore.removeWithUndo(id)
   }
@@ -128,50 +141,66 @@ const MealBuilder = () => {
 
   return (
     <PageContainer>
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-slate-950 dark:text-[#FDFDFD]">Meal Builder</h1>
-        <Button variant="outline" size="sm" onClick={() => setShowEditor((v) => !v)}>
+      <div className="mb-4 flex items-center justify-between">
+        <h1 className="text-lg font-bold text-[var(--color-text)]">Meal Builder</h1>
+        <button 
+          type="button" 
+          onClick={() => setShowEditor((v) => !v)}
+          className="py-2 px-4 rounded-lg text-sm font-medium border transition-colors
+              bg-transparent border-[var(--color-border)] text-[var(--color-text)]
+              hover:bg-[var(--color-surface)]"
+          >
           {showEditor ? 'Done Editing' : 'Edit Foods'}
-        </Button>
+        </button>
       </div>
 
       {showEditor ? (
-        <Card title="Food Macro Editor">
+        <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
           <FoodMacroEditor />
-        </Card>
+        </div>
       ) : (
-      <div className="space-y-6">
-        <div className="mb-2 flex items-center justify-between">
-          <Button size="sm" variant="outline" onClick={handlePreviousDay} className="flex gap-2 items-center">
-            &larr; Prev
-          </Button>
-          <div className="flex items-center gap-2">
+      <div className="space-y-4">
+        {/* Date navigation pills */}
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={handlePreviousDay}
+            className="flex-1 py-2.5 px-2 rounded-lg text-sm font-medium border transition-colors
+              bg-transparent border-[var(--color-border)] text-[var(--color-text)]
+              hover:bg-[var(--color-surface)]"
+          >
+            Prev
+          </button>
+          <div className="relative flex-1">
             <button
               type="button"
-              onClick={() => {
-                const input = document.getElementById('meal-date-picker') as HTMLInputElement
-                if (input) input.showPicker?.() ?? input.click()
-              }}
-              className="text-sm font-medium text-slate-950 hover:text-neutral-700 dark:text-[#FDFDFD]"
+              onClick={() => dateInputRef.current?.click()}
+              className="relative z-10 w-full py-2.5 px-4 rounded-lg text-sm font-medium border transition-colors
+                bg-[var(--color-text)] text-[var(--color-bg)] border-[var(--color-text)]
+                hover:opacity-90"
             >
               {formattedDate}
             </button>
-            <input
-              id="meal-date-picker"
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="sr-only"
+            <DateInput
+              ref={dateInputRef}
+              label="Select date"
+              isLabelHidden
+              value={selectedDate as `${number}${number}${number}${number}-${number}${number}-${number}${number}`}
+              onChange={(val) => { if (val) setSelectedDate(val) }}
+              size="sm"
+              className="absolute inset-0 opacity-0"
             />
-            {!isToday && (
-              <Button size="sm" variant="outline" onClick={handleToday}>
-                Today
-              </Button>
-            )}
           </div>
-          <Button size="sm" variant="outline" onClick={handleNextDay} disabled={isToday}>
-            Next &rarr;
-          </Button>
+          <button
+            type="button"
+            onClick={handleNextDay}
+            disabled={isToday}
+            className="flex-1 py-2.5 px-2 rounded-lg text-sm font-medium border transition-colors
+              bg-transparent border-[var(--color-border)] text-[var(--color-text)]
+              hover:bg-[var(--color-surface)] disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Next
+          </button>
         </div>
 
         <UndoBanner
@@ -181,50 +210,123 @@ const MealBuilder = () => {
           onUndo={handleUndo}
         />
 
-        <Card title="New Meal">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <input
-              type="text"
-              className="flex-1 border border-slate-200 dark:border-[#2D2D2D] px-3 py-2 text-sm dark:bg-[#1F1F1F] dark:text-[#FDFDFD]"
-              value={mealNameInput}
-              onChange={(e) => setMealNameInput(e.target.value)}
-              placeholder="Meal name"
-            />
-            <Button onClick={handleCreateMeal} className="w-full sm:w-auto dark:bg-[#FDFDFD] dark:text-[#111111]">Create</Button>
-          </div>
-        </Card>
+        {/* New Meal */}
+        <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
+          <p className="text-base font-semibold text-[var(--color-text)] mb-3">New Meal</p>
+          <input
+            type="text"
+            className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2.5 text-sm text-[var(--color-text)] placeholder-[var(--color-muted)]"
+            value={mealNameInput}
+            onChange={(e) => setMealNameInput(e.target.value)}
+            placeholder="Meal name"
+          />
+          <button
+            type="button"
+            onClick={handleCreateMeal}
+            disabled={!mealNameInput.trim()}
+            className="mt-3 w-full rounded-lg py-2.5 rounded-lg text-sm font-medium border transition-colors
+                bg-[var(--color-text)] text-[var(--color-bg)] border-[var(--color-text)]
+                hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Create
+          </button>
+        </div>
 
+        {/* Current meal being edited */}
         {currentMeal && (
-          <div className="border border-[#2D2D2D] bg-[#1F1F1F] p-5">
-            <h3 className="mb-3 text-sm font-semibold text-[#FDFDFD]">{currentMeal.name}</h3>
+          <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
+            <p className="text-base font-semibold text-[var(--color-text)] mb-3">{currentMeal.name}</p>
             <AddItem onAdd={handleAddItem} />
             <div className="mt-4 space-y-2">
-              {currentMeal.items?.map((item) => (
-                <div key={item.id} className="flex items-center justify-between border border-[#2D2D2D] bg-[#111111] p-2">
-                  <div>
-                    <p className="text-sm font-medium text-[#FDFDFD]">{item.foodId}</p>
-                    <p className="text-xs text-[#FDFDFD]/60">{item.quantity} {item.unit}</p>
+              {currentMeal.items?.map((item) => {
+                if (editItemId === item.id) {
+                  return (
+                    <div key={item.id} className="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] p-3">
+                      <p className="text-base font-semibold text-[var(--color-text)] mb-2">Edit Item</p>
+                      <QuantityPicker
+                        value={item.quantity}
+                        unit={item.unit}
+                        onChange={(v, u) => {
+                          // Update item quantity/unit in state
+                          setCurrentMeal({
+                            ...currentMeal,
+                            items: currentMeal.items?.map((i) =>
+                              i.id === item.id ? { ...i, quantity: v, unit: u } : i
+                            ) ?? [],
+                          })
+                        }}
+                      />
+                      <div className="mt-3 flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={handleSaveItem}
+                          className="flex-1 py-2 text-sm font-medium bg-[var(--color-text)] text-[var(--color-bg)] hover:opacity-90 transition-colors"
+                        >
+                          Save
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleCancelEdit}
+                          className="flex-1 py-2 text-sm font-medium border border-[var(--color-border)] text-[var(--color-text)] hover:bg-[var(--color-surface)] transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )
+                }
+                return (
+                  <div key={item.id} className="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] p-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-[var(--color-text)]">{item.name}</span>
+                      <span className="text-sm text-[var(--color-muted)]">{item.quantity} {item.unit}</span>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveItem(item.id)}
+                          className="py-1.5 rounded-sm px-2 text-xs text-[var(--color-error)] hover:bg-[var(--color-surface-alt)] transition-colors"
+                        >
+                          Remove
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleEditItem(item.id)}
+                          className="py-1.5 rounded-sm px-2 text-xs text-[var(--color-accent)] hover:bg-[var(--color-surface-alt)] transition-colors"
+                        >
+                          Edit
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                  <Button size="sm" variant="ghost" className="text-red-400" onClick={() => handleRemoveItem(item.id)}>
-                    Remove
-                  </Button>
-                </div>
-              ))}
+                )
+              })}
             </div>
             <div className="mt-4 flex items-center gap-2">
-              <Button onClick={handleSaveMeal} className='dark:bg-[#FDFDFD] dark:text-[#111111]'>Save Meal</Button>
-              <Button onClick={() => setCurrentMeal(null)} variant="outline">
+              <button
+                type="button"
+                onClick={handleSaveMeal}
+                className="flex-1 rounded-lg py-2.5 text-sm font-medium bg-[var(--color-text)] text-[var(--color-bg)] hover:opacity-90 transition-colors"
+              >
+                Save Meal
+              </button>
+              <button
+                type="button"
+                onClick={() => setCurrentMeal(null)}
+                className="flex-1 rounded-lg py-2.5 text-sm font-medium border border-[var(--color-border)] text-[var(--color-text)] hover:bg-[var(--color-surface)] transition-colors"
+              >
                 Cancel
-              </Button>
+              </button>
             </div>
           </div>
         )}
 
-        <Card title="Meals">
+        {/* Meals list */}
+        <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
+          <p className="text-base font-semibold text-[var(--color-text)] mb-3">Meals</p>
           {mealStore.meals.length === 0 ? (
-            <p className="text-sm text-[#FDFDFD]/60">No meals for this day</p>
+            <p className="text-sm text-[var(--color-muted)]">No meals for this day</p>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-4">
               {mealStore.meals.map((meal) => (
                 <MealCard
                   key={meal.id}
@@ -235,7 +337,7 @@ const MealBuilder = () => {
               ))}
             </div>
           )}
-        </Card>
+        </div>
       </div>
       )}
     </PageContainer>

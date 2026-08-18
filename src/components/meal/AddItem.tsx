@@ -2,8 +2,6 @@ import { useState, useCallback } from 'react'
 import type { Food } from '@/types'
 import FoodPicker from './FoodPicker'
 import QuantityPicker from './QuantityPicker'
-import { Button } from '@/components/ui/button'
-import { computeGramsPerUnit } from '@/lib/utils/nutrition'
 
 interface AddItemProps {
   onAdd: (payload: { food: Food; quantity: number; unit?: string; gramsPerUnit: number }) => void
@@ -23,7 +21,8 @@ const AddItem = ({ onAdd }: AddItemProps) => {
 
   const handleConfirm = useCallback(() => {
     if (!selectedFood) return
-    onAdd({ food: selectedFood, quantity, unit, gramsPerUnit: computeGramsPerUnit(selectedFood, unit) })
+    const gramsPerUnit = unit === 'g' || unit === 'ml' ? 1 : selectedFood.measures?.find((m) => m.unit === unit)?.grams ?? 1
+    onAdd({ food: selectedFood, quantity, unit, gramsPerUnit })
     setSelectedFood(null)
     setAddedName(selectedFood.name)
     setTimeout(() => setAddedName(null), 2000)
@@ -35,22 +34,35 @@ const AddItem = ({ onAdd }: AddItemProps) => {
 
   if (selectedFood) {
     return (
-      <div className="border border-slate-100 bg-white p-3 dark:border-[#2D2D2D] dark:bg-[#1F1F1F]">
-        <p className="mb-3 text-sm font-medium text-slate-950 dark:text-[#FDFDFD]">{selectedFood.name}</p>
+      <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] p-3">
+        <p className="text-sm font-medium text-[var(--color-text)] mb-2">{selectedFood.name}</p>
         <QuantityPicker value={quantity} unit={unit} onChange={(v, u) => { setQuantity(v); if (u) setUnit(u) }} />
         <div className="mt-3 flex items-center gap-2">
-          <Button variant="outline" size="sm" className="flex-1" onClick={handleCancel}>Cancel</Button>
-          <Button size="sm" className="flex-1" onClick={handleConfirm}>Add</Button>
+          <button
+            type="button"
+            onClick={handleCancel}
+            className="flex-1 rounded-lg py-2 text-sm font-medium border border-[var(--color-border)] text-[var(--color-text)] hover:bg-[var(--color-surface)] transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleConfirm}
+            className="flex-1 rounded-lg py-2 text-sm font-medium bg-[var(--color-text)] text-[var(--color-bg)] hover:opacity-90 transition-colors"
+          >
+            Add
+          </button>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="border border-slate-100 bg-white p-3 dark:border-[#2D2D2D] dark:bg-[#1F1F1F]">
+    <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] p-3">
+      <p className="text-sm font-medium text-[var(--color-muted)] mb-2">Add food item</p>
       <FoodPicker onSelect={handleSelect} />
       {addedName && (
-        <p className="mt-2 text-sm text-green-600">Added: {addedName}</p>
+        <p className="mt-2 text-sm text-[var(--color-success)]">Added: {addedName}</p>
       )}
     </div>
   )

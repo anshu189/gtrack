@@ -1,5 +1,3 @@
-import { Button } from '@/components/ui/button'
-
 interface DeleteItemButtonProps {
   onClick: () => void
   label?: string
@@ -7,9 +5,13 @@ interface DeleteItemButtonProps {
 
 const DeleteItemButton = ({ onClick, label = 'Delete' }: DeleteItemButtonProps) => {
   return (
-    <Button size="sm" variant="ghost" className="text-red-600 dark:text-red-400" onClick={onClick}>
+    <button
+      type="button"
+      onClick={onClick}
+      className="rounded-lg py-2 text-sm font-medium text-[var(--color-error)] border border-[var(--color-border)] hover:bg-[var(--color-surface-alt)] transition-colors"
+    >
       {label}
-    </Button>
+    </button>
   )
 }
 

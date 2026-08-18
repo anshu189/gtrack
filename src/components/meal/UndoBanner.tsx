@@ -37,26 +37,26 @@ const UndoBanner = ({ entries, dismissedIds, onDismiss, onUndo }: UndoBannerProp
       {visible.map((entry) => (
         <div
           key={entry.id}
-          className="flex items-center justify-between border border-[#2D2D2D] bg-[#1F1F1F] px-4 py-3"
+          className="flex items-center justify-between rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3"
         >
           <div className="flex-1">
-            <p className="text-sm text-[#FDFDFD]">
+            <p className="text-sm text-[var(--color-text)]">
               "{entry.meal.name ?? 'Untitled'}" deleted.
             </p>
-            <p className="text-xs text-[#FDFDFD]/50">Undo available until midnight ({timeLeft} left)</p>
+            <p className="text-xs text-[var(--color-muted)]">Undo available until midnight ({timeLeft} left)</p>
           </div>
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => onUndo(entry.id)}
-              className="border border-[#FDFDFD] px-3 py-1 text-xs font-medium text-[#FDFDFD] hover:bg-[#FDFDFD] hover:text-[#111111]"
+              className="border border-[var(--color-text)] px-3 py-1 text-xs font-medium text-[var(--color-text)] hover:bg-[var(--color-text)] hover:text-[var(--color-bg)] transition-colors"
             >
               Undo
             </button>
             <button
               type="button"
               onClick={() => onDismiss(entry.id)}
-              className="text-xs text-[#FDFDFD]/40 hover:text-[#FDFDFD]/70"
+              className="text-xs text-[var(--color-muted)] hover:text-[var(--color-text)] transition-colors"
             >
               ✕
             </button>
