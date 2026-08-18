@@ -1,17 +1,16 @@
 import type { WeightEntry } from '@/types'
-import { Table, proportional } from '@astryxdesign/core/Table'
-import type { TableColumn } from '@astryxdesign/core/Table'
+import {
+  Table,
+  TableHeader,
+  TableHeaderCell,
+  TableBody,
+  TableRow,
+  TableCell,
+} from '@astryxdesign/core/Table'
 
 interface WeightHistoryProps {
   entries: WeightEntry[]
   excludeDate?: string
-}
-
-interface WeightRow extends Record<string, unknown> {
-  id: string
-  date: string
-  weight: string
-  trend: { label: string; tone: 'success' | 'error' | 'neutral' } | null
 }
 
 function formatDate(dateIso: string) {
@@ -30,6 +29,12 @@ function getTrend(current: WeightEntry, previous?: WeightEntry) {
   return { label: `${delta.toFixed(1)} ${current.unit}`, tone: 'success' as const }
 }
 
+function toneClass(tone: 'success' | 'error' | 'neutral') {
+  if (tone === 'success') return 'text-[var(--color-success)]'
+  if (tone === 'error') return 'text-[var(--color-error)]'
+  return 'text-[var(--color-muted)]'
+}
+
 export const WeightHistory = ({ entries, excludeDate }: WeightHistoryProps) => {
   const items = entries.filter((e) => e.date !== excludeDate)
 
@@ -37,34 +42,46 @@ export const WeightHistory = ({ entries, excludeDate }: WeightHistoryProps) => {
     return <p className="text-sm text-[var(--color-muted)]">Log today&apos;s weight to begin tracking.</p>
   }
 
-  const rows: WeightRow[] = items.map((entry, index) => ({
-    id: entry.id,
-    date: formatDate(entry.date),
-    weight: `${entry.weight} ${entry.unit}`,
-    trend: getTrend(entry, items[index + 1]),
-  }))
-
-  const columns: TableColumn<WeightRow>[] = [
-    { key: 'date', header: 'Date', width: proportional(2) },
-    { key: 'weight', header: 'Weight', width: proportional(1) },
-    {
-      key: 'trend',
-      header: 'Change',
-      width: proportional(1),
-      renderCell: (row) => {
-        if (!row.trend) return null
-        const toneClass =
-          row.trend.tone === 'success'
-            ? 'text-[var(--color-success)]'
-            : row.trend.tone === 'error'
-              ? 'text-[var(--color-error)]'
-              : 'text-[var(--color-muted)]'
-        return <span className={`text-sm ${toneClass}`}>{row.trend.label}</span>
-      },
-    },
-  ]
-
-  return <Table data={rows} columns={columns} idKey="id" density="compact" dividers="rows" />
+  return (
+    <Table density="compact" dividers="rows">
+      <TableHeader>
+        <TableRow isHeaderRow>
+          <TableHeaderCell>
+            <span className="text-sm font-semibold text-[var(--color-muted)]">Date</span>
+          </TableHeaderCell>
+          <TableHeaderCell>
+            <span className="text-sm font-semibold text-[var(--color-muted)]">Weight</span>
+          </TableHeaderCell>
+          <TableHeaderCell>
+            <span className="text-sm font-semibold text-[var(--color-muted)]">Change</span>
+          </TableHeaderCell>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {items.map((entry, index) => {
+          const previous = items[index + 1]
+          const trend = getTrend(entry, previous)
+          return (
+            <TableRow key={entry.id}>
+              <TableCell>
+                <span className="text-sm text-[var(--color-muted)]">{formatDate(entry.date)}</span>
+              </TableCell>
+              <TableCell>
+                <span className="text-sm font-medium text-[var(--color-text)]">
+                  {entry.weight} {entry.unit}
+                </span>
+              </TableCell>
+              <TableCell>
+                {trend && (
+                  <span className={`text-sm ${toneClass(trend.tone)}`}>{trend.label}</span>
+                )}
+              </TableCell>
+            </TableRow>
+          )
+        })}
+      </TableBody>
+    </Table>
+  )
 }
 
 export default WeightHistory
