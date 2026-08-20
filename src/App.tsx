@@ -70,11 +70,13 @@ function AppLayout() {
       header={
         <div className="flex items-center gap-3">
           {/* <img src="../public/favicon.png" alt="Gtrak - Growth Tracker for G's" className='cursor-pointer' /> */}
-          <div className='flex px-auto items-center justify-center gap-[6px] w-12 h-12 bg-[#0c0c0c]'>
-            <div className="w-[5px] h-[5px] bg-white rounded-full"></div>
-            <div className="w-[5px] h-[5px] bg-white rounded-full"></div>
-            <div className="w-[5px] h-[5px] bg-white rounded-full"></div>
-          </div>
+          <a href="/">
+            <div className='flex px-auto items-center justify-center gap-[6px] w-12 h-12 bg-[#0c0c0c]'>
+              <div className="w-[5px] h-[5px] bg-white rounded-full"></div>
+              <div className="w-[5px] h-[5px] bg-white rounded-full"></div>
+              <div className="w-[5px] h-[5px] bg-white rounded-full"></div>
+            </div>
+          </a>
           <div>
             <p className="text-xl font-bold tracking-tight text-black dark:text-[#E8F1F6]">Gtrak</p>
             <p className="text-[12px] text-[#96A0AB]">Growth Tracker for G's</p>

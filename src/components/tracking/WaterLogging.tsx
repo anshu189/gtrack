@@ -6,7 +6,7 @@ interface WaterLoggingProps {
   onAdd: (log: Partial<WaterLog>) => void
 }
 
-const QUICK_AMOUNTS = [250, 350, 500, 750]
+const QUICK_AMOUNTS = [250, 300, 350, 500, 750]
 
 export const WaterLogging = ({ onAdd }: WaterLoggingProps) => {
   const [custom, setCustom] = useState<number | null>(null)
