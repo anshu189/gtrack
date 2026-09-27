@@ -172,46 +172,46 @@ const FoodMacroEditor = () => {
   return (
     <div className="w-full rounded-lg">
       <input
-        className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2.5 text-sm text-[var(--color-text)] placeholder-[var(--color-muted)]"
+        className="w-full h-[56px] rounded-md border border-transparent bg-surface-2 px-4 subhead text-black placeholder:text-ink-3 outline-none transition duration-150 hover:border-track focus:border-black focus:bg-surface"
         value={q}
         onChange={(e) => setQ(e.target.value)}
         placeholder="Search food to edit macros"
       />
 
       <div className="mt-2 max-h-72 overflow-auto">
-        {loading && <p className="text-sm text-[var(--color-muted)]">Searching...</p>}
-        {!loading && results.length === 0 && q && <p className="text-sm text-[var(--color-muted)]">No results</p>}
+        {loading && <p className="text-sm text-ink-2">Searching...</p>}
+        {!loading && results.length === 0 && q && <p className="text-sm text-ink-2">No results</p>}
         <ul className="space-y-1">
           {results.map((f) => (
             <li
               key={f.id}
-              className={`flex cursor-pointer items-center justify-between rounded-lg p-2 px-3 border border-[var(--color-border)] bg-[var(--color-surface)] hover:bg-[var(--color-surface-alt)] transition-colors ${selected?.id === f.id ? 'bg-[var(--color-surface-alt)]' : ''}`}
+              className={`flex cursor-pointer items-center justify-between rounded-lg p-2 px-3 border border-line bg-surface hover:bg-surface-2 transition-colors ${selected?.id === f.id ? 'bg-surface-2' : ''}`}
               onClick={() => handleSelect(f)}
             >
               <div>
-                <p className="text-sm font-medium text-[var(--color-text)]">{f.name}</p>
-                <p className="text-xs text-[var(--color-muted)]">{f.source}{f.sourceReference ? ` · ${f.sourceReference}` : ''}</p>
+                <p className="text-sm font-medium text-black">{f.name}</p>
+                <p className="text-xs text-ink-2">{f.source}{f.sourceReference ? ` · ${f.sourceReference}` : ''}</p>
               </div>
-              <p className="text-sm text-[var(--color-muted)]">{f.nutrition.calories} kcal</p>
+              <p className="text-sm text-ink-2">{f.nutrition.calories} kcal</p>
             </li>
           ))}
         </ul>
       </div>
 
       {selected && (
-        <div className="mt-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
-          <p className="mb-2 text-md font-semibold text-[var(--color-text)]">{selected.name}</p>
-          <div className="mb-6 flex flex-wrap items-center gap-1 text-sm text-[var(--color-muted)]">
+        <div className="mt-3 rounded-lg border border-line bg-surface p-3">
+          <p className="mb-2 text-md font-semibold text-black">{selected.name}</p>
+          <div className="mb-6 flex flex-wrap items-center gap-1 text-sm text-ink-2">
             <span>Per</span>
             <input
               type="number"
-              className="w-14 rounded border border-[var(--color-border)] bg-[var(--color-bg)] px-1.5 py-0.5 text-xs text-[var(--color-text)]"
+              className="w-14 rounded border border-line bg-surface-2 px-1.5 py-0.5 text-xs text-black"
               value={editQuantity}
               onChange={(e) => handleQuantityChange(Number(e.target.value), editUnit)}
               min={0}
             />
             <select
-              className="rounded border border-[var(--color-border)] bg-[var(--color-bg)] px-1.5 py-0.5 text-xs text-[var(--color-text)]"
+              className="rounded border border-line bg-surface-2 px-1.5 py-0.5 text-xs text-black"
               value={editUnit}
               onChange={(e) => handleQuantityChange(editQuantity, e.target.value)}
             >
@@ -225,20 +225,20 @@ const FoodMacroEditor = () => {
           <div className="grid grid-cols-2 gap-2">
             {fields.map((f) => (
               <div key={f.key}>
-                <p className="text-sm text-[var(--color-muted)] mb-1">{f.label}</p>
+                <p className="text-sm text-ink-2 mb-1">{f.label}</p>
                 <input
                   type="number"
-                  className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 text-sm text-[var(--color-text)]"
+                  className="w-full h-[56px] rounded-md border border-transparent bg-surface-2 px-4 subhead text-black placeholder:text-ink-3 outline-none transition duration-150 hover:border-track focus:border-black focus:bg-surface"
                   value={f.value}
                   onChange={(e) => f.setter(Number(e.target.value))}
                 />
               </div>
             ))}
             <div>
-              <p className="text-sm text-[var(--color-muted)] mb-1">Fiber (g)</p>
+              <p className="text-sm text-ink-2 mb-1">Fiber (g)</p>
               <input
                 type="number"
-                className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 text-sm text-[var(--color-text)]"
+                className="w-full h-[56px] rounded-md border border-transparent bg-surface-2 px-4 subhead text-black placeholder:text-ink-3 outline-none transition duration-150 hover:border-track focus:border-black focus:bg-surface"
                 value={fiber}
                 onChange={(e) => setFiber(Number(e.target.value))}
               />
@@ -249,14 +249,14 @@ const FoodMacroEditor = () => {
               type="button"
               onClick={handleUpdate}
               disabled={saving}
-              className="flex-1 rounded-lg py-2 text-sm font-medium bg-[var(--color-text)] text-[var(--color-bg)] hover:opacity-90 transition-colors disabled:opacity-50"
+              className="min-w-0 flex-1 rounded-lg py-2 text-sm font-medium bg-ink text-on-ink hover:opacity-90 transition-colors disabled:opacity-50"
             >
               {saving ? 'Saving...' : 'Update'}
             </button>
             <button
               type="button"
               onClick={() => { setSelected(null); setQ('') }}
-              className="flex-1 rounded-lg py-2 text-sm font-medium border border-[var(--color-border)] text-[var(--color-text)] hover:bg-[var(--color-surface)] transition-colors"
+              className="min-w-0 flex-1 rounded-lg py-2 text-sm font-medium border border-line text-black hover:bg-surface transition-colors"
             >
               Cancel
             </button>
@@ -265,28 +265,28 @@ const FoodMacroEditor = () => {
       )}
 
       {done && (
-        <p className="mt-2 text-sm text-[var(--color-success)]">Updated: {done}</p>
+        <p className="mt-2 text-sm text-success">Updated: {done}</p>
       )}
 
-      <div className="mt-4 flex items-center gap-2 border-t border-[var(--color-border)] pt-3">
+      <div className="mt-4 flex items-center gap-2 border-t border-line pt-3">
         <button
           type="button"
           onClick={handleExport}
-          className="flex-1 rounded-lg py-2 text-sm font-medium border border-[var(--color-border)] text-[var(--color-text)] hover:bg-[var(--color-surface)] transition-colors"
+          className="min-w-0 flex-1 rounded-lg py-2 text-sm font-medium border border-line text-black hover:bg-surface transition-colors"
         >
           Export Overrides
         </button>
         <button
           type="button"
           onClick={() => fileRef.current?.click()}
-          className="flex-1 rounded-lg py-2 text-sm font-medium border border-[var(--color-border)] text-[var(--color-text)] hover:bg-[var(--color-surface)] transition-colors"
+          className="min-w-0 flex-1 rounded-lg py-2 text-sm font-medium border border-line text-black hover:bg-surface transition-colors"
         >
           Import Overrides
         </button>
         <input ref={fileRef} type="file" accept=".json" className="hidden" onChange={handleImport} />
       </div>
       {importMsg && (
-        <p className="mt-2 text-sm text-[var(--color-muted)]">{importMsg}</p>
+        <p className="mt-2 text-sm text-ink-2">{importMsg}</p>
       )}
     </div>
   )

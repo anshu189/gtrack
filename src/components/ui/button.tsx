@@ -1,50 +1,42 @@
 import * as React from 'react'
+import { Button as DsButton, type ButtonVariant, type ButtonSize } from '@/components/ds'
 import { cn } from '@/lib/utils/cn'
 
-type ButtonVariant = 'default' | 'secondary' | 'outline' | 'ghost' | 'danger'
+type LegacyVariant = 'default' | 'secondary' | 'outline' | 'ghost' | 'danger'
+type LegacySize = 'sm' | 'md' | 'lg'
 
-type ButtonSize = 'sm' | 'md' | 'lg'
-
-const buttonStyles: Record<ButtonVariant, string> = {
-  default:
-    'bg-black text-white hover:bg-neutral-800',
-  secondary:
-    'bg-slate-100 text-slate-950 border border-slate-200 hover:bg-slate-200 dark:bg-[#24292D] dark:text-[#E8F1F6] dark:border-[#24292D] dark:hover:bg-[#2a2f34]',
-  outline:
-    'bg-white text-slate-950 border border-slate-200 hover:bg-slate-50 dark:bg-transparent dark:text-[#E8F1F6] dark:border-[#24292D] dark:hover:bg-[#24292D]',
-  ghost:
-    'bg-transparent text-slate-950 hover:bg-slate-100 dark:text-[#E8F1F6] dark:hover:bg-[#24292D]',
-  danger:
-    'bg-red-600 text-white hover:bg-red-700',
+/**
+ * Adapter: maps the old Button API onto the Gtrak DS Button.
+ *
+ * `danger` has no DS equivalent — the DS forbids colouring a button with a
+ * status colour. A destructive action is rendered as a secondary button with
+ * protein-red label instead, which signals the danger without the fill.
+ */
+const VARIANT_MAP: Record<LegacyVariant, ButtonVariant> = {
+  default: 'primary',
+  secondary: 'secondary',
+  outline: 'outline',
+  ghost: 'ghost',
+  danger: 'secondary',
 }
 
-const sizeStyles: Record<ButtonSize, string> = {
-  sm: 'px-3 py-1.5 text-xs',
-  md: 'px-4 py-2 text-sm',
-  lg: 'px-5 py-2.5 text-base',
-}
+const SIZE_MAP: Record<LegacySize, ButtonSize> = { sm: 'sm', md: 'md', lg: 'lg' }
 
 type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: ButtonVariant
-  size?: ButtonSize
+  variant?: LegacyVariant
+  size?: LegacySize
 }
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = 'default', size = 'md', type = 'button', ...props }, ref) => {
-    return (
-      <button
-        ref={ref}
-        type={type}
-        className={cn(
-          'inline-flex items-center justify-center gap-2 font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50',
-          buttonStyles[variant],
-          sizeStyles[size],
-          className,
-        )}
-        {...props}
-      />
-    )
-  },
+  ({ variant = 'default', size = 'md', className, ...props }, ref) => (
+    <DsButton
+      ref={ref}
+      variant={VARIANT_MAP[variant]}
+      size={SIZE_MAP[size]}
+      className={cn(variant === 'danger' && 'text-protein hover:text-protein', className)}
+      {...props}
+    />
+  ),
 )
 
 Button.displayName = 'Button'

@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import type { Food, Meal, MealItem } from '@/types'
 import { useMealStore } from '@/stores/mealStore'
 import { MealCard, AddItem, QuantityPicker, FoodMacroEditor, UndoBanner } from '@/components/meal'
-import { PageContainer } from '@/components/ui/page-container'
-import { DateInput } from '@astryxdesign/core'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { Button, Card, DatePicker, IconButton, TextField } from '@/components/ds'
 import { cleanForFirestore } from '@/lib/utils/firestore'
 
 function getTodayIso() {
@@ -14,7 +14,6 @@ function getTodayIso() {
 const MealBuilder = () => {
   const location = useLocation()
   const mealStore = useMealStore()
-  const dateInputRef = useRef<HTMLInputElement>(null)
   const [currentMeal, setCurrentMeal] = useState<Partial<Meal> | null>(null)
   const [mealNameInput, setMealNameInput] = useState('')
   const [showEditor, setShowEditor] = useState(false)
@@ -24,7 +23,8 @@ const MealBuilder = () => {
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set())
   const [editItemId, setEditItemId] = useState<string | null>(null)
 
-  const isToday = selectedDate === getTodayIso()
+  const today = getTodayIso()
+  const isToday = selectedDate === today
 
   useEffect(() => {
     mealStore.loadByDateRange(`${selectedDate}T00:00:00Z`, `${selectedDate}T23:59:59Z`)
@@ -42,12 +42,6 @@ const MealBuilder = () => {
     next.setDate(next.getDate() + 1)
     setSelectedDate(next.toISOString().split('T')[0])
   }
-
-  const formattedDate = new Date(`${selectedDate}T12:00:00`).toLocaleDateString('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-  })
 
   const handleCreateMeal = () => {
     const name = mealNameInput.trim()
@@ -139,67 +133,43 @@ const MealBuilder = () => {
   }
 
   return (
-    <PageContainer>
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-lg font-bold text-[var(--color-text)]">Meal Builder</h1>
-        <button 
-          type="button" 
-          onClick={() => setShowEditor((v) => !v)}
-          className="py-2 px-4 rounded-lg text-sm font-medium border transition-colors
-              bg-transparent border-[var(--color-border)] text-[var(--color-text)]
-              hover:bg-[var(--color-surface)]"
-          >
-          {showEditor ? 'Done Editing' : 'Edit Foods'}
-        </button>
+    <>
+      <div className="mb-5 flex items-center justify-between gap-4">
+        <h1 className="title-1 text-black">Meals</h1>
+        <Button variant="ghost" size="sm" onClick={() => setShowEditor((v) => !v)}>
+          {showEditor ? 'Done editing' : 'Edit foods'}
+        </Button>
       </div>
 
       {showEditor ? (
-        <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
+        <Card>
           <FoodMacroEditor />
-        </div>
+        </Card>
       ) : (
-      <div className="space-y-4">
-        {/* Date navigation pills */}
-        <div className="flex gap-2">
-          <button
-            type="button"
+      <div className="flex flex-col gap-3">
+        {/* Date navigation. The old centre pill hid a date input behind
+            an invisible overlay; the DS picker owns its own popover instead. */}
+        <div className="mb-5 flex items-center gap-2">
+          <IconButton
+            label="Previous day"
+            icon={<ChevronLeft size={20} />}
             onClick={handlePreviousDay}
-            className="flex-1 py-2.5 px-2 rounded-lg text-sm font-medium border transition-colors
-              bg-transparent border-[var(--color-border)] text-[var(--color-text)]
-              hover:bg-[var(--color-surface)]"
-          >
-            Prev
-          </button>
-          <div className="relative flex-1">
-            <button
-              type="button"
-              onClick={() => dateInputRef.current?.click()}
-              className="relative z-10 w-full py-2.5 px-4 rounded-lg text-sm font-medium border transition-colors
-                bg-[var(--color-text)] text-[var(--color-bg)] border-[var(--color-text)]
-                hover:opacity-90"
-            >
-              {formattedDate}
-            </button>
-            <DateInput
-              ref={dateInputRef}
-              label="Select date"
-              isLabelHidden
-              value={selectedDate as `${number}${number}${number}${number}-${number}${number}-${number}${number}`}
-              onChange={(val) => { if (val) setSelectedDate(val) }}
-              size="sm"
-              className="absolute inset-0 opacity-0"
-            />
-          </div>
-          <button
-            type="button"
+          />
+          <DatePicker
+            label="Select date"
+            value={selectedDate}
+            onChange={setSelectedDate}
+            max={today}
+            fullWidth
+            className="flex-1"
+          />
+          <IconButton
+            label="Next day"
+            icon={<ChevronRight size={20} />}
             onClick={handleNextDay}
             disabled={isToday}
-            className="flex-1 py-2.5 px-2 rounded-lg text-sm font-medium border transition-colors
-              bg-transparent border-[var(--color-border)] text-[var(--color-text)]
-              hover:bg-[var(--color-surface)] disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            Next
-          </button>
+            className="disabled:bg-surface-2 disabled:opacity-40"
+          />
         </div>
 
         <UndoBanner
@@ -209,39 +179,41 @@ const MealBuilder = () => {
           onUndo={handleUndo}
         />
 
-        {/* New Meal */}
-        <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
-          <p className="text-base font-semibold text-[var(--color-text)] mb-3">New Meal</p>
-          <input
-            type="text"
-            className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2.5 text-sm text-[var(--color-text)] placeholder-[var(--color-muted)]"
+        {/* New meal. The DS TextField's inline action is disabled until there
+            is input, which is exactly the meal-name-required rule. */}
+        <Card>
+          <p className="title-2 mb-4 text-black">New meal</p>
+          <TextField
+            label="Meal name"
+            isLabelHidden
             value={mealNameInput}
             onChange={(e) => setMealNameInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && mealNameInput.trim()) {
+                e.preventDefault()
+                handleCreateMeal()
+              }
+            }}
             placeholder="Meal name"
+            action={{
+              label: 'Create',
+              onClick: handleCreateMeal,
+              disabled: !mealNameInput.trim(),
+            }}
           />
-          <button
-            type="button"
-            onClick={handleCreateMeal}
-            disabled={!mealNameInput.trim()}
-            className="mt-3 w-full rounded-lg py-2.5 rounded-lg text-sm font-medium border transition-colors
-                bg-[var(--color-text)] text-[var(--color-bg)] border-[var(--color-text)]
-                hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            Create
-          </button>
-        </div>
+        </Card>
 
         {/* Current meal being edited */}
         {currentMeal && (
-          <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
-            <p className="text-base font-semibold text-[var(--color-text)] mb-3">{currentMeal.name}</p>
+          <div className="rounded-lg border border-line bg-surface p-5">
+            <p className="text-base font-semibold text-black mb-3">{currentMeal.name}</p>
             <AddItem onAdd={handleAddItem} />
             <div className="mt-4 space-y-2">
               {currentMeal.items?.map((item) => {
                 if (editItemId === item.id) {
                   return (
-                    <div key={item.id} className="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] p-3">
-                      <p className="text-base font-semibold text-[var(--color-text)] mb-2">Edit Item</p>
+                    <div key={item.id} className="rounded-lg border border-line bg-surface-2 p-3">
+                      <p className="text-base font-semibold text-black mb-2">Edit Item</p>
                       <QuantityPicker
                         value={item.quantity}
                         unit={item.unit}
@@ -259,14 +231,14 @@ const MealBuilder = () => {
                         <button
                           type="button"
                           onClick={handleSaveItem}
-                          className="flex-1 py-2 text-sm font-medium bg-[var(--color-text)] text-[var(--color-bg)] hover:opacity-90 transition-colors"
+                          className="flex-1 py-2 text-sm font-medium bg-ink text-on-ink hover:opacity-90 transition-colors"
                         >
                           Save
                         </button>
                         <button
                           type="button"
                           onClick={handleCancelEdit}
-                          className="flex-1 py-2 text-sm font-medium border border-[var(--color-border)] text-[var(--color-text)] hover:bg-[var(--color-surface)] transition-colors"
+                          className="flex-1 py-2 text-sm font-medium border border-line text-black hover:bg-surface transition-colors"
                         >
                           Cancel
                         </button>
@@ -275,22 +247,22 @@ const MealBuilder = () => {
                   )
                 }
                 return (
-                  <div key={item.id} className="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] p-3">
+                  <div key={item.id} className="rounded-lg border border-line bg-surface-2 p-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-[var(--color-text)]">{item.name}</span>
-                      <span className="text-sm text-[var(--color-muted)]">{item.quantity} {item.unit}</span>
+                      <span className="text-sm font-medium text-black">{item.name}</span>
+                      <span className="text-sm text-ink-2">{item.quantity} {item.unit}</span>
                       <div className="flex items-center gap-1">
                         <button
                           type="button"
                           onClick={() => handleRemoveItem(item.id)}
-                          className="py-1.5 rounded-sm px-2 text-xs text-[var(--color-error)] hover:bg-[var(--color-surface-alt)] transition-colors"
+                          className="py-1.5 rounded-sm px-2 text-xs text-protein hover:bg-surface-2 transition-colors"
                         >
                           Remove
                         </button>
                         <button
                           type="button"
                           onClick={() => handleEditItem(item.id)}
-                          className="py-1.5 rounded-sm px-2 text-xs text-[var(--color-accent)] hover:bg-[var(--color-surface-alt)] transition-colors"
+                          className="py-1.5 rounded-sm px-2 text-xs text-accent hover:bg-surface-2 transition-colors"
                         >
                           Edit
                         </button>
@@ -304,14 +276,14 @@ const MealBuilder = () => {
               <button
                 type="button"
                 onClick={handleSaveMeal}
-                className="flex-1 rounded-lg py-2.5 text-sm font-medium bg-[var(--color-text)] text-[var(--color-bg)] hover:opacity-90 transition-colors"
+                className="min-w-0 flex-1 rounded-lg py-2.5 text-sm font-medium bg-ink text-on-ink hover:opacity-90 transition-colors"
               >
                 Save Meal
               </button>
               <button
                 type="button"
                 onClick={() => setCurrentMeal(null)}
-                className="flex-1 rounded-lg py-2.5 text-sm font-medium border border-[var(--color-border)] text-[var(--color-text)] hover:bg-[var(--color-surface)] transition-colors"
+                className="min-w-0 flex-1 rounded-lg py-2.5 text-sm font-medium border border-line text-black hover:bg-surface transition-colors"
               >
                 Cancel
               </button>
@@ -320,10 +292,10 @@ const MealBuilder = () => {
         )}
 
         {/* Meals list */}
-        <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
-          <p className="text-base font-semibold text-[var(--color-text)] mb-3">Meals</p>
+        <div className="rounded-lg border border-line bg-surface p-5">
+          <p className="text-base font-semibold text-black mb-3">Meals</p>
           {mealStore.meals.length === 0 ? (
-            <p className="text-sm text-[var(--color-muted)]">No meals for this day</p>
+            <p className="text-sm text-ink-2">No meals for this day</p>
           ) : (
             <div className="space-y-4">
               {mealStore.meals.map((meal) => (
@@ -339,7 +311,7 @@ const MealBuilder = () => {
         </div>
       </div>
       )}
-    </PageContainer>
+    </>
   )
 }
 

@@ -86,28 +86,28 @@ const FoodPicker = ({ onSelect, placeholder = 'Search food...' }: FoodPickerProp
   return (
     <div className="w-full">
       <input
-        className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2.5 text-sm text-[var(--color-text)] placeholder-[var(--color-muted)]"
+        className="w-full h-[56px] rounded-md border border-transparent bg-surface-2 px-4 subhead text-black placeholder:text-ink-3 outline-none transition duration-150 hover:border-track focus:border-black focus:bg-surface"
         value={q}
         onChange={(e) => setQ(e.target.value)}
         placeholder={placeholder}
       />
       <div className="mt-2 max-h-56 overflow-auto">
-        {loading && <p className="text-sm text-[var(--color-muted)]">Searching...</p>}
-        {!loading && results.length === 0 && q && <p className="text-sm text-[var(--color-muted)]">No results</p>}
+        {loading && <p className="text-sm text-ink-2">Searching...</p>}
+        {!loading && results.length === 0 && q && <p className="text-sm text-ink-2">No results</p>}
         <ul className="space-y-1">
           {results.map((f) => (
             <li
               key={f.id}
-              className="flex cursor-pointer items-center justify-between rounded-lg p-2 border border-[var(--color-border)] bg-[var(--color-surface)] hover:bg-[var(--color-surface-alt)] transition-colors"
+              className="flex cursor-pointer items-center justify-between rounded-lg p-2 border border-line bg-surface hover:bg-surface-2 transition-colors"
               onClick={() => { onSelect(f); setQ('') }}
             >
               <div>
-                <p className="text-sm font-medium text-[var(--color-text)]">{f.name}</p>
+                <p className="text-sm font-medium text-black">{f.name}</p>
                 <div className="flex items-center gap-2 text-xs mt-0.5">
-                  <span className="text-[var(--color-text)]">{f.nutrition.calories} kcal</span>
-                  <span className="text-[var(--color-accent)]">{f.nutrition.protein}g P</span>
-                  <span className="text-[var(--color-warning)]">{f.nutrition.carbs}g C</span>
-                  <span className="text-[var(--color-error)]">{f.nutrition.fat}g F</span>
+                  <span className="text-black">{f.nutrition.calories} kcal</span>
+                  <span className="text-protein">{f.nutrition.protein}g P</span>
+                  <span className="text-carbs">{f.nutrition.carbs}g C</span>
+                  <span className="text-fat">{f.nutrition.fat}g F</span>
                 </div>
               </div>
             </li>
@@ -119,22 +119,22 @@ const FoodPicker = ({ onSelect, placeholder = 'Search food...' }: FoodPickerProp
         {!showCustomForm ? (
           <button
             type="button"
-            className="w-full rounded-lg py-2 text-sm font-medium text-[var(--color-muted)] border border-[var(--color-border)] hover:bg-[var(--color-surface)] transition-colors"
+            className="w-full rounded-lg py-2 text-sm font-medium text-ink-2 border border-line hover:bg-surface transition-colors"
             onClick={() => setShowCustomForm(true)}
           >
             + Create Custom Food
           </button>
         ) : (
-          <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-3 space-y-3">
-            <p className="text-xs font-semibold text-[var(--color-muted)]">New Custom Food</p>
+          <div className="rounded-lg border border-line bg-surface p-3 space-y-3">
+            <p className="text-xs font-semibold text-ink-2">New Custom Food</p>
             <input
-              className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 text-sm text-[var(--color-text)] placeholder-[var(--color-muted)]"
+              className="w-full h-[56px] rounded-md border border-transparent bg-surface-2 px-4 subhead text-black placeholder:text-ink-3 outline-none transition duration-150 hover:border-track focus:border-black focus:bg-surface"
               value={customName}
               onChange={(e) => setCustomName(e.target.value)}
               placeholder="Food name"
             />
             <select
-              className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 text-sm text-[var(--color-text)]"
+              className="w-full h-[56px] rounded-md border border-transparent bg-surface-2 px-4 subhead text-black placeholder:text-ink-3 outline-none transition duration-150 hover:border-track focus:border-black focus:bg-surface"
               value={customCategory}
               onChange={(e) => setCustomCategory(e.target.value)}
             >
@@ -145,13 +145,13 @@ const FoodPicker = ({ onSelect, placeholder = 'Search food...' }: FoodPickerProp
             <div className="flex items-center gap-2">
               <input
                 type="number"
-                className="w-24 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 text-sm text-[var(--color-text)]"
+                className="w-24 h-[56px] rounded-md border border-transparent bg-surface-2 px-4 subhead text-black placeholder:text-ink-3 outline-none transition duration-150 hover:border-track focus:border-black focus:bg-surface"
                 value={customServing}
                 onChange={(e) => setCustomServing(Number(e.target.value))}
                 placeholder="Serving"
               />
               <input
-                className="flex-1 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 text-sm text-[var(--color-text)] placeholder-[var(--color-muted)]"
+                className="min-w-0 flex-1 h-[56px] rounded-md border border-transparent bg-surface-2 px-4 subhead text-black placeholder:text-ink-3 outline-none transition duration-150 hover:border-track focus:border-black focus:bg-surface"
                 value={customUnit}
                 onChange={(e) => setCustomUnit(e.target.value)}
                 placeholder="Unit (e.g. g, ml, oz)"
@@ -159,37 +159,37 @@ const FoodPicker = ({ onSelect, placeholder = 'Search food...' }: FoodPickerProp
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <p className="text-xs text-[var(--color-muted)] mb-1">Calories</p>
+                <p className="text-xs text-ink-2 mb-1">Calories</p>
                 <input
                   type="number"
-                  className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 text-sm text-[var(--color-text)]"
+                  className="w-full h-[56px] rounded-md border border-transparent bg-surface-2 px-4 subhead text-black placeholder:text-ink-3 outline-none transition duration-150 hover:border-track focus:border-black focus:bg-surface"
                   value={customCalories}
                   onChange={(e) => setCustomCalories(Number(e.target.value))}
                 />
               </div>
               <div>
-                <p className="text-xs text-[var(--color-muted)] mb-1">Protein (g)</p>
+                <p className="text-xs text-ink-2 mb-1">Protein (g)</p>
                 <input
                   type="number"
-                  className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 text-sm text-[var(--color-text)]"
+                  className="w-full h-[56px] rounded-md border border-transparent bg-surface-2 px-4 subhead text-black placeholder:text-ink-3 outline-none transition duration-150 hover:border-track focus:border-black focus:bg-surface"
                   value={customProtein}
                   onChange={(e) => setCustomProtein(Number(e.target.value))}
                 />
               </div>
               <div>
-                <p className="text-xs text-[var(--color-muted)] mb-1">Carbs (g)</p>
+                <p className="text-xs text-ink-2 mb-1">Carbs (g)</p>
                 <input
                   type="number"
-                  className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 text-sm text-[var(--color-text)]"
+                  className="w-full h-[56px] rounded-md border border-transparent bg-surface-2 px-4 subhead text-black placeholder:text-ink-3 outline-none transition duration-150 hover:border-track focus:border-black focus:bg-surface"
                   value={customCarbs}
                   onChange={(e) => setCustomCarbs(Number(e.target.value))}
                 />
               </div>
               <div>
-                <p className="text-xs text-[var(--color-muted)] mb-1">Fat (g)</p>
+                <p className="text-xs text-ink-2 mb-1">Fat (g)</p>
                 <input
                   type="number"
-                  className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 text-sm text-[var(--color-text)]"
+                  className="w-full h-[56px] rounded-md border border-transparent bg-surface-2 px-4 subhead text-black placeholder:text-ink-3 outline-none transition duration-150 hover:border-track focus:border-black focus:bg-surface"
                   value={customFat}
                   onChange={(e) => setCustomFat(Number(e.target.value))}
                 />
@@ -200,14 +200,14 @@ const FoodPicker = ({ onSelect, placeholder = 'Search food...' }: FoodPickerProp
                 type="button"
                 onClick={handleCreateCustom}
                 disabled={!customName.trim() || saving}
-                className="flex-1 rounded-lg py-2 text-sm font-medium bg-[var(--color-text)] text-[var(--color-bg)] hover:opacity-90 transition-colors disabled:opacity-50"
+                className="min-w-0 flex-1 rounded-lg py-2 text-sm font-medium bg-ink text-on-ink hover:opacity-90 transition-colors disabled:opacity-50"
               >
                 {saving ? 'Saving...' : 'Save Food'}
               </button>
               <button
                 type="button"
                 onClick={() => setShowCustomForm(false)}
-                className="flex-1 rounded-lg py-2 text-sm font-medium border border-[var(--color-border)] text-[var(--color-text)] hover:bg-[var(--color-surface)] transition-colors"
+                className="min-w-0 flex-1 rounded-lg py-2 text-sm font-medium border border-line text-black hover:bg-surface transition-colors"
               >
                 Cancel
               </button>

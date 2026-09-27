@@ -35,8 +35,8 @@ const MealCard = ({ meal, onAddItem, onDelete }: MealCardProps) => {
   }, [meal.items])
 
   return (
-    <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] p-4">
-      <p className="text-base font-semibold text-[var(--color-text)] mb-3">{meal.name}</p>
+    <div className="rounded-lg border border-line bg-surface-2 p-4">
+      <p className="text-base font-semibold text-black mb-3">{meal.name}</p>
 
       {meal.items && meal.items.length > 0 ? (
         <div className="space-y-2">
@@ -45,23 +45,23 @@ const MealCard = ({ meal, onAddItem, onDelete }: MealCardProps) => {
             const multiplier = mealItemGrams(it) / 100
             const n = it.nutrition
             return (
-              <div key={it.id} className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
+              <div key={it.id} className="rounded-lg border border-line bg-surface p-3">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm font-medium text-[var(--color-text)]">{displayName}</span>
-                  <span className="text-sm text-[var(--color-muted)]">{it.quantity} {it.unit}</span>
+                  <span className="text-sm font-medium text-black">{displayName}</span>
+                  <span className="text-sm text-ink-2">{it.quantity} {it.unit}</span>
                 </div>
                 <div className="flex items-center gap-3 text-sm">
-                  <span className="text-[var(--color-text)]">{n ? formatNum(n.calories * multiplier) : '0'} kcal</span>
-                  <span className="text-[var(--color-accent)]">{n ? formatNum(n.protein * multiplier) : '0'}g P</span>
-                  <span className="text-[var(--color-warning)]">{n ? formatNum(n.carbs * multiplier) : '0'}g C</span>
-                  <span className="text-[var(--color-error)]">{n ? formatNum(n.fat * multiplier) : '0'}g F</span>
+                  <span className="text-black">{n ? formatNum(n.calories * multiplier) : '0'} kcal</span>
+                  <span className="text-protein">{n ? formatNum(n.protein * multiplier) : '0'}g P</span>
+                  <span className="text-carbs">{n ? formatNum(n.carbs * multiplier) : '0'}g C</span>
+                  <span className="text-fat">{n ? formatNum(n.fat * multiplier) : '0'}g F</span>
                 </div>
               </div>
             )
           })}
         </div>
       ) : (
-        <p className="text-sm text-[var(--color-muted)]">No items</p>
+        <p className="text-sm text-ink-2">No items</p>
       )}
 
       {(onAddItem || onDelete) && (
@@ -70,7 +70,7 @@ const MealCard = ({ meal, onAddItem, onDelete }: MealCardProps) => {
             <button
               type="button"
               onClick={onAddItem}
-              className="rounded-lg py-2 text-sm font-medium text-[var(--color-text)] border border-[var(--color-border)] hover:bg-[var(--color-surface-alt)] transition-colors"
+              className="rounded-lg py-2 text-sm font-medium text-black border border-line hover:bg-surface-2 transition-colors"
             >
               Add
             </button>
@@ -79,7 +79,7 @@ const MealCard = ({ meal, onAddItem, onDelete }: MealCardProps) => {
             <button
               type="button"
               onClick={onDelete}
-              className="rounded-lg py-2 text-sm font-medium text-[var(--color-error)] border border-[var(--color-border)] hover:bg-[var(--color-surface-alt)] transition-colors"
+              className="rounded-lg py-2 text-sm font-medium text-protein border border-line hover:bg-surface-2 transition-colors"
             >
               Delete
             </button>

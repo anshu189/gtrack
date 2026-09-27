@@ -37,26 +37,25 @@ const UndoBanner = ({ entries, dismissedIds, onDismiss, onUndo }: UndoBannerProp
       {visible.map((entry) => (
         <div
           key={entry.id}
-          className="flex items-center justify-between rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3"
+          className="flex items-center justify-between rounded-lg border border-line bg-surface px-4 py-3"
         >
           <div className="flex-1">
-            <p className="text-sm text-[var(--color-text)]">
-              "{entry.meal.name ?? 'Untitled'}" deleted.
+            <p className="text-sm text-black">"{entry.meal.name ?? 'Untitled'}" deleted.
             </p>
-            <p className="text-xs text-[var(--color-muted)]">Undo available until midnight ({timeLeft} left)</p>
+            <p className="text-xs text-ink-2">Undo available until midnight ({timeLeft} left)</p>
           </div>
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => onUndo(entry.id)}
-              className="border border-[var(--color-text)] px-3 py-1 text-xs font-medium text-[var(--color-text)] hover:bg-[var(--color-text)] hover:text-[var(--color-bg)] transition-colors"
+              className="border border-ink px-3 py-1 text-xs font-medium text-black hover:bg-ink hover:text-on-ink transition-colors"
             >
               Undo
             </button>
             <button
               type="button"
               onClick={() => onDismiss(entry.id)}
-              className="text-xs text-[var(--color-muted)] hover:text-[var(--color-text)] transition-colors"
+              className="text-xs text-ink-2 hover:text-black transition-colors"
             >
               ✕
             </button>

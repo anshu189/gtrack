@@ -1,4 +1,4 @@
-import { ProgressBar } from '@astryxdesign/core'
+import { ProgressBar } from '@/components/ds'
 
 interface WaterProgressProps {
   current: number
@@ -10,12 +10,15 @@ export const WaterProgress = ({ current, goal, unit = 'ml' }: WaterProgressProps
   const pct = goal > 0 ? Math.min(100, Math.round((current / goal) * 100)) : 0
 
   return (
-    <div>
-      <div className="mb-1 flex items-center justify-between text-sm text-slate-500 dark:text-[var(--color-muted)]">
-        <span>{current} {unit} / {goal} {unit}</span>
-        <span>{pct}%</span>
+    <div className="flex flex-col gap-1.5">
+      <div className="flex items-baseline justify-between">
+        <span className="footnote text-black">
+          {current} {unit} <span className="label-text text-ink-2">/ {goal} {unit}</span>
+        </span>
+        <span className="label-text text-ink-2">{pct}%</span>
       </div>
-      <ProgressBar label="Water intake" isLabelHidden value={pct} max={100} />
+      {/* Water borrows the DS `fat` blue — same colour as the water chips. */}
+      <ProgressBar label="Water intake" value={pct} max={100} color="var(--fat)" />
     </div>
   )
 }

@@ -19,22 +19,22 @@ export const WorkoutHistory = ({ workouts, excludeDate }: WorkoutHistoryProps) =
   const items = workouts.filter((w) => w.date !== excludeDate)
 
   if (items.length === 0) {
-    return <p className="text-sm text-[#96A0AB]">No previous workouts logged.</p>
+    return <p className="footnote text-ink-2">No previous workouts logged.</p>
   }
 
   return (
-    <div className="rounded-lg border border-[#24292D] overflow-hidden">
+    <div className="overflow-hidden rounded-md">
       {items.map((workout, i) => (
         <div
           key={workout.id}
           className={cn(
             'flex items-center justify-between px-3 py-2.5 text-sm',
-            i % 2 === 0 ? 'bg-[#101314]' : 'bg-[#1a1d20]',
-            i > 0 && 'border-t border-[#24292D]',
+            i % 2 === 0 ? 'bg-surface' : 'bg-surface-2',
+            i > 0 && 'border-t border-line',
           )}
         >
-          <span className="font-semibold text-[#E8F1F6]">{formatDate(workout.date)}</span>
-          <span className="text-[#96A0AB]">{WORKOUT_LABELS[workout.type]}</span>
+          <span className="footnote text-black">{formatDate(workout.date)}</span>
+          <span className="footnote text-ink-2">{WORKOUT_LABELS[workout.type]}</span>
         </div>
       ))}
     </div>

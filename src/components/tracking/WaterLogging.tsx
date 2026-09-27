@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { NumberInput, Button } from '@astryxdesign/core'
 import type { WaterLog } from '@/types'
+import { Button, Chip, TextField } from '@/components/ds'
 
 interface WaterLoggingProps {
   onAdd: (log: Partial<WaterLog>) => void
@@ -9,49 +9,49 @@ interface WaterLoggingProps {
 const QUICK_AMOUNTS = [250, 300, 350, 500, 750]
 
 export const WaterLogging = ({ onAdd }: WaterLoggingProps) => {
-  const [custom, setCustom] = useState<number | null>(null)
+  const [custom, setCustom] = useState('')
+
+  const amount = Number(custom)
+  const canAdd = Number.isFinite(amount) && amount > 0
 
   const handleCustomAdd = () => {
-    if (!custom || custom <= 0) return
-    onAdd({ amount: custom, unit: 'ml' })
-    setCustom(null)
+    if (!canAdd) return
+    onAdd({ amount, unit: 'ml' })
+    setCustom('')
   }
 
   return (
-    <div className='flex flex-col gap-2'>
+    <div className="flex flex-col gap-3">
       <div className="flex flex-wrap gap-2">
-        {QUICK_AMOUNTS.map((amount) => (
-          <button
-            key={amount}
-            type="button"
-            onClick={() => onAdd({ amount, unit: 'ml' })}
-            className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 !text-sm text-[var(--color-text)] hover:bg-[var(--color-surface)] transition-colors"
-          >
-            {amount} ml
-          </button>
+        {QUICK_AMOUNTS.map((quick) => (
+          <Chip key={quick} variant="action" onClick={() => onAdd({ amount: quick, unit: 'ml' })}>
+            {quick} ml
+          </Chip>
         ))}
       </div>
-      <div className="mt-2 flex items-center gap-2">
-        <div className="flex-1">
-          <NumberInput
-            label="Custom amount"
-            isLabelHidden
-            value={custom}
-            onChange={(val) => setCustom(val)}
-            placeholder="Custom amount (ml)"
-            min={0}
-            size="sm"
-            className="h-10"
-          />
-        </div>
-        <Button
-          label="Add"
-          variant="primary"
-          size="lg"
-          className="h-10"
-          onClick={handleCustomAdd}
-          isDisabled={!custom || custom <= 0}
+
+      <div className="flex items-center gap-2">
+        <TextField
+          label="Custom amount"
+          isLabelHidden
+          type="number"
+          inputMode="numeric"
+          min={0}
+          value={custom}
+          onChange={(e) => setCustom(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              handleCustomAdd()
+            }
+          }}
+          placeholder="Custom amount"
+          suffix="ml"
+          className="flex-1"
         />
+        <Button variant="primary" size="md" onClick={handleCustomAdd} disabled={!canAdd}>
+          Add
+        </Button>
       </div>
     </div>
   )

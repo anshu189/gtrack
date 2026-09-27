@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { TextInput, Button } from '@astryxdesign/core'
+import { Button, Card, PasswordField, TextField, TextLink } from '@/components/ds'
 import { GoogleSignInButton } from '@/components/auth'
 import { useAuthStore } from '@/stores/authStore'
 
@@ -7,10 +7,11 @@ type Mode = 'signin' | 'signup' | 'reset'
 
 const MIN_PASSWORD_LENGTH = 8
 
+/** Gtrak DS voice: friendly coach, second person. Title Case for short titles. */
 const COPY: Record<Mode, { heading: string; sub: string; submit: string }> = {
-  signin: { heading: 'Welcome back', sub: 'Sign in to continue tracking.', submit: 'Sign in' },
-  signup: { heading: 'Create your account', sub: 'Your log stays private to you.', submit: 'Create account' },
-  reset: { heading: 'Reset your password', sub: 'We will email you a reset link.', submit: 'Send reset link' },
+  signin: { heading: 'Welcome back', sub: 'Pick up where you left off.', submit: 'Sign In' },
+  signup: { heading: 'Create Your Account', sub: 'Your log stays private to you.', submit: 'Create Account' },
+  reset: { heading: 'Reset Your Password', sub: 'We will email you a reset link.', submit: 'Send Reset Link' },
 }
 
 const Login = () => {
@@ -34,8 +35,8 @@ const Login = () => {
     clearFeedback()
   }
 
-  const update = (setter: (v: string) => void) => (value: string) => {
-    setter(value)
+  const update = (setter: (v: string) => void) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    setter(e.target.value)
     if (localError) setLocalError(null)
     clearFeedback()
   }
@@ -52,7 +53,8 @@ const Login = () => {
     return null
   }
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
     const problem = validate()
     if (problem) {
       setLocalError(problem)
@@ -65,146 +67,119 @@ const Login = () => {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[var(--color-bg)] px-4 py-10">
-      <div className="flex w-full max-w-sm flex-col gap-6">
-        <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center gap-[6px] rounded-lg bg-[#0c0c0c]">
-            <div className="h-[5px] w-[5px] rounded-full bg-white" />
-            <div className="h-[5px] w-[5px] rounded-full bg-white" />
-            <div className="h-[5px] w-[5px] rounded-full bg-white" />
+    <div className="flex min-h-screen justify-center bg-canvas px-4 py-10">
+      <div className="flex w-full max-w-[420px] flex-col gap-8">
+        <div className="flex items-center gap-3 pt-6">
+          <div className="flex h-12 w-12 items-center justify-center gap-[6px] rounded-lg bg-black">
+            <span className="h-[5px] w-[5px] rounded-pill bg-on-ink" />
+            <span className="h-[5px] w-[5px] rounded-pill bg-on-ink" />
+            <span className="h-[5px] w-[5px] rounded-pill bg-on-ink" />
           </div>
           <div>
-            <p className="text-xl font-bold tracking-tight text-[var(--color-text)]">Gtrak</p>
-            <p className="text-[12px] text-[var(--color-muted)]">Growth Tracker for G's</p>
+            <p className="title-2 text-black">Gtrak</p>
+            <p className="caption text-ink-2">Growth Tracker for G's</p>
           </div>
         </div>
 
-        <div className="flex flex-col gap-5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
-          <div className="flex flex-col gap-1">
-            <h1 className="text-base font-semibold text-[var(--color-text)]">{copy.heading}</h1>
-            <p className="text-sm text-[var(--color-muted)]">{copy.sub}</p>
+        <Card className="flex flex-col gap-6">
+          <div className="flex flex-col gap-2">
+            <h1 className="title-2 text-black">{copy.heading}</h1>
+            <p className="body-text text-ink-2">{copy.sub}</p>
           </div>
 
-          <div className="flex flex-col gap-3">
-            {mode === 'signup' && (
-              <TextInput
-                label="Name"
-                value={displayName}
-                onChange={update(setDisplayName)}
-                placeholder="What should we call you?"
-                isOptional
-                size="lg"
-                width="100%"
-                className="rounded-lg"
+          <form className="flex flex-col gap-6" onSubmit={handleSubmit} noValidate>
+            <div className="flex flex-col gap-3">
+              {mode === 'signup' && (
+                <TextField
+                  label="Name"
+                  value={displayName}
+                  onChange={update(setDisplayName)}
+                  placeholder="What should we call you?"
+                  autoComplete="name"
+                />
+              )}
+
+              <TextField
+                label="Email"
+                type="email"
+                value={email}
+                onChange={update(setEmail)}
+                placeholder="you@example.com"
+                autoComplete="email"
               />
+
+              {mode !== 'reset' && (
+                <PasswordField
+                  label="Password"
+                  value={password}
+                  onChange={update(setPassword)}
+                  placeholder={mode === 'signup' ? `At least ${MIN_PASSWORD_LENGTH} characters` : 'Your password'}
+                  autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
+                />
+              )}
+
+              {mode === 'signup' && (
+                <PasswordField
+                  label="Confirm password"
+                  value={confirmPassword}
+                  onChange={update(setConfirmPassword)}
+                  placeholder="Repeat your password"
+                  autoComplete="new-password"
+                />
+              )}
+            </div>
+
+            {feedbackError && (
+              <p className="flex items-start gap-2 footnote text-black">
+                <span aria-hidden="true" className="mt-1 size-2 shrink-0 rounded-pill bg-protein" />
+                {feedbackError}
+              </p>
+            )}
+            {notice && (
+              <p className="rounded-md bg-success-soft px-4 py-3 footnote text-success-text">{notice}</p>
             )}
 
-            <TextInput
-              label="Email"
-              type="email"
-              value={email}
-              onChange={update(setEmail)}
-              placeholder="you@example.com"
-              size="lg"
-              width="100%"
-              className="rounded-lg"
-            />
+            {/* Gtrak DS: one primary action per screen. */}
+            <div className="flex flex-col gap-3">
+              <Button type="submit" variant="primary" size="lg" block isLoading={loading}>
+                {copy.submit}
+              </Button>
 
-            {mode !== 'reset' && (
-              <TextInput
-                label="Password"
-                type="password"
-                value={password}
-                onChange={update(setPassword)}
-                placeholder={mode === 'signup' ? `At least ${MIN_PASSWORD_LENGTH} characters` : 'Your password'}
-                description={mode === 'signup' ? 'Use at least 8 characters.' : undefined}
-                size="lg"
-                width="100%"
-                className="rounded-lg"
-              />
-            )}
+              {mode !== 'reset' && (
+                <>
+                  <div className="flex items-center gap-3">
+                    <span className="h-px flex-1 bg-line" />
+                    <span className="caption text-ink-3">or</span>
+                    <span className="h-px flex-1 bg-line" />
+                  </div>
+                  <GoogleSignInButton onClick={signInWithGoogle} disabled={loading} />
+                </>
+              )}
+            </div>
+          </form>
 
-            {mode === 'signup' && (
-              <TextInput
-                label="Confirm password"
-                type="password"
-                value={confirmPassword}
-                onChange={update(setConfirmPassword)}
-                placeholder="Repeat your password"
-                size="lg"
-                width="100%"
-                className="rounded-lg"
-              />
-            )}
-          </div>
-
-          {feedbackError && (
-            <p className="rounded-lg border border-[var(--color-error)] bg-[var(--color-error-muted)] px-3 py-2 text-sm text-[var(--color-text)]">
-              {feedbackError}
-            </p>
-          )}
-          {notice && (
-            <p className="rounded-lg border border-[var(--color-success)] bg-[var(--color-success-muted)] px-3 py-2 text-sm text-[var(--color-text)]">
-              {notice}
-            </p>
-          )}
-
-          <div className="flex flex-col gap-3">
-            <Button
-              label={copy.submit}
-              variant="primary"
-              size="lg"
-              width="100%"
-              onClick={handleSubmit}
-              isLoading={loading}
-              className="rounded-lg"
-            />
-
-            {mode !== 'reset' && (
-              <>
-                <div className="flex items-center gap-3">
-                  <span className="h-px flex-1 bg-[var(--color-border)]" />
-                  <span className="text-xs text-[var(--color-muted)]">or</span>
-                  <span className="h-px flex-1 bg-[var(--color-border)]" />
-                </div>
-                <GoogleSignInButton onClick={signInWithGoogle} isDisabled={loading} />
-              </>
-            )}
-          </div>
-
-          <div className="flex flex-col gap-2 text-sm">
+          {/* Only the link text is interactive — never the sentence around it. */}
+          <div className="flex flex-col items-start gap-2 body-text text-ink-2">
             {mode === 'signin' && (
               <>
-                <button type="button" className="text-left text-[var(--color-accent)]" onClick={() => switchMode('reset')}>
-                  Forgot your password?
-                </button>
-                <p className="text-[var(--color-muted)]">
-                  New here?{' '}
-                  <button type="button" className="text-[var(--color-accent)]" onClick={() => switchMode('signup')}>
-                    Create an account
-                  </button>
+                <TextLink onClick={() => switchMode('reset')}>Forgot your password?</TextLink>
+                <p className="body-text text-ink-2">
+                  New here? <TextLink onClick={() => switchMode('signup')}>Create an account</TextLink>
                 </p>
               </>
             )}
             {mode === 'signup' && (
-              <p className="text-[var(--color-muted)]">
-                Already have an account?{' '}
-                <button type="button" className="text-[var(--color-accent)]" onClick={() => switchMode('signin')}>
-                  Sign in
-                </button>
+              <p className="body-text text-ink-2">
+                Already have an account? <TextLink onClick={() => switchMode('signin')}>Sign in</TextLink>
               </p>
             )}
             {mode === 'reset' && (
-              <button type="button" className="text-left text-[var(--color-accent)]" onClick={() => switchMode('signin')}>
-                Back to sign in
-              </button>
+              <TextLink onClick={() => switchMode('signin')}>Back to sign in</TextLink>
             )}
           </div>
-        </div>
+        </Card>
 
-        <p className="text-center text-xs text-[var(--color-muted)]">
-          Limited to 50 accounts.
-        </p>
+        <p className="text-center caption text-ink-3">Limited to 50 accounts.</p>
       </div>
     </div>
   )

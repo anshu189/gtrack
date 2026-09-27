@@ -8,7 +8,7 @@ const DeleteItemButton = ({ onClick, label = 'Delete' }: DeleteItemButtonProps) 
     <button
       type="button"
       onClick={onClick}
-      className="rounded-lg py-2 text-sm font-medium text-[var(--color-error)] border border-[var(--color-border)] hover:bg-[var(--color-surface-alt)] transition-colors"
+      className="rounded-lg py-2 text-sm font-medium text-protein border border-line hover:bg-surface-2 transition-colors"
     >
       {label}
     </button>

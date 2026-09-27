@@ -7,16 +7,9 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "preview": "vite preview",
-    "astryx": "node node_modules/@astryxdesign/cli/clients/cli/bin/astryx.mjs"
-  },
-  "astryx": {
-    "theme": "gothic"
+    "preview": "vite preview"
   },
   "dependencies": {
-    "@astryxdesign/core": "^0.4.3",
-    "@astryxdesign/theme-gothic": "^0.4.3",
-    "@stylexjs/stylex": "^0.19.0",
     "clsx": "^2.1.1",
     "firebase": "^12.16.0",
     "fuse.js": "^7.4.2",
@@ -31,7 +24,6 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
-    "@astryxdesign/cli": "^0.4.3",
     "@tailwindcss/postcss": "^4.3.2",
     "@types/node": "^24.13.2",
     "@types/react": "^19.2.17",

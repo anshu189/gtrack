@@ -1,9 +1,6 @@
 import { useEffect } from 'react'
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
-import { Theme } from '@astryxdesign/core'
-import { gothicTheme } from '@astryxdesign/theme-gothic'
-import { AppShell } from '@/components/ui/app-shell'
-import { BottomNavigation } from '@/components/ui/bottom-navigation'
+import { AppShell, TabBar } from '@/components/ds'
 import Dashboard from '@/pages/Dashboard'
 import MealBuilder from '@/pages/MealBuilder'
 import History from '@/pages/History'
@@ -30,14 +27,14 @@ function App() {
   useEffect(() => init(), [init])
 
   if (!initialized) {
-    return <Theme theme={gothicTheme}><div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-[#111111]"><p className="text-sm text-slate-500 dark:text-[#FDFDFD]/70">Loading...</p></div></Theme>
+    return <div className="flex min-h-screen items-center justify-center bg-canvas"><p className="body-text text-ink-2">Loading…</p></div>
   }
 
   if (!user) {
-    return <Theme theme={gothicTheme}><Login /></Theme>
+    return <Login />
   }
 
-  return <Theme theme={gothicTheme}><AppLayout /></Theme>
+  return <AppLayout />
 }
 
 function AppLayout() {
@@ -49,14 +46,6 @@ function AppLayout() {
     settingsStore.load()
   }, [])
 
-  useEffect(() => {
-    if (settingsStore.settings) {
-      const theme = settingsStore.settings.theme ?? 'light'
-      const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
-      document.documentElement.classList.toggle('dark', isDark)
-    }
-  }, [settingsStore.settings])
-
   const navItems = NAV_ITEMS.map((item) => ({
     ...item,
     active: location.pathname === item.path,
@@ -66,22 +55,19 @@ function AppLayout() {
   return (
     <AppShell
       header={
-        <div className="flex items-center gap-3">
-          {/* <img src="../public/favicon.png" alt="Gtrak - Growth Tracker for G's" className='cursor-pointer' /> */}
-          <a href="/">
-            <div className='flex px-auto items-center justify-center gap-[6px] w-12 h-12 bg-[#0c0c0c]'>
-              <div className="w-[5px] h-[5px] bg-white rounded-full"></div>
-              <div className="w-[5px] h-[5px] bg-white rounded-full"></div>
-              <div className="w-[5px] h-[5px] bg-white rounded-full"></div>
-            </div>
-          </a>
-          <div>
-            <p className="text-xl font-bold tracking-tight text-black dark:text-[#E8F1F6]">Gtrak</p>
-            <p className="text-[12px] text-[#96A0AB]">Growth Tracker for G's</p>
-          </div>
-        </div>
+        <a href="/" className="inline-flex items-center gap-3" aria-label="Gtrak home">
+          <span className="flex h-12 w-12 items-center justify-center gap-[6px] rounded-lg bg-black">
+            <span className="h-[5px] w-[5px] rounded-pill bg-on-ink" />
+            <span className="h-[5px] w-[5px] rounded-pill bg-on-ink" />
+            <span className="h-[5px] w-[5px] rounded-pill bg-on-ink" />
+          </span>
+          <span className="flex flex-col">
+            <span className="title-2 text-black">Gtrak</span>
+            <span className="caption text-ink-2">Growth Tracker for G's</span>
+          </span>
+        </a>
       }
-      bottomNavigation={<BottomNavigation items={navItems} />}
+      tabBar={<TabBar items={navItems} />}
     >
       <Routes>
         <Route path="/" element={<Dashboard />} />

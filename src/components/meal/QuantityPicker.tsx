@@ -12,13 +12,13 @@ const QuantityPicker = ({ value, unit = 'g', onChange, units = ALL_UNITS }: Quan
     <div className="flex items-center gap-2">
       <input
         type="number"
-        className="w-20 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-2 py-1.5 text-sm text-[var(--color-text)]"
+        className="w-20 rounded-lg border border-line bg-surface-2 px-2 py-1.5 text-sm text-black"
         value={value}
         onChange={(e) => onChange(Number(e.target.value), unit)}
         min={0}
       />
       <select
-        className="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-2 py-1.5 text-sm text-[var(--color-text)]"
+        className="rounded-lg border border-line bg-surface-2 px-2 py-1.5 text-sm text-black"
         value={unit}
         onChange={(e) => onChange(value, e.target.value)}
       >

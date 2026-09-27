@@ -22,16 +22,16 @@ const MealItem = ({ item }: MealItemProps) => {
   const displayName = item.name ?? resolvedName ?? item.foodId
 
   return (
-    <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
+    <div className="rounded-lg border border-line bg-surface p-3">
       <div className="flex items-center justify-between mb-1">
-        <span className="text-sm font-medium text-[var(--color-text)]">{displayName}</span>
-        <span className="text-sm text-[var(--color-muted)]">{item.quantity} {item.unit}</span>
+        <span className="text-sm font-medium text-black">{displayName}</span>
+        <span className="text-sm text-ink-2">{item.quantity} {item.unit}</span>
       </div>
       <div className="flex items-center gap-3 text-sm">
-        <span className="text-[var(--color-text)]">{formatNum(item.nutrition?.calories ?? 0)} kcal</span>
-        <span className="text-[var(--color-accent)]">{formatNum(item.nutrition?.protein ?? 0)}g P</span>
-        <span className="text-[var(--color-warning)]">{formatNum(item.nutrition?.carbs ?? 0)}g C</span>
-        <span className="text-[var(--color-error)]">{formatNum(item.nutrition?.fat ?? 0)}g F</span>
+        <span className="text-black">{formatNum(item.nutrition?.calories ?? 0)} kcal</span>
+        <span className="text-protein">{formatNum(item.nutrition?.protein ?? 0)}g P</span>
+        <span className="text-carbs">{formatNum(item.nutrition?.carbs ?? 0)}g C</span>
+        <span className="text-fat">{formatNum(item.nutrition?.fat ?? 0)}g F</span>
       </div>
     </div>
   )

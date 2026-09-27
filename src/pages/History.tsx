@@ -17,7 +17,8 @@ import { WaterLogging, WaterProgress } from '@/components/tracking'
 import { WeightLogging } from '@/components/tracking'
 import { TretinoinTracker } from '@/components/tracking'
 import { UndoBanner } from '@/components/meal'
-import { PageContainer } from '@/components/ui/page-container'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { DatePicker, IconButton } from '@/components/ds'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { formatNum } from '@/lib/utils/format'
@@ -315,17 +316,17 @@ export default function History() {
   const isToday = selectedDate === getTodayIso()
 
   function renderWorkout() {
-    if (!workout) return <p className="text-base text-slate-500 dark:text-[#FDFDFD]/60">No workout logged</p>
+    if (!workout) return <p className="text-base text-ink-2">No workout logged</p>
     const labels: Record<string, string> = { push: 'Push', pull: 'Pull', legs: 'Legs', rest: 'Rest' }
-    return <p className="text-base text-slate-950 dark:text-[#FDFDFD]">{labels[workout] ?? workout}</p>
+    return <p className="text-base text-black">{labels[workout] ?? workout}</p>
   }
 
   function renderWaterLogs() {
-    if (waterLogs.length === 0) return <p className="text-sm text-slate-500 dark:text-[#FDFDFD]/60">No water logged</p>
+    if (waterLogs.length === 0) return <p className="text-sm text-ink-2">No water logged</p>
     return (
       <div className="flex flex-wrap gap-1">
         {waterLogs.map((log) => (
-          <span key={log.id} className="border border-slate-200 bg-slate-50 px-2.5 py-1 text-sm text-slate-600 dark:border-[#2D2D2D] dark:bg-[#1F1F1F] dark:text-[#FDFDFD]/70">
+          <span key={log.id} className="border border-line bg-surface-2 px-2.5 py-1 text-sm text-ink-2">
             {log.amount} {log.unit}
           </span>
         ))}
@@ -334,70 +335,63 @@ export default function History() {
   }
 
   function renderWeight() {
-    if (!weightEntry || !weightEntry.weight) return <p className="text-sm text-slate-500 dark:text-[#FDFDFD]/60">No weight logged</p>
+    if (!weightEntry || !weightEntry.weight) return <p className="text-sm text-ink-2">No weight logged</p>
     return (
       <div>
-        <p className="text-base text-slate-950 dark:text-[#FDFDFD]">{weightEntry.weight} {weightEntry.unit}</p>
+        <p className="text-base text-black">{weightEntry.weight} {weightEntry.unit}</p>
         {weightEntry.notes && (
-          <p className="mt-1 text-sm text-[#FDFDFD]/60">{weightEntry.notes}</p>
+          <p className="mt-1 text-sm text-ink-2">{weightEntry.notes}</p>
         )}
       </div>
     )
   }
 
   function renderNote() {
-    if (!dailyNote?.content) return <p className="text-base text-slate-500 dark:text-[#FDFDFD]/60">No notes</p>
-    return <p className="text-base whitespace-pre-wrap text-slate-950 dark:text-[#FDFDFD]">{dailyNote.content}</p>
+    if (!dailyNote?.content) return <p className="text-base text-ink-2">No notes</p>
+    return <p className="text-base whitespace-pre-wrap text-black">{dailyNote.content}</p>
   }
 
   return (
-    <PageContainer>
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-slate-950 dark:text-[#FDFDFD]">History</h1>
+    <>
+      <div className="mb-5 flex items-center justify-between gap-4">
+        <h1 className="title-1 text-black">History</h1>
+        {!isToday && (
+          <Button size="sm" variant="ghost" onClick={handleToday}>
+            Back to today
+          </Button>
+        )}
       </div>
 
-      <div className="mb-6 flex items-center justify-between">
-        <Button size="sm" variant="outline" onClick={handlePreviousDay}>
-          &larr; Previous
-        </Button>
-        <div className="text-center">
-          <button
-            type="button"
-            onClick={() => {
-              const input = document.getElementById('history-date-picker') as HTMLInputElement
-              if (input) input.showPicker?.() ?? input.click()
-            }}
-            className="text-sm font-medium text-slate-950 hover:text-neutral-700 dark:text-[#FDFDFD] dark:hover:text-[#FDFDFD]"
-          >
-            {new Date(`${selectedDate}T12:00:00`).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
-          </button>
-          <input
-            id="history-date-picker"
-            type="date"
-            value={selectedDate}
-            onChange={(e) => {
-              setSelectedDate(e.target.value)
-              setEditing(false)
-              setHasChanges(false)
-              setWaterChanged(false)
-            }}
-            className="sr-only"
-          />
-        </div>
-        <div className="flex items-center gap-2">
-          {!isToday && (
-            <Button size="sm" variant="outline" onClick={handleToday}>
-              Today
-            </Button>
-          )}
-          <Button size="sm" variant="outline" onClick={handleNextDay} disabled={isToday}>
-            Next &rarr;
-          </Button>
-        </div>
+      <div className="mb-6 flex items-center gap-2">
+        <IconButton
+          label="Previous day"
+          icon={<ChevronLeft size={20} />}
+          onClick={handlePreviousDay}
+        />
+        <DatePicker
+          label="Select date"
+          value={selectedDate}
+          onChange={(next) => {
+            setSelectedDate(next)
+            setEditing(false)
+            setHasChanges(false)
+            setWaterChanged(false)
+          }}
+          max={getTodayIso()}
+          fullWidth
+          className="flex-1"
+        />
+        <IconButton
+          label="Next day"
+          icon={<ChevronRight size={20} />}
+          onClick={handleNextDay}
+          disabled={isToday}
+          className="disabled:bg-surface-2 disabled:opacity-40"
+        />
       </div>
 
       {loading ? (
-        <p className="py-12 text-center text-sm text-slate-500 dark:text-[#FDFDFD]/60">Loading...</p>
+        <p className="py-12 text-center text-sm text-ink-2">Loading...</p>
       ) : (
         <div className="space-y-6">
           <UndoBanner
@@ -415,49 +409,49 @@ export default function History() {
 
           <Card title={`Meals (${meals.length})`}>
             {meals.length === 0 ? (
-              <p className="text-sm text-slate-500 dark:text-[#FDFDFD]/60">No meals logged for this day.</p>
+              <p className="text-sm text-ink-2">No meals logged for this day.</p>
             ) : (
               <div className="space-y-2">
                 {meals.map((meal) => {
                   const mealNutrition = nutritionCalculationService.calculateMealNutrition(meal)
                   const expanded = expandedMeals.has(meal.id)
                   return (
-                    <div key={meal.id} className="border border-[#2D2D2D]">
+                    <div key={meal.id} className="overflow-hidden rounded-md bg-surface-2">
                       <div className="flex items-center justify-between p-3">
                         <button
                           type="button"
                           onClick={() => toggleMealExpand(meal.id)}
                           className="flex-1 text-left"
                         >
-                          <span className="text-sm font-medium text-slate-950 capitalize dark:text-[#FDFDFD]">{meal.name ?? 'Meal'}</span>
+                          <span className="text-sm font-medium text-black capitalize">{meal.name ?? 'Meal'}</span>
                         </button>
                         <div className="flex items-center gap-2">
-                          <span className="text-xs text-[#FDFDFD]/60">{formatNum(mealNutrition.calories)} kcal</span>
-                          <button type="button" onClick={() => toggleMealExpand(meal.id)} className="text-xs text-[#FDFDFD]/40 px-1">
+                          <span className="text-xs text-ink-2">{formatNum(mealNutrition.calories)} kcal</span>
+                          <button type="button" onClick={() => toggleMealExpand(meal.id)} className="text-xs text-ink-3 px-1">
                             {expanded ? '▲' : '▼'}
                           </button>
                           {editing && (
-                            <Button size="sm" variant="ghost" className="text-red-400 text-xs" onClick={() => handleDeleteMeal(meal.id)}>
+                            <Button size="sm" variant="ghost" className="text-protein text-xs" onClick={() => handleDeleteMeal(meal.id)}>
                               Delete
                             </Button>
                           )}
                         </div>
                       </div>
                       {expanded && meal.items && meal.items.length > 0 && (
-                        <div className="border-t border-[#2D2D2D] px-3 pb-3 pt-2 space-y-1">
+                        <div className="border-t border-line px-3 pb-3 pt-2 space-y-1">
                           {meal.items.map((it) => {
                             const displayName = it.name ?? resolvedFoodNames[it.foodId] ?? it.foodId.split(':').pop()
                             const multiplier = mealItemGrams(it) / 100
                             const n = it.nutrition
                             return (
                               <div key={it.id} className="flex items-center justify-between text-xs py-1">
-                                <span className="text-[#FDFDFD]/80">{displayName}</span>
+                                <span className="text-black">{displayName}</span>
                                 <div className="flex items-center gap-3">
-                                  <span className="text-[#FDFDFD]/50">{it.quantity}{it.unit}</span>
-                                  <span className="text-[#FDFDFD]/70">{n ? formatNum(n.calories * multiplier) : '0'} kcal</span>
-                                  <span className="text-[#FDFDFD]/50">{n ? formatNum(n.protein * multiplier) : '0'}g P</span>
-                                  <span className="text-[#FDFDFD]/50">{n ? formatNum(n.carbs * multiplier) : '0'}g C</span>
-                                  <span className="text-[#FDFDFD]/50">{n ? formatNum(n.fat * multiplier) : '0'}g F</span>
+                                  <span className="text-ink-2">{it.quantity}{it.unit}</span>
+                                  <span className="text-black">{n ? formatNum(n.calories * multiplier) : '0'} kcal</span>
+                                  <span className="text-protein">{n ? formatNum(n.protein * multiplier) : '0'}g P</span>
+                                  <span className="text-carbs">{n ? formatNum(n.carbs * multiplier) : '0'}g C</span>
+                                  <span className="text-fat">{n ? formatNum(n.fat * multiplier) : '0'}g F</span>
                                 </div>
                               </div>
                             )
@@ -493,12 +487,12 @@ export default function History() {
                     {waterLogs.map((log) => (
                       <span
                         key={log.id}
-                        className="inline-flex items-center gap-1.5 border border-slate-200 bg-slate-50 px-2.5 py-1 text-sm text-slate-600 dark:border-[#2D2D2D] dark:bg-[#1F1F1F] dark:text-[#FDFDFD]/70"
+                        className="inline-flex items-center gap-1.5 border border-line bg-surface-2 px-2.5 py-1 text-sm text-ink-2"
                       >
                         {log.amount} {log.unit}
                         <button
                           type="button"
-                          className="text-slate-400 hover:text-red-600 dark:text-[#FDFDFD]/60 dark:hover:text-red-400"
+                          className="text-ink-3 hover:text-protein"
                           onClick={() => handleDeleteWaterLog(log.id)}
                           aria-label="Delete water log"
                         >
@@ -545,7 +539,7 @@ export default function History() {
           <Card title="Daily Notes">
             {editing ? (
               <textarea
-                className="w-full resize-none border border-slate-200 px-3 py-2 text-sm dark:border-[#2D2D2D] dark:bg-[#1F1F1F] dark:text-[#FDFDFD]"
+                className="w-full resize-none border border-line px-3 py-2 text-sm"
                 placeholder="No notes for this day."
                 value={editNoteContent}
                 onChange={(e) => setEditNoteContent(e.target.value)}
@@ -564,11 +558,11 @@ export default function History() {
                   Cancel
                 </Button>
                 <Button
-                  className={`flex-1 ${hasChanges ? 'bg-black text-white hover:bg-neutral-800' : 'bg-slate-100 text-slate-950'}`}
+                  className="flex-1"
                   onClick={handleUpdateLog}
                   disabled={!hasChanges}
                 >
-                  {hasChanges ? 'Update Log' : 'No Changes'}
+                  {hasChanges ? 'Save changes' : 'No changes'}
                 </Button>
               </div>
             ) : (
@@ -580,7 +574,7 @@ export default function History() {
             {!confirmDelete ? (
               <Button
                 variant="outline"
-                className="w-full text-red-400 dark:text-red-400 dark:border-red-400"
+                className="w-full text-protein"
                 onClick={() => setConfirmDelete(true)}
               >
                 Delete Entire Day
@@ -598,6 +592,6 @@ export default function History() {
           </div>
         </div>
       )}
-    </PageContainer>
+    </>
   )
 }

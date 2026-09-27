@@ -10,10 +10,8 @@ import { workoutRepository } from '@/lib/repositories/workoutRepository'
 import { tretinoinRepository } from '@/lib/repositories/tretinoinRepository'
 import { nutritionCalculationService } from '@/lib/services/nutritionCalculation'
 import { useSettingsStore } from '@/stores/settingsStore'
-import { PageContainer } from '@/components/ui/page-container'
+import { ChartCard, SegmentedControl } from '@/components/ds'
 import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { formatNum } from '@/lib/utils/format'
 
 type RangeKey = '7d' | '30d' | '90d'
 
@@ -179,135 +177,152 @@ export default function Analytics() {
   const totalWorkouts = workouts.filter((w) => w.type !== 'rest').length
 
   return (
-    <PageContainer>
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-slate-950 dark:text-[#FDFDFD]">Analytics</h1>
+    <>
+      <div className="mb-5">
+        <h1 className="title-1 text-black">Analytics</h1>
       </div>
 
-      <div className="mb-6 flex items-center gap-2">
-        {(Object.keys(RANGE_LABELS) as RangeKey[]).map((key) => (
-          <Button
-            key={key}
-            size="sm"
-            variant={range === key ? 'default' : 'outline'}
-            onClick={() => setRange(key)}
-          >
-            {RANGE_LABELS[key]}
-          </Button>
-        ))}
+      <div className="mb-6">
+        <SegmentedControl
+          label="Date range"
+          value={range}
+          onChange={(next) => setRange(next as RangeKey)}
+          options={(Object.keys(RANGE_LABELS) as RangeKey[]).map((key) => ({
+            value: key,
+            label: RANGE_LABELS[key],
+          }))}
+        />
       </div>
 
       {loading ? (
-        <p className="py-12 text-center text-sm text-slate-500 dark:text-[#FDFDFD]/60">Loading...</p>
+        <p className="py-12 text-center text-sm text-ink-2">Loading...</p>
       ) : (
         <div className="space-y-6">
-          <Card title="Daily Calories">
-            <ResponsiveContainer width="100%" height={240}>
-              <LineChart data={nutritionData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="date" tickFormatter={formatShortDate} tick={{ fontSize: 11, fill: '#64748b' }} />
-                <YAxis tick={{ fontSize: 11, fill: '#64748b' }} />
-                <Tooltip />
-                <Line type="monotone" dataKey="calories" stroke="#2563eb" strokeWidth={2} dot={false} name="Calories" />
-                <Line
-                  type="monotone" dataKey="calories" stroke="#dc2626" strokeWidth={1}
-                  strokeDasharray="4 4" dot={false} name={`Target (${calTarget})`}
-                  data={nutritionData.map((d) => ({ ...d, calories: calTarget }))}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </Card>
+          <ChartCard
+            title="Daily calories"
+            data={nutritionData.map((d) => d.calories)}
+            labels={nutritionData.map((d) => formatShortDate(d.date))}
+            unit=" kcal"
+            decimals={0}
+            target={calTarget}
+            targetLabel={`Target ${Math.round(calTarget)}`}
+            emptyMessage="Log a few more days to see a trend."
+          />
 
           <Card title="Macronutrients">
             <ResponsiveContainer width="100%" height={240}>
               <LineChart data={nutritionData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="date" tickFormatter={formatShortDate} tick={{ fontSize: 11, fill: '#64748b' }} />
-                <YAxis tick={{ fontSize: 11, fill: '#64748b' }} />
-                <Tooltip />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--track)" />
+                <XAxis dataKey="date" tickFormatter={formatShortDate} tick={{ fontSize: 11, fill: 'var(--ink-2)' }} />
+                <YAxis tick={{ fontSize: 11, fill: 'var(--ink-2)' }} />
+                <Tooltip
+                  contentStyle={{
+                    background: 'var(--ink)',
+                    border: 'none',
+                    borderRadius: 10,
+                    padding: '8px 10px',
+                  }}
+                  labelStyle={{ color: 'var(--on-ink-muted)', fontSize: 11 }}
+                  itemStyle={{ color: 'var(--on-ink)', fontSize: 12, fontWeight: 600 }}
+                  cursor={{ stroke: 'var(--track)' }}
+                />
                 <Legend />
-                <Line type="monotone" dataKey="protein" stroke="#16a34a" strokeWidth={2} dot={false} name="Protein" />
-                <Line type="monotone" dataKey="carbs" stroke="#ea580c" strokeWidth={2} dot={false} name="Carbs" />
-                <Line type="monotone" dataKey="fat" stroke="#dc2626" strokeWidth={2} dot={false} name="Fat" />
+                <Line type="monotone" dataKey="protein" stroke="var(--protein)" strokeWidth={2} dot={false} name="Protein" />
+                <Line type="monotone" dataKey="carbs" stroke="var(--carbs)" strokeWidth={2} dot={false} name="Carbs" />
+                <Line type="monotone" dataKey="fat" stroke="var(--fat)" strokeWidth={2} dot={false} name="Fat" />
               </LineChart>
             </ResponsiveContainer>
           </Card>
 
-          {weightData.length > 0 && (
-            <Card title="Weight Trend">
-              <ResponsiveContainer width="100%" height={240}>
-                <LineChart data={weightData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                  <XAxis dataKey="date" tickFormatter={formatShortDate} tick={{ fontSize: 11, fill: '#64748b' }} />
-                  <YAxis tick={{ fontSize: 11, fill: '#64748b' }} domain={['auto', 'auto']} />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="weight" stroke="#7c3aed" strokeWidth={2} dot={{ r: 3 }} name="Weight" />
-                </LineChart>
-              </ResponsiveContainer>
-            </Card>
-          )}
+          <ChartCard
+            title="Weight trend"
+            data={weightData.map((d) => d.weight)}
+            labels={weightData.map((d) => formatShortDate(d.date))}
+            unit=" kg"
+            emptyMessage="Log your weight on a few more days to see a trend."
+          />
 
           {waterData.length > 0 && (
-            <Card title="Water Intake">
+            <Card title="Water intake">
               <ResponsiveContainer width="100%" height={240}>
                 <BarChart data={waterData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                  <XAxis dataKey="date" tickFormatter={formatShortDate} tick={{ fontSize: 11, fill: '#64748b' }} />
-                  <YAxis tick={{ fontSize: 11, fill: '#64748b' }} />
-                  <Tooltip />
-                  <Bar dataKey="amount" fill="#0ea5e9" radius={[4, 4, 0, 0]} name="Water (ml)" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--track)" />
+                  <XAxis dataKey="date" tickFormatter={formatShortDate} tick={{ fontSize: 11, fill: 'var(--ink-2)' }} />
+                  <YAxis tick={{ fontSize: 11, fill: 'var(--ink-2)' }} />
+                  <Tooltip
+                  contentStyle={{
+                    background: 'var(--ink)',
+                    border: 'none',
+                    borderRadius: 10,
+                    padding: '8px 10px',
+                  }}
+                  labelStyle={{ color: 'var(--on-ink-muted)', fontSize: 11 }}
+                  itemStyle={{ color: 'var(--on-ink)', fontSize: 12, fontWeight: 600 }}
+                  cursor={{ stroke: 'var(--track)' }}
+                />
+                  <Bar dataKey="amount" fill="var(--fat)" radius={[4, 4, 0, 0]} name="Water (ml)" />
                 </BarChart>
               </ResponsiveContainer>
             </Card>
           )}
 
-          <Card title="Tretinoin Adherence">
+          <Card title="Tretinoin adherence">
             <ResponsiveContainer width="100%" height={240}>
               <BarChart data={tretinoinData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="date" tickFormatter={formatShortDate} tick={{ fontSize: 11, fill: '#64748b' }} />
-                <YAxis tick={{ fontSize: 11, fill: '#64748b' }} domain={[0, 1]} ticks={[0, 1]} />
-                <Tooltip />
-                <Bar dataKey="applied" fill="#16a34a" radius={[2, 2, 0, 0]} name="Applied" />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--track)" />
+                <XAxis dataKey="date" tickFormatter={formatShortDate} tick={{ fontSize: 11, fill: 'var(--ink-2)' }} />
+                <YAxis tick={{ fontSize: 11, fill: 'var(--ink-2)' }} domain={[0, 1]} ticks={[0, 1]} />
+                <Tooltip
+                  contentStyle={{
+                    background: 'var(--ink)',
+                    border: 'none',
+                    borderRadius: 10,
+                    padding: '8px 10px',
+                  }}
+                  labelStyle={{ color: 'var(--on-ink-muted)', fontSize: 11 }}
+                  itemStyle={{ color: 'var(--on-ink)', fontSize: 12, fontWeight: 600 }}
+                  cursor={{ stroke: 'var(--track)' }}
+                />
+                <Bar dataKey="applied" fill="var(--success)" radius={[2, 2, 0, 0]} name="Applied" />
               </BarChart>
             </ResponsiveContainer>
           </Card>
 
           <Card title="Summary">
             <div className="grid grid-cols-2 gap-3">
-              <div className="border border-slate-200 p-4 dark:border-[#2D2D2D]">
-                <p className="text-xs text-slate-500 dark:text-[#FDFDFD]/60">Avg Daily Calories</p>
-                <p className="mt-1 text-xl font-semibold text-slate-950 dark:text-[#FDFDFD]">{formatNum(avgCalories)}</p>
-                <p className="text-xs text-slate-500 dark:text-[#FDFDFD]/60">target: {formatNum(calTarget)}</p>
+              <div className="rounded-md bg-surface-2 p-4">
+                <p className="text-xs text-ink-2">Avg daily calories</p>
+                <p className="mt-1 stat-md text-black">{Math.round(avgCalories)}</p>
+                <p className="text-xs text-ink-2">target: {Math.round(calTarget)}</p>
               </div>
-              <div className="border border-slate-200 p-4 dark:border-[#2D2D2D]">
-                <p className="text-xs text-slate-500 dark:text-[#FDFDFD]/60">Avg Protein</p>
-                <p className="mt-1 text-xl font-semibold text-slate-950 dark:text-[#FDFDFD]">{formatNum(avgProtein)}g</p>
-                <p className="text-xs text-slate-500 dark:text-[#FDFDFD]/60">target: {formatNum(proteinTarget)}g</p>
+              <div className="rounded-md bg-surface-2 p-4">
+                <p className="text-xs text-ink-2">Avg protein</p>
+                <p className="mt-1 stat-md text-black">{Math.round(avgProtein)}g</p>
+                <p className="text-xs text-ink-2">target: {Math.round(proteinTarget)}g</p>
               </div>
-              <div className="border border-slate-200 p-4 dark:border-[#2D2D2D]">
-                <p className="text-xs text-slate-500 dark:text-[#FDFDFD]/60">Avg Carbs</p>
-                <p className="mt-1 text-xl font-semibold text-slate-950 dark:text-[#FDFDFD]">{formatNum(avgCarbs)}g</p>
-                <p className="text-xs text-slate-500 dark:text-[#FDFDFD]/60">target: {formatNum(carbsTarget)}g</p>
+              <div className="rounded-md bg-surface-2 p-4">
+                <p className="text-xs text-ink-2">Avg carbs</p>
+                <p className="mt-1 stat-md text-black">{Math.round(avgCarbs)}g</p>
+                <p className="text-xs text-ink-2">target: {Math.round(carbsTarget)}g</p>
               </div>
-              <div className="border border-slate-200 p-4 dark:border-[#2D2D2D]">
-                <p className="text-xs text-slate-500 dark:text-[#FDFDFD]/60">Avg Fat</p>
-                <p className="mt-1 text-xl font-semibold text-slate-950 dark:text-[#FDFDFD]">{formatNum(avgFat)}g</p>
-                <p className="text-xs text-slate-500 dark:text-[#FDFDFD]/60">target: {formatNum(fatTarget)}g</p>
+              <div className="rounded-md bg-surface-2 p-4">
+                <p className="text-xs text-ink-2">Avg fat</p>
+                <p className="mt-1 stat-md text-black">{Math.round(avgFat)}g</p>
+                <p className="text-xs text-ink-2">target: {Math.round(fatTarget)}g</p>
               </div>
-              <div className="border border-slate-200 p-4 dark:border-[#2D2D2D]">
-                <p className="text-xs text-slate-500 dark:text-[#FDFDFD]/60">Workouts</p>
-                <p className="mt-1 text-xl font-semibold text-slate-950 dark:text-[#FDFDFD]">{totalWorkouts}</p>
-                <p className="text-xs text-slate-500 dark:text-[#FDFDFD]/60">in {RANGE_LABELS[range].toLowerCase()}</p>
+              <div className="rounded-md bg-surface-2 p-4">
+                <p className="text-xs text-ink-2">Workouts</p>
+                <p className="mt-1 stat-md text-black">{totalWorkouts}</p>
+                <p className="text-xs text-ink-2">in {RANGE_LABELS[range].toLowerCase()}</p>
               </div>
-              <div className="border border-slate-200 p-4 dark:border-[#2D2D2D]">
-                <p className="text-xs text-slate-500 dark:text-[#FDFDFD]/60">Workout Split</p>
+              <div className="rounded-md bg-surface-2 p-4">
+                <p className="text-xs text-ink-2">Workout split</p>
                 <div className="mt-1 space-y-0.5">
                   {workoutSummary.filter((w) => w.value > 0).map((w) => (
-                    <p key={w.name} className="text-xs text-slate-600 dark:text-[#FDFDFD]/70">{w.name}: {w.value}x</p>
+                    <p key={w.name} className="text-xs text-ink-2 /70">{w.name}: {w.value}x</p>
                   ))}
                   {workoutSummary.every((w) => w.value === 0) && (
-                    <p className="text-xs text-slate-400 dark:text-[#FDFDFD]/40">No data</p>
+                    <p className="text-xs text-ink-3 /40">No data</p>
                   )}
                 </div>
               </div>
@@ -315,6 +330,6 @@ export default function Analytics() {
           </Card>
         </div>
       )}
-    </PageContainer>
+    </>
   )
 }

@@ -6,10 +6,9 @@ import { getDocs, setDoc, writeBatch } from 'firebase/firestore'
 import { userColl, userDoc } from '@/lib/paths'
 import { useAuthStore } from '@/stores/authStore'
 import { cleanForFirestore } from '@/lib/utils/firestore'
-import { PageContainer } from '@/components/ui/page-container'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { NumberInput, TextInput } from '@astryxdesign/core'
+import { TextField } from '@/components/ds'
 
 const DEFAULT_SETTINGS: UserSettings = {
   id: 'settings:default',
@@ -80,10 +79,6 @@ export default function Settings() {
     }
   }, [settingsStore.settings])
 
-  useEffect(() => {
-    const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
-    document.documentElement.classList.toggle('dark', isDark)
-  }, [theme])
 
   const handleSave = async () => {
     setSaving(true)
@@ -223,9 +218,9 @@ export default function Settings() {
   }
 
   return (
-    <PageContainer>
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-slate-950 dark:text-[#FDFDFD]">Settings</h1>
+    <>
+      <div className="mb-5">
+        <h1 className="title-1 text-black">Settings</h1>
       </div>
 
       <div className="space-y-6">
@@ -233,11 +228,11 @@ export default function Settings() {
           <div className="flex flex-col gap-3">
             <div className="flex flex-col gap-1">
               {authUser?.displayName && (
-                <p className="text-base font-semibold text-slate-950 dark:text-[var(--color-text)]">
+                <p className="text-base font-semibold text-black">
                   {authUser.displayName}
                 </p>
               )}
-              <p className="text-base text-slate-500 dark:text-[var(--color-muted)]">
+              <p className="text-base text-ink-2">
                 {authUser?.email ?? '—'}
               </p>
             </div>
@@ -249,135 +244,128 @@ export default function Settings() {
           </div>
         </Card>
 
-        <Card title="Nutrition Targets">
+        <Card title="Nutrition targets">
           <div className="grid grid-cols-2 gap-4">
-            <NumberInput
+            <TextField
               label="Calories (kcal)"
-              value={calories}
-              onChange={(v) => setCalories(v)}
+              type="number"
+              inputMode="numeric"
               min={0}
               step={50}
-              size="sm"
+              value={String(calories)}
+              onChange={(e) => setCalories(Number(e.target.value) || 0)}
             />
-            <NumberInput
+            <TextField
               label="Protein (g)"
-              value={protein}
-              onChange={(v) => setProtein(v)}
+              type="number"
+              inputMode="numeric"
               min={0}
               step={5}
-              size="sm"
+              value={String(protein)}
+              onChange={(e) => setProtein(Number(e.target.value) || 0)}
             />
-            <NumberInput
+            <TextField
               label="Carbs (g)"
-              value={carbs}
-              onChange={(v) => setCarbs(v)}
+              type="number"
+              inputMode="numeric"
               min={0}
               step={5}
-              size="sm"
+              value={String(carbs)}
+              onChange={(e) => setCarbs(Number(e.target.value) || 0)}
             />
-            <NumberInput
+            <TextField
               label="Fat (g)"
-              value={fat}
-              onChange={(v) => setFat(v)}
+              type="number"
+              inputMode="numeric"
               min={0}
               step={5}
-              size="sm"
+              value={String(fat)}
+              onChange={(e) => setFat(Number(e.target.value) || 0)}
             />
-            <NumberInput
+            <TextField
               label="Fiber (g)"
-              value={fiber}
-              onChange={(v) => setFiber(v)}
+              type="number"
+              inputMode="numeric"
               min={0}
               step={1}
-              size="sm"
+              value={String(fiber)}
+              onChange={(e) => setFiber(Number(e.target.value) || 0)}
             />
           </div>
         </Card>
 
-        <Card title="Water Goal">
-          <NumberInput
-            label="Daily target (ml)"
-            value={waterGoal}
-            onChange={(v) => setWaterGoal(v)}
-            min={0}
-            step={100}
-            size="sm"
-          />
+        <Card title="Water goal">
+          <TextField
+              label="Daily target (ml)"
+              type="number"
+              inputMode="numeric"
+              min={0}
+              step={100}
+              value={String(waterGoal)}
+              onChange={(e) => setWaterGoal(Number(e.target.value) || 0)}
+            />
         </Card>
 
-        <Card title="Theme">
-          <div className="flex items-center gap-3">
-            <Button variant={theme === 'light' ? 'default' : 'outline'} size="sm" onClick={() => setTheme('light')}>
-              Light
-            </Button>
-            <Button variant={theme === 'dark' ? 'default' : 'outline'} size="sm" onClick={() => setTheme('dark')}>
-              Dark
-            </Button>
-            <Button variant={theme === 'system' ? 'default' : 'outline'} size="sm" onClick={() => setTheme('system')}>
-              System
-            </Button>
-          </div>
-        </Card>
 
         <div className="flex items-center gap-3">
           <Button onClick={handleSave} disabled={saving}>
-            {saving ? 'Saving...' : saved ? 'Saved!' : 'Save Settings'}
+            {saving ? 'Saving…' : saved ? 'Saved' : 'Save settings'}
           </Button>
         </div>
 
-        <Card title="Export Data" description="Download all your data as a JSON file.">
+        <Card title="Export data" description="Download all your data as a JSON file.">
           <div className="flex items-center gap-3">
             <Button variant="outline" size="sm" onClick={handleExport}>
               Export
             </Button>
-            {exportStatus && <span className="text-xs text-green-600">{exportStatus}</span>}
+            {exportStatus && <span className="text-xs text-success">{exportStatus}</span>}
           </div>
         </Card>
 
-        <Card title="Import Data" description="Upload a previously exported JSON file. Existing data is preserved; imported records are added.">
+        <Card title="Import data" description="Upload a previously exported JSON file. Existing data is preserved; imported records are added.">
           <div>
             <input
               ref={fileInputRef}
               type="file"
               accept=".json"
-              className="mb-2 text-sm dark:text-[#FDFDFD] dark:border dark:border-slate-600 p-1"
+              className="w-full cursor-pointer footnote text-ink-2 file:mr-3 file:cursor-pointer file:rounded-pill file:border-0 file:bg-surface-2 file:px-4 file:py-2 file:btn-label file:text-black hover:file:bg-fill-strong"
               onChange={handleImport}
             />
-            {importStatus && <span className="text-xs text-green-600">{importStatus}</span>}
+            {importStatus && <span className="text-xs text-success">{importStatus}</span>}
           </div>
         </Card>
 
-        <Card title="Reset Application" description="Clear all your user data (meals, history, settings, and tracking). Built-in foods remain.">
+        <Card title="Reset app data" description="Clear all your user data (meals, history, settings, and tracking). Built-in foods remain.">
           {!confirmReset ? (
             <Button
               variant="outline"
               size="sm"
-              className="text-red-600 dark:bg-red-400 dark:border-red-400 dark:border dark:font-bold"
+              className="text-protein"
               onClick={() => setConfirmReset(true)}
             >
               Reset All Data
             </Button>
           ) : (
             <div className="space-y-3">
-              <p className="text-sm text-slate-600 dark:text-[var(--color-muted)]">
+              <p className="text-sm text-ink-2">
                 This permanently deletes your meals, history, tracking and settings. Your foods,
                 categories and presets are kept. This cannot be undone.
               </p>
-              <p className="text-sm text-slate-950 dark:text-[var(--color-text)]">
+              <p className="text-sm text-black">
                 To confirm, type <span className="font-semibold">{RESET_CONFIRM_PHRASE}</span> below.
               </p>
-              <TextInput
-                label={`Type "${RESET_CONFIRM_PHRASE}" to confirm`}
+              <TextField
+                label={`Type"${RESET_CONFIRM_PHRASE}" to confirm`}
                 isLabelHidden
                 value={resetConfirmText}
-                onChange={(v) => { setResetConfirmText(v); setResetError(null) }}
+                onChange={(e) => {
+                  setResetConfirmText(e.target.value)
+                  setResetError(null)
+                }}
                 placeholder={RESET_CONFIRM_PHRASE}
-                size="lg"
-                width="100%"
-                isDisabled={resetting}
-                className="rounded-lg"
+                disabled={resetting}
               />
-              {resetError && <p className="text-xs text-red-400">{resetError}</p>}
+              {resetError && <p className="text-xs text-protein">{resetError}</p>}
               <div className="flex items-center gap-3">
                 <Button variant="outline" size="sm" onClick={cancelReset} disabled={resetting}>
                   Cancel
@@ -395,6 +383,6 @@ export default function Settings() {
           )}
         </Card>
       </div>
-    </PageContainer>
+    </>
   )
 }

@@ -1,112 +1,366 @@
-﻿@layer reset, theme, base, astryx-base, astryx-theme, components, utilities;
+@layer reset, theme, base, components, utilities;
 
 @import "tailwindcss/theme.css" layer(theme);
 @import "tailwindcss/preflight.css" layer(base);
-@import "@astryxdesign/core/reset.css";
-@import "@astryxdesign/core/astryx.css";
-@import "@astryxdesign/theme-gothic/theme.css";
-@import "@astryxdesign/core/tailwind-theme.css";
 @import "tailwindcss/utilities.css" layer(utilities);
 
-@custom-variant dark (&:where(.dark, .dark *));
+/* ---------------------------------------------------------------------------
+   Hanken Grotesk — Gtrak DS type face (OFL, self-hosted).
+   Replaces the Poppins/Inter pair loaded from the Google Fonts CDN.
+--------------------------------------------------------------------------- */
+@font-face {
+  font-family: "Hanken Grotesk";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/HankenGrotesk-400.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Hanken Grotesk";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/fonts/HankenGrotesk-500.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Hanken Grotesk";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/fonts/HankenGrotesk-600.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Hanken Grotesk";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/HankenGrotesk-700.woff2") format("woff2");
+}
 
+/* ---------------------------------------------------------------------------
+   Gtrak DS v2.1 tokens — the source of truth.
+   Light only: the design system declares a single theme and has no dark variant.
+--------------------------------------------------------------------------- */
 :root {
   color-scheme: light;
-  --color-bg: #ffffff;
-  --color-surface: #ffffff;
-  --color-border: #e2e8f0;
-  --color-text: #000000;
-  --color-muted: #64748b;
-  --color-primary: #000000;
-  --color-primary-strong: #333333;
-  --color-success: #16a34a;
-  --color-error: #dc2626;
-  --color-warning: #ea580c;
+
+  /* Ink + text */
+  --black: #000000;
+  --ink: #1c1a22;
+  --ink-2: #767578;
+  --ink-3: #9a999e;
+  --ink-4: #cfcfcf;
+  --on-ink: #ffffff;
+  --on-ink-muted: #a09ea6;
+
+  /* Surfaces */
+  --canvas: #ffffff;
+  --canvas-glow: #f0eae7;
+  --canvas-glow-2: #e3e8e9;
+  --surface: #ffffff;
+  --surface-2: #f9f8fd;
+  --fill-subtle: #f5f5f5;
+  --fill: #f0eff4;
+  --fill-strong: #ececec;
+
+  /* Tracks + lines */
+  --track: #e8e8e8;
+  --ring-track: #eff1f7;
+  --slider-track: #e0e0e0;
+  --line: #ececec;
+  --line-strong: #d8d8d8;
+
+  /* Disabled */
+  --disabled: #bababc;
+  --disabled-2: #c0bfc6;
+
+  /* Data colours — the only place colour is allowed */
+  --protein: #dd6668;
+  --carbs: #df9a65;
+  --fat: #6596dd;
+  --accent: var(--carbs);
+  --tint-over: #fbf0ef;
+  --success: #349470;
+  --success-text: #3e8c6c;
+  --success-soft: #eaf8ef;
+  --streak: #f69716;
+  --streak-soft: #fce298;
+  --day-over: #bc6c70;
+  --day-met: #8fce89;
+  --avatar: #5ab0ce;
+  --avatar-2: #84c8e0;
+  --camera-tile: #222220;
+  --glass: rgba(56, 56, 52, 0.72);
+  --focus: var(--ink);
+
+  /* Elevation */
+  --shadow-card: 0 4px 16px #1c1a220f;
+  --shadow-float: 0 12px 32px #1c1a2217, 0 2px 8px #1c1a220a;
+  --shadow-cta: 0 -24px 48px #0000000a;
+  --shadow-focus: 0 0 0 2px #ffffff, 0 0 0 4px #1c1a22;
+
+  /* Space */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-gutter-home: 30px;
+  --space-8: 32px;
+  --space-10: 40px;
+
+  /* Radius */
+  --radius-xs: 8px;
+  --radius-sm: 12px;
+  --radius-md: 15px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-pill: 9999px;
+
+  /* Control sizes */
+  --control-xl: 58px;
+  --control-md: 48px;
+  --control-sm: 36px;
+  --option-row: 69px;
+  --option-row-2: 90px;
+  --input-height: 63px;
+  --icon-button: 40px;
+  --fab-size: 64px;
+  --step-bar: 3px;
+  --slider-bar: 4px;
+  --ring-stroke: 12px;
+  --switch-w: 51px;
+
+  --font-ui: "Hanken Grotesk", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
 }
 
-.dark {
-  color-scheme: dark;
-  --color-bg: #101314;
-  --color-surface: #1a1d20;
-  --color-border: #24292D;
-  --color-text: #E8F1F6;
-  --color-muted: #96A0AB;
-  --color-primary: #E8F1F6;
-  --color-primary-strong: #cccccc;
-  --color-success: #b3c79a;
-  --color-error: #c6a6a2;
-  --color-warning: #d3c490;
-  --color-accent: #a3b5d6;
-  --color-accent-muted: #a3b5d633;
-  --color-on-accent: #101314;
-  --color-background-surface: #1a1d20;
-  --color-background-body: #101314;
-  --color-background-muted: #24292D;
-  --color-text-primary: #E8F1F6;
-  --color-text-secondary: #96A0AB;
-  --color-text-accent: #a3b5d6;
-  --color-icon-primary: #E8F1F6;
-  --color-icon-secondary: #96A0AB;
-  --color-icon-accent: #a3b5d6;
-  --color-success-muted: #b3c79a33;
-  --color-error-muted: #c6a6a233;
-  --color-warning-muted: #d3c49033;
-}
-
-* {
-  box-sizing: border-box;
-}
-
-html {
-  min-height: 100%;
-  background: var(--color-bg);
-  color: var(--color-text);
-  font-family: 'Poppins', 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-}
-
-body {
-  min-height: 100%;
-  margin: 0;
-  background: var(--color-bg);
-  color: var(--color-text);
-  font-family: 'Poppins', 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-}
-
+/* ---------------------------------------------------------------------------
+   Legacy compatibility layer.
+   The old gothic palette was consumed as --color-* in ~200 places. Rather than
+   break every screen at once, each legacy name now points at its Gtrak DS
+   equivalent. These are deleted as screens migrate; nothing new should use them.
+--------------------------------------------------------------------------- */
 :root {
-  --font-family-body: 'Poppins', 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-family-heading: 'Poppins', 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --color-bg: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-alt: var(--surface-2);
+  --color-border: var(--line);
+  --color-text: var(--black);
+  --color-text-muted: var(--ink-2);
+  --color-muted: var(--ink-2);
+  --color-primary: var(--ink);
+  --color-primary-strong: var(--black);
+  --color-success: var(--success);
+  --color-error: var(--protein);
+  --color-warning: var(--streak);
+  --color-accent: var(--accent);
+  --color-accent-muted: color-mix(in srgb, var(--accent) 20%, transparent);
+  --color-on-accent: var(--on-ink);
+  --color-background-surface: var(--surface);
+  --color-background-body: var(--canvas);
+  --color-background-muted: var(--surface-2);
+  --color-text-primary: var(--black);
+  --color-text-secondary: var(--ink-2);
+  --color-text-accent: var(--accent);
+  --color-icon-primary: var(--black);
+  --color-icon-secondary: var(--ink-2);
+  --color-icon-accent: var(--accent);
+  --color-success-muted: color-mix(in srgb, var(--success) 15%, transparent);
+  --color-error-muted: color-mix(in srgb, var(--protein) 15%, transparent);
+  --color-warning-muted: color-mix(in srgb, var(--streak) 15%, transparent);
+
+  --font-family-body: var(--font-ui);
+  --font-family-heading: var(--font-ui);
 }
 
-button, input, textarea, select {
-  font: inherit;
+/* ---------------------------------------------------------------------------
+   Tailwind v4 theme — exposes the tokens as utilities (bg-ink, text-ink-2,
+   bg-surface-2, rounded-md, shadow-card, …) plus the Gtrak DS type scale.
+--------------------------------------------------------------------------- */
+@theme inline {
+  --font-sans: var(--font-ui);
+
+  --color-black: var(--black);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-ink-4: var(--ink-4);
+  --color-on-ink: var(--on-ink);
+  --color-on-ink-muted: var(--on-ink-muted);
+  --color-canvas: var(--canvas);
+  --color-canvas-glow: var(--canvas-glow);
+  --color-canvas-glow-2: var(--canvas-glow-2);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-fill-subtle: var(--fill-subtle);
+  --color-fill: var(--fill);
+  --color-fill-strong: var(--fill-strong);
+  --color-track: var(--track);
+  --color-ring-track: var(--ring-track);
+  --color-slider-track: var(--slider-track);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-disabled: var(--disabled);
+  --color-disabled-2: var(--disabled-2);
+  --color-protein: var(--protein);
+  --color-carbs: var(--carbs);
+  --color-fat: var(--fat);
+  --color-accent: var(--accent);
+  --color-tint-over: var(--tint-over);
+  --color-success: var(--success);
+  --color-success-text: var(--success-text);
+  --color-success-soft: var(--success-soft);
+  --color-streak: var(--streak);
+  --color-streak-soft: var(--streak-soft);
+  --color-day-over: var(--day-over);
+  --color-day-met: var(--day-met);
+  --color-avatar: var(--avatar);
+  --color-avatar-2: var(--avatar-2);
+  --color-camera-tile: var(--camera-tile);
+  --color-glass: var(--glass);
+  --color-focus: var(--focus);
+
+  --radius-xs: 8px;
+  --radius-sm: 12px;
+  --radius-md: 15px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-pill: 9999px;
+
+  --shadow-card: 0 4px 16px #1c1a220f;
+  --shadow-float: 0 12px 32px #1c1a2217, 0 2px 8px #1c1a220a;
+  --shadow-cta: 0 -24px 48px #0000000a;
+  --shadow-focus: 0 0 0 2px #ffffff, 0 0 0 4px #1c1a22;
 }
 
-a {
-  color: inherit;
-  text-decoration: none;
+/* Gtrak DS type scale */
+@utility stat-xl { font-size: 42px; line-height: 46px; font-weight: 600; }
+@utility large-title { font-size: 32px; line-height: 36px; font-weight: 600; }
+@utility stat-lg { font-size: 32px; line-height: 36px; font-weight: 600; }
+@utility title-1 { font-size: 22px; line-height: 28px; font-weight: 600; }
+@utility stat-md { font-size: 18px; line-height: 22px; font-weight: 600; }
+@utility title-2 { font-size: 18px; line-height: 24px; font-weight: 600; }
+@utility headline { font-size: 17px; line-height: 22px; font-weight: 600; }
+@utility btn-label { font-size: 17px; line-height: 22px; font-weight: 600; }
+@utility option { font-size: 17px; line-height: 22px; font-weight: 500; }
+@utility body-text { font-size: 17px; line-height: 19px; font-weight: 400; }
+@utility callout { font-size: 16px; line-height: 20px; font-weight: 400; }
+@utility subhead { font-size: 15px; line-height: 20px; font-weight: 400; }
+@utility chip-text { font-size: 14px; line-height: 18px; font-weight: 500; }
+@utility label-text { font-size: 14px; line-height: 18px; font-weight: 400; }
+@utility footnote { font-size: 13px; line-height: 16px; font-weight: 500; }
+@utility caption { font-size: 12px; line-height: 15px; font-weight: 500; }
+
+/* --------------------------------------------------------------------------- */
+
+/* These live in @layer base so the DS type utilities can override them.
+   Unlayered, "font: inherit" on controls beat every type utility — every
+   btn-label, chip-text and subhead on a button or input silently fell back to
+   the inherited 16px. */
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    min-height: 100%;
+    background: var(--canvas);
+    color: var(--black);
+    font-family: var(--font-ui);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    min-height: 100%;
+    margin: 0;
+    background: var(--canvas);
+    color: var(--black);
+    font-family: var(--font-ui);
+  }
+
+  button, input, textarea, select {
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+    line-height: inherit;
+    color: inherit;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
 }
 
 ::selection {
   background: rgba(0, 0, 0, 0.12);
-  color: var(--color-text);
+  color: var(--black);
 }
 
-.dark [data-astryx-progressbar-fill] {
-  background-color: var(--fill-color, #a3b5d6);
+/* The native date input's calendar button, tinted to match DS ink. */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.55;
+  transition: opacity 150ms ease-out;
+}
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
 }
 
-.dark [data-astryx-progressbar-fill][data-variant="accent"] {
-  --fill-color: #a3b5d6;
+/* ---------------------------------------------------------------------------
+   Reduced motion. The DS animates rings and bars over 600ms and presses to
+   0.97; anyone who has asked their OS for less motion gets none of it, while
+   state still changes instantly so nothing becomes unusable.
+--------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .active\:scale-\[0\.97\]:active {
+    transform: none !important;
+  }
 }
 
-.dark [data-astryx-progressbar-fill][data-variant="success"] {
-  --fill-color: #b3c79a;
+/* ---------------------------------------------------------------------------
+   Autofill. Chrome paints its own pale-blue fill and text colour over any
+   autofilled input, which breaks the surface-2 field. There is no way to set
+   the background directly, so an inset box-shadow stands in for it, and the
+   very long transition keeps Chrome from re-painting on focus.
+--------------------------------------------------------------------------- */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+  -webkit-text-fill-color: var(--black);
+  caret-color: var(--black);
+  box-shadow: inset 0 0 0 1000px var(--surface-2);
+  transition: background-color 100000s ease-in-out 0s;
+  font: inherit;
 }
 
-.dark [data-astryx-progressbar-fill][data-variant="warning"] {
-  --fill-color: #d3c490;
+/* The field turns white on focus, so the stand-in fill has to follow it. */
+.group:focus-within input:-webkit-autofill {
+  box-shadow: inset 0 0 0 1000px var(--surface);
 }
 
-.dark [data-astryx-progressbar-fill][data-variant="error"] {
-  --fill-color: #c89aab;
+/* Number inputs: the native spinners crowd the DS suffix and overflow the
+   field on narrow columns. The wheels and steppers cover stepping. */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
 }
