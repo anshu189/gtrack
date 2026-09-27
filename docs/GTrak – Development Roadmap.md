@@ -1,6 +1,6 @@
 # GTrak – Development Roadmap
 
-**Version:** 1.1.0
+**Version:** 1.2.0
 
 This roadmap tracks the development progress of GTrak.
 
@@ -536,6 +536,66 @@ Phase 10 — Polish
 ☑ `cleanForFirestore` write sanitization
 
 ☑ Vercel production deployment
+
+---
+
+# Phase 13 — Gothic Refinement + Hardening (v1.2.0)
+
+UI is source-of-truth over older "square design" doc text (superseded in v1.2.0).
+
+## Design System Adoption
+
+☑ Astryx v0.4.3 + gothic theme (`core`, `theme-gothic`, CLI workflow in `AGENTS.md`)
+
+☑ Rounded corners everywhere (cards `rounded-xl`, inputs/buttons/items `rounded-lg`)
+
+☑ Gothic dark tokens live in `src/index.css` (bg `#101314`, surface `#1a1d20`, border `#24292D`, text `#E8F1F6`, muted `#96A0AB`, accent `#a3b5d6`, success `#b3c79a`, warning `#d3c490`, error `#c6a6a2`)
+
+☑ Sentence-case labels (Water intake, Respect/Trust score, Daily notes, Submit daily log)
+
+☑ Astryx `ProgressBar` for water + nutrition summaries (real `label` props)
+
+☑ Astryx `Table` for weight history (rows `text-sm`, headers `text-xs`)
+
+☑ Dashboard font tuning (h1 `text-xl`, Daily summary `text-base`) + Submit button `size="lg"`
+
+---
+
+## MealBuilder Redesign
+
+☑ Gothic redesign (header + Edit Foods, Prev/date/Next pills, New Meal card, inline edit section, meals list)
+
+☑ Per-item Remove / Edit with inline `QuantityPicker` (Save/Cancel)
+
+☑ Meal name required (Create disabled on empty input + handler guard; no silent `'Meal'` fallback)
+
+☑ Date pill opens Astryx calendar via hidden `DateInput` overlay (no `pointer-events-none` — see gotcha below)
+
+---
+
+## Tracking Tweaks
+
+☑ Water quick-add: 250 / 300 / 350 / 500 / 750 ml
+
+---
+
+## Build Hardening
+
+☑ Strict `tsc -b && vite build` green (fixed duplicate declarations, missing `QuantityPicker` import, restored `isToday`, removed unused `Button` import / `onDelete` prop — Vercel `TS6133`)
+
+☑ Known gotcha recorded: never wrap Astryx `DateInput` in `pointer-events-none` (inline popover inherits it → visible-but-unclickable calendar)
+
+---
+
+## Docs
+
+☑ `MEMORY.md` handoff file (purpose, functionality, approach, design system, scalability, services, food data, changelog, guardrails)
+
+☑ All docs bumped to v1.2.0 (app-as-truth: rounded gothic, Astryx stack, writable `foods`, backup gap documented)
+
+Dependencies
+
+Everything
 
 ---
 

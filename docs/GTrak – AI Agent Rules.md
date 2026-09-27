@@ -1,6 +1,6 @@
 # GTrak – Copilot Implementation Rules
 
-**Version:** 1.1.0
+**Version:** 1.2.0
 
 This document defines how coding agents should contribute to the project.
 
@@ -210,29 +210,37 @@ Names should clearly describe purpose.
 
 # 10. UI Rules
 
-Follow the GTrak design language.
+Follow the GTrak gothic design language (the live app is truth — see `src/index.css` and `MEMORY.md §4`).
 
-Fully **square** design:
+GTrak uses **Astryx v0.4.3** (`@astryxdesign/core`, `@astryxdesign/theme-gothic`) plus Tailwind CSS v4:
 
-- No rounded corners (except the brand "G" mark).
+- Discover before building: `npx astryx build "<idea>"`, `npx astryx template <name>`, `npx astryx component <Name>` for props (full workflow in `AGENTS.md`).
+- Prefer Astryx components (ProgressBar, DateInput, Table, NumberInput, …) with real `label` props over hand-rolled elements.
+- Tokens for every value (`--color-bg/surface/border/text/muted/accent/success/warning/error`); never override `--color-*` in `:root`.
+
+Rounded, flat design:
+
+- Rounded corners everywhere: cards `rounded-xl`, inputs/buttons/items `rounded-lg`.
 - No shadows.
-- No opacity.
 - Solid, flat colors only.
+- Sentence-case labels ("Water intake", "Respect/Trust score", "Do what you said").
 
-Palette:
+Palette (dark theme, the used theme):
 
-- Light: white background, `#e2e8f0` borders, black text.
-- Dark: `#111111` background, `#1F1F1F` surface, `#2D2D2D` borders, `#FDFDFD` text.
+- Background `#101314`, surface `#1a1d20`, borders `#24292D`, text `#E8F1F6`, muted `#96A0AB`.
+- Accent `#a3b5d6` (periwinkle), success `#b3c79a` (sage), warning `#d3c490` (aged gold), error `#c6a6a2` (dusty rose).
 
 Functional colors:
 
-- Green: success / positive values
-- Red: errors, negative values, and delete actions
-- Orange: warnings
-
-There is **no blue** in the application. Do not introduce blue.
+- Sage green: success / positive values
+- Dusty rose: errors, negative values, and delete actions
+- Aged gold: warnings
 
 Avoid gradients, glassmorphism, neumorphism, decorative animations, and excessive borders.
+
+## Known UI gotcha
+
+Never put `pointer-events-none` on a wrapper around an Astryx `DateInput`: its calendar popover renders inline as a DOM child and inherits `pointer-events`, so the whole calendar becomes visible-but-unclickable (dead month/year arrows, no selectable dates). The working pattern (MealBuilder date pill) is an `absolute inset-0 opacity-0` overlay with no `pointer-events-none`, and the custom button above it (`relative z-10`) receiving the clicks.
 
 ---
 
@@ -253,7 +261,7 @@ Optimize only when necessary.
 
 Every completed feature should satisfy:
 
-✓ TypeScript passes (`npm run build` / `tsc -b`)
+✓ TypeScript passes (`npm run build` / `tsc -b` — strict: `noUnusedLocals`/`noUnusedParameters`, so unused imports/props fail Vercel deploys)
 
 ✓ Lint passes (`npm run lint`)
 

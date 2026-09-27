@@ -1,6 +1,6 @@
 # GTrak – Architecture Document
 
-**Version:** 1.1.0  
+**Version:** 1.2.0  
 **Status:** Active  
 **Framework:** React + Vite + TypeScript  
 **Backend:** Firebase Firestore (cloud) + Anonymous Auth
@@ -193,9 +193,10 @@ it should probably be split into smaller modules.
 
 | Purpose | Technology |
 |----------|------------|
-| Framework | React + Vite |
-| Language | TypeScript |
-| Styling | Tailwind CSS |
+| Framework | React 19 + Vite 8 |
+| Language | TypeScript ~6.0 (strict: `noUnusedLocals`, `noUnusedParameters`) |
+| Design system | Astryx v0.4.3 (`@astryxdesign/core`, `@astryxdesign/theme-gothic`, CLI; workflow in `AGENTS.md`) |
+| Styling | Tailwind CSS v4 + gothic theme tokens (`src/index.css`) |
 | State Management | Zustand |
 | Database | Firebase Firestore |
 | Authentication | Firebase Anonymous Auth |
@@ -204,7 +205,8 @@ it should probably be split into smaller modules.
 | Forms | React Hook Form |
 | Validation | Zod |
 | Icons | Lucide React |
-| Deployment | Vercel |
+| Routing | React Router |
+| Deployment | Vercel (`npm run build` = `tsc -b && vite build`) |
 
 ---
 
@@ -663,7 +665,7 @@ settings           Single app settings document
 
 ## foods
 
-Contains built-in foods.
+Contains built-in foods **plus user-created custom foods and user-edited macros**.
 
 Fields:
 
@@ -674,9 +676,10 @@ Fields:
 - nutrition (per 100g / 100ml)
 - measures (discrete measures with `gramsPerUnit` for conversion)
 - aliases
-- source
+- source (`IFCT` / `USDA` / `FSSAI` / `Brand` / `Custom`)
+- isCustom (true for user-created foods, id `food:custom:{uuid}`)
 
-This collection is seeded from `src/data` and is read-only at runtime.
+This collection is seeded from `src/data` on first boot, then **user-writable at runtime**: `FoodMacroEditor` persists macro tweaks via `foodRepository.update()`, and `FoodPicker` creates custom foods via `foodRepository.createCustom()`. `seedIfEmpty()` no-ops whenever the collection is non-empty, so code pushes and seed-file edits never overwrite live food data. Food docs are lost only if the collection is deleted/emptied (next boot reseeds seed-only data), the app is pointed at a new Firebase project, or docs are explicitly deleted.
 
 ---
 
@@ -755,9 +758,9 @@ Only one settings record should exist.
 
 Settings provides:
 
-- Export: downloads all user data as JSON.
+- Export: downloads user data as JSON — covers 9 collections plus settings, but **excludes `foods`, `categories`, `quantityPresets`, `nutritionSources`, and `deletedMeals`**. There is no in-app backup of custom foods or macro tweaks; export `foods` from the Firestore console before any risky change.
 - Import: reads a previously exported JSON file (existing data is preserved).
-- Reset: clears all user data; requires the confirmation password `godelete`. Built-in foods remain.
+- Reset: clears all user data; requires the confirmation password `godelete`. Built-in foods remain — and so do custom foods (Reset spares the `foods` collection).
 
 ---
 
@@ -1340,7 +1343,7 @@ Overrides are applied once during seeding.
 
 # 9. UI & Design System
 
-The UI should feel like a professional productivity application.
+The UI should feel like a professional productivity application. It is built on **Astryx v0.4.3 with the gothic theme** (`@astryxdesign/core`, `@astryxdesign/theme-gothic`; CLI workflow in `AGENTS.md`) plus Tailwind CSS v4 and gothic tokens in `src/index.css`.
 
 Avoid unnecessary visual decoration.
 
@@ -1360,43 +1363,41 @@ The interface should be:
 
 Every screen should feel familiar.
 
+Prefer Astryx components (ProgressBar, DateInput, Table, NumberInput, TextInput, TextArea, …) with real `label` props over hand-rolled elements. Tokens for every value; never override `--color-*` in `:root`.
+
 ---
 
 ## Design Language
 
-Fully square, flat design:
+Rounded, flat gothic design:
 
-- No rounded corners (except the brand "G" mark).
+- Rounded corners everywhere: cards `rounded-xl`, inputs/buttons/items `rounded-lg`.
 - No shadows.
-- No opacity.
 - Solid, flat colors only.
+- Sentence-case labels ("Water intake", "Respect/Trust score", "Do what you said").
+
+**Known gotcha:** never put `pointer-events-none` on a wrapper around an Astryx `DateInput` — its calendar popover renders inline as a DOM child and inherits `pointer-events`, becoming visible-but-unclickable. The working pattern (MealBuilder date pill) is an `absolute inset-0 opacity-0` overlay with no `pointer-events-none`, custom button above it (`relative z-10`).
 
 ---
 
 ## Color Palette
 
-Light theme
+Dark theme (the used theme, `src/index.css`)
 
-- Background: white
-- Border: `#e2e8f0`
-- Text: black
-- Muted: `#64748b`
-
-Dark theme
-
-- Background: `#111111`
-- Surface: `#1F1F1F`
-- Border: `#2D2D2D`
-- Text: `#FDFDFD`
-- Muted: `#888888`
+- Background: `#101314`
+- Surface: `#1a1d20`
+- Border: `#24292D`
+- Text: `#E8F1F6`
+- Muted: `#96A0AB`
 
 Functional
 
-- Green: success / positive
-- Red: errors, negative values, delete actions
-- Orange: warnings
+- Accent: `#a3b5d6` (periwinkle)
+- Success: `#b3c79a` (sage) — success / positive
+- Error: `#c6a6a2` (dusty rose) — errors, negative values, delete actions
+- Warning: `#d3c490` (aged gold) — warnings
 
-There is **no blue** in the application.
+Light theme values also exist in `src/index.css` but dark is the used theme.
 
 Avoid using colors for decoration.
 
@@ -1406,9 +1407,7 @@ Every color should communicate information.
 
 ## Border Radius
 
-None.
-
-Everything is square.
+Cards `rounded-xl`; inputs, buttons, and list items `rounded-lg`.
 
 ---
 

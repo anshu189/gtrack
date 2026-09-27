@@ -1,7 +1,7 @@
 
 # GTrak – Product Requirements Document (PRD)
 
-**Version:** 1.1.0  
+**Version:** 1.2.0  
 **Status:** In Development  
 **Owner:** Neo  
 **Project Type:** Nutrition & Fitness Tracker  
@@ -217,28 +217,23 @@ Brand values:
 
 Visual style should remain consistent throughout the application.
 
-Fully square, flat design:
+Rounded, flat gothic design (built on Astryx v0.4.3 + gothic theme; tokens in `src/index.css`):
 
-- No rounded corners (except the brand "G" mark).
+- Rounded corners everywhere: cards `rounded-xl`, inputs/buttons/items `rounded-lg`.
 - No shadows.
-- No opacity.
 - Solid, flat colors.
+- Sentence-case labels ("Water intake", "Respect/Trust score").
 
-Light theme:
+Dark theme (the used theme):
 
-- White background, `#e2e8f0` borders, black text.
-
-Dark theme:
-
-- `#111111` background, `#1F1F1F` surfaces, `#2D2D2D` borders, `#FDFDFD` text.
+- `#101314` background, `#1a1d20` surfaces, `#24292D` borders, `#E8F1F6` text, `#96A0AB` muted.
 
 Functional colors:
 
-- Green: success / positive values
-- Red: errors, negative values, delete actions
-- Orange: warnings
-
-There is **no blue** in the application.
+- Accent `#a3b5d6` (periwinkle)
+- Success `#b3c79a` (sage): success / positive values
+- Error `#c6a6a2` (dusty rose): errors, negative values, delete actions
+- Warning `#d3c490` (aged gold): warnings
 
 Avoid:
 
@@ -721,6 +716,10 @@ User taps "New Meal" or opens an existing meal.
 
 ↓
 
+A meal cannot be created without a name: the Create button stays disabled until a name is entered, and empty/whitespace names are rejected.
+
+↓
+
 User selects Food.
 
 ↓
@@ -926,6 +925,7 @@ Examples:
 - Foods always belong to a valid category.
 - Negative values are never accepted.
 - Empty meals cannot be marked complete.
+- Meals cannot be created without a name (Create disabled until named).
 
 ---
 
@@ -1309,6 +1309,8 @@ Future workout types should be supported without code changes.
 
 Track daily water intake.
 
+Quick-add buttons: 250 / 300 / 350 / 500 / 750 ml, plus a custom amount input.
+
 Displays:
 
 Current Intake
@@ -1653,28 +1655,22 @@ Privacy is a core product value.
 
 # 5.12 Visual Rules
 
-The interface should remain minimal.
+The interface should remain minimal (Astryx gothic; tokens in `src/index.css`).
 
-Light theme:
+Dark theme (the used theme):
 
-- White background
-- Black text
-- `#e2e8f0` borders
-
-Dark theme:
-
-- `#111111` background
-- `#1F1F1F` surfaces
-- `#2D2D2D` borders
-- `#FDFDFD` text
+- `#101314` background
+- `#1a1d20` surfaces
+- `#24292D` borders
+- `#E8F1F6` text
+- `#96A0AB` muted
 
 Functional colors:
 
-- Green: success / positive
-- Red: errors / negative / delete
-- Orange: warning
-
-No blue.
+- Accent `#a3b5d6`
+- Success `#b3c79a` / positive
+- Error `#c6a6a2` / negative / delete
+- Warning `#d3c490`
 
 Avoid:
 
@@ -1682,9 +1678,10 @@ Avoid:
 - Glassmorphism
 - Neumorphism
 - Shadows
-- Rounded corners
 - Animated backgrounds
 - Decorative illustrations
+
+Rounded corners: cards `rounded-xl`, inputs/buttons/items `rounded-lg`.
 
 Spacing should be generous.
 
