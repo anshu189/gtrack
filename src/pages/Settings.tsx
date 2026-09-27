@@ -229,13 +229,17 @@ export default function Settings() {
       </div>
 
       <div className="space-y-6">
-        <Card title="Account" description="Your log is private to this account.">
+        <Card title="Account">
           <div className="flex flex-col gap-3">
             <div className="flex flex-col gap-1">
-              <p className="text-sm text-slate-950 dark:text-[#E8F1F6]">{authUser?.email ?? 'Signed in'}</p>
               {authUser?.displayName && (
-                <p className="text-xs text-slate-500 dark:text-[#96A0AB]">{authUser.displayName}</p>
+                <p className="text-base font-semibold text-slate-950 dark:text-[var(--color-text)]">
+                  {authUser.displayName}
+                </p>
               )}
+              <p className="text-base text-slate-500 dark:text-[var(--color-muted)]">
+                {authUser?.email ?? '—'}
+              </p>
             </div>
             <div>
               <Button variant="outline" size="sm" onClick={handleSignOut} disabled={authLoading}>

@@ -2,11 +2,16 @@ import { useState, useEffect } from 'react'
 import { NumberInput, TextInput, Button } from '@astryxdesign/core'
 import type { WeightEntry } from '@/types'
 
+/** Quick-fill options for the notes field, mirroring the water quick-add chips. */
+const NOTE_PRESETS = ['ideal, not measured.', 'measured.']
+
 interface WeightLoggingProps {
   todayEntry?: WeightEntry
   date: string
   onSave: (entry: WeightEntry) => void
   showButton?: boolean
+  /** Shows tappable note presets above the notes field. */
+  showNotePresets?: boolean
   weight?: number
   unit?: string
   notes?: string
@@ -20,6 +25,7 @@ export const WeightLogging = ({
   date,
   onSave,
   showButton = true,
+  showNotePresets = false,
   weight: controlledWeight,
   unit: controlledUnit,
   notes: controlledNotes,
@@ -43,6 +49,11 @@ export const WeightLogging = ({
       setInternalNotes(todayEntry?.notes ?? '')
     }
   }, [todayEntry, isControlled])
+
+  const applyNote = (value: string) => {
+    if (isControlled) onNotesChange?.(value)
+    else setInternalNotes(value)
+  }
 
   const handleSave = () => {
     if (weight <= 0) return
@@ -93,6 +104,28 @@ export const WeightLogging = ({
           </select>
         </div>
       </div>
+      {showNotePresets && (
+        <div className="flex flex-wrap gap-2">
+          {NOTE_PRESETS.map((preset) => (
+            <button
+              key={preset}
+              type="button"
+              onClick={() => applyNote(preset)}
+              className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 !text-sm text-[var(--color-text)] hover:bg-[var(--color-surface)] transition-colors"
+            >
+              {preset}
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={() => applyNote('')}
+            disabled={!notes}
+            className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 !text-sm text-[var(--color-muted)] hover:bg-[var(--color-surface)] hover:text-[var(--color-text)] transition-colors disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[var(--color-muted)]"
+          >
+            Clear
+          </button>
+        </div>
+      )}
       <TextInput
         label="Notes"
         isLabelHidden

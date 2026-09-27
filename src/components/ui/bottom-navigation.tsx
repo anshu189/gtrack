@@ -15,7 +15,7 @@ type BottomNavigationProps = {
 export function BottomNavigation({ items }: BottomNavigationProps) {
   return (
     <nav aria-label="Bottom navigation">
-      <ul className="flex items-center justify-around">
+      <ul className="flex items-center justify-around sm:justify-center sm:gap-12">
         {items.map((item) => {
           const Icon = item.icon
           return (

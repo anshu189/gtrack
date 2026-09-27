@@ -468,6 +468,7 @@ const Dashboard = () => {
             date={selectedDate}
             onSave={handleSaveWeight}
             showButton={false}
+            showNotePresets
             weight={pendingWeight}
             unit={pendingWeightUnit}
             notes={pendingWeightNotes}

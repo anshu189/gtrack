@@ -22,8 +22,10 @@ export function AppShell({ header, children, bottomNavigation, className }: AppS
         <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">{children}</div>
       </div>
       {bottomNavigation ? (
-        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white dark:border-[#24292D] dark:bg-[#101314] px-4 py-2 sm:hidden">
-          {bottomNavigation}
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white dark:border-[#24292D] dark:bg-[#101314]">
+          <div className="mx-auto w-full max-w-7xl px-4 py-2 sm:px-6 lg:px-8">
+            {bottomNavigation}
+          </div>
         </div>
       ) : null}
     </div>
