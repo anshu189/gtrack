@@ -8,7 +8,6 @@ import { weightRepository } from '@/lib/repositories/weightRepository'
 import { waterRepository } from '@/lib/repositories/waterRepository'
 import { workoutRepository } from '@/lib/repositories/workoutRepository'
 import { tretinoinRepository } from '@/lib/repositories/tretinoinRepository'
-import { respectRepository } from '@/lib/repositories/respectRepository'
 import { nutritionCalculationService } from '@/lib/services/nutritionCalculation'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { PageContainer } from '@/components/ui/page-container'
@@ -56,18 +55,12 @@ interface TretinoinDataPoint {
   applied: number
 }
 
-interface RespectDataPoint {
-  date: string
-  total: number
-}
-
 export default function Analytics() {
   const [range, setRange] = useState<RangeKey>('7d')
   const [nutritionData, setNutritionData] = useState<NutritionDataPoint[]>([])
   const [weightData, setWeightData] = useState<WeightDataPoint[]>([])
   const [waterData, setWaterData] = useState<WaterDataPoint[]>([])
   const [tretinoinData, setTretinoinData] = useState<TretinoinDataPoint[]>([])
-  const [respectData, setRespectData] = useState<RespectDataPoint[]>([])
   const [workouts, setWorkouts] = useState<Workout[]>([])
   const [loading, setLoading] = useState(false)
 
@@ -92,12 +85,11 @@ export default function Analytics() {
       const { start, end } = getDateRange(days)
       const dayEnd = `${end}T23:59:59.999Z`
 
-      const [allMeals, allWeights, allWorkouts, allTretinoin, allRespect] = await Promise.all([
+      const [allMeals, allWeights, allWorkouts, allTretinoin] = await Promise.all([
         mealRepository.listByDateRange(start, dayEnd),
         weightRepository.listAll(),
         workoutRepository.listAll(),
         tretinoinRepository.listAll(),
-        respectRepository.listAll(),
       ])
 
       const nutrition = aggregateNutrition(allMeals, start, end)
@@ -128,23 +120,14 @@ export default function Analytics() {
         if (t.applied) tretinoinMap.set(t.date, true)
       }
       const tretinoinPoints: TretinoinDataPoint[] = []
-      const respectMap = new Map<string, number>()
-      for (const r of allRespect) {
-        respectMap.set(r.date, r.total)
-      }
-      const respectPoints: RespectDataPoint[] = []
       const cursor = new Date(start)
       const endDt = new Date(end)
       while (cursor <= endDt) {
         const iso = cursor.toISOString().split('T')[0]
         tretinoinPoints.push({ date: iso, applied: tretinoinMap.has(iso) ? 1 : 0 })
-        if (respectMap.has(iso)) {
-          respectPoints.push({ date: iso, total: respectMap.get(iso)! })
-        }
         cursor.setDate(cursor.getDate() + 1)
       }
       setTretinoinData(tretinoinPoints)
-      setRespectData(respectPoints)
 
       const filteredWorkouts = allWorkouts.filter((w) => w.date >= start && w.date <= end)
       setWorkouts(filteredWorkouts)
@@ -289,20 +272,6 @@ export default function Analytics() {
               </BarChart>
             </ResponsiveContainer>
           </Card>
-
-          {respectData.length > 0 && (
-            <Card title="Respect/Trust Score Trend">
-              <ResponsiveContainer width="100%" height={240}>
-                <LineChart data={respectData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                  <XAxis dataKey="date" tickFormatter={formatShortDate} tick={{ fontSize: 11, fill: '#64748b' }} />
-                  <YAxis tick={{ fontSize: 11, fill: '#64748b' }} />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="total" stroke="#f59e0b" strokeWidth={2} dot={{ r: 3 }} name="Score" />
-                </LineChart>
-              </ResponsiveContainer>
-            </Card>
-          )}
 
           <Card title="Summary">
             <div className="grid grid-cols-2 gap-3">

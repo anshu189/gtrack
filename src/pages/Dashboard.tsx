@@ -7,7 +7,6 @@ import { useWaterStore } from '@/stores/waterStore'
 import { useWeightStore } from '@/stores/weightStore'
 import { useDailyNoteStore } from '@/stores/dailyNoteStore'
 import { useTretinoinStore } from '@/stores/tretinoinStore'
-import { useRespectStore } from '@/stores/respectStore'
 import { useSettingsStore } from '@/stores/settingsStore'
 import {
   Card,
@@ -29,14 +28,13 @@ import {
   WeightHistory,
   DailyNoteEditor,
   TretinoinTracker,
-  RespectTracker,
 } from '@/components/tracking'
 import { PageContainer } from '@/components/ui/page-container'
 import { foodRepository } from '@/lib/repositories/foodRepository'
 import { formatNum } from '@/lib/utils/format'
 import { mealItemGrams } from '@/lib/utils/nutrition'
 import { getLastAppliedDate, isScheduledNight } from '@/lib/utils/tretinoin'
-import type { DailyNote, RespectLog, WaterLog, WeightEntry, WorkoutType } from '@/types'
+import type { DailyNote, WaterLog, WeightEntry, WorkoutType } from '@/types'
 
 const DEFAULT_WATER_GOAL_ML = 2000
 
@@ -53,7 +51,6 @@ const Dashboard = () => {
   const weightStore = useWeightStore()
   const dailyNoteStore = useDailyNoteStore()
   const tretinoinStore = useTretinoinStore()
-  const respectStore = useRespectStore()
   const settingsStore = useSettingsStore()
   const { status: dailyStatus } = useDailyNutritionProgress(selectedDate)
 
@@ -69,7 +66,6 @@ const Dashboard = () => {
     weightStore.error,
     dailyNoteStore.error,
     tretinoinStore.error,
-    respectStore.error,
     settingsStore.error,
   ].filter(Boolean) as string[]
 
@@ -83,7 +79,6 @@ const Dashboard = () => {
     dailyNoteStore.loadByDate(selectedDate)
     tretinoinStore.loadByDate(selectedDate)
     tretinoinStore.loadAll()
-    respectStore.loadByDate(selectedDate)
     settingsStore.load()
   }, [selectedDate])
 
@@ -129,10 +124,6 @@ const Dashboard = () => {
 
   const handleTretinoinToggle = async (applied: boolean) => {
     await tretinoinStore.setApplied(selectedDate, applied)
-  }
-
-  const handleRespectUpsert = async (patch: Partial<RespectLog>) => {
-    await respectStore.upsert({ ...patch, date: selectedDate })
   }
 
   const handleSubmitDay = async () => {
@@ -488,12 +479,6 @@ const Dashboard = () => {
             <p className="text-sm font-semibold text-[var(--color-muted)] mb-2">Weight history</p>
             <WeightHistory entries={weightStore.recentEntries} excludeDate={selectedDate} />
           </div>
-        </Card>
-
-        {/* Respect/Trust Score */}
-        <Card>
-          <p className="text-md font-semibold text-[var(--color-text)] mb-3">Respect/Trust score</p>
-          <RespectTracker log={respectStore.todayLog} onUpsert={handleRespectUpsert} />
         </Card>
 
         {/* Daily Notes */}

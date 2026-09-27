@@ -1,0 +1,78 @@
+rules_version = '2';
+
+// GTrak security rules.
+//
+// Model:
+//  - Every document a user owns lives under users/{uid}/... Access requires
+//    being signed in as that exact uid. This is what keeps logs private.
+//  - Sign-up is open, but capped by a seat counter at meta/seats. Creating a
+//    profile is only permitted as part of the same atomic commit that
+//    increments the counter, and only while the count is below the limit.
+//
+// Paste this into Firebase console -> Firestore Database -> Rules.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function seatsBefore() {
+      return get(/databases/$(database)/documents/meta/seats).data;
+    }
+
+    function seatsAfter() {
+      return getAfter(/databases/$(database)/documents/meta/seats).data;
+    }
+
+    // A profile may only be created by a commit that also takes exactly one
+    // seat and stays within the limit.
+    function takesOneSeat() {
+      return seatsAfter().count == seatsBefore().count + 1
+        && seatsAfter().count <= seatsAfter().limit;
+    }
+
+    match /meta/seats {
+      allow read: if signedIn();
+
+      // The counter may only ever move up by one, never past the limit, never
+      // change the limit, and only for a caller who does not already have a
+      // profile and will have one once this commit lands.
+      allow update: if signedIn()
+        && request.resource.data.limit == resource.data.limit
+        && request.resource.data.count == resource.data.count + 1
+        && request.resource.data.count <= resource.data.limit
+        && !exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && existsAfter(/databases/$(database)/documents/users/$(request.auth.uid));
+
+      // Seeding and raising the limit are console-only operations.
+      allow create, delete: if false;
+    }
+
+    match /users/{uid} {
+      allow read: if isOwner(uid);
+      allow create: if isOwner(uid) && takesOneSeat();
+      allow update: if isOwner(uid);
+
+      // Profiles are never deleted from the client: allowing it would let a
+      // user drop and recreate their profile to burn seats.
+      allow delete: if false;
+
+      // Every per-domain subcollection: meals, foods, history, settings, ...
+      match /{document=**} {
+        allow read, write: if isOwner(uid);
+      }
+    }
+
+    // Legacy pre-auth global collections (foods, meals, history, ...).
+    // Locked once migration is done; nothing in the app reads them any more.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

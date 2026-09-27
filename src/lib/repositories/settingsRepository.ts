@@ -1,14 +1,15 @@
 import {
-  collection, doc, getDocs, setDoc,
+  getDocs, setDoc,
   query, orderBy, limit, writeBatch,
 } from 'firebase/firestore'
 import { firestore } from '@/lib/firebase'
+import { userColl, userDoc } from '@/lib/paths'
 import { cleanForFirestore } from '@/lib/utils/firestore'
 import type { UserSettings } from '@/types'
 
 const COLLECTION = 'settings'
-function coll() { return collection(firestore, COLLECTION) }
-function dRef(id: string) { return doc(firestore, COLLECTION, id) }
+function coll() { return userColl(COLLECTION) }
+function dRef(id: string) { return userDoc(COLLECTION, id) }
 function snapTo<T>(d: any): T { return { id: d.id, ...d.data() } as T }
 
 export interface SettingsRepository {

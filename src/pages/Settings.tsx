@@ -2,12 +2,14 @@ import { useState, useEffect, useRef } from 'react'
 import type { UserSettings } from '@/types'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { firestore } from '@/lib/firebase'
-import { collection, getDocs, setDoc, doc, writeBatch } from 'firebase/firestore'
+import { getDocs, setDoc, writeBatch } from 'firebase/firestore'
+import { userColl, userDoc } from '@/lib/paths'
+import { useAuthStore } from '@/stores/authStore'
 import { cleanForFirestore } from '@/lib/utils/firestore'
 import { PageContainer } from '@/components/ui/page-container'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { NumberInput } from '@astryxdesign/core'
+import { NumberInput, TextInput } from '@astryxdesign/core'
 
 const DEFAULT_SETTINGS: UserSettings = {
   id: 'settings:default',
@@ -17,8 +19,31 @@ const DEFAULT_SETTINGS: UserSettings = {
   waterGoalMl: 2000,
 }
 
+/**
+ * Collections included in export / import — everything the signed-in user owns
+ * except deletedMeals, which is a 24h undo buffer and not worth restoring.
+ * `foods` is per user now, so custom foods and macro tweaks are backed up too.
+ */
+const BACKUP_COLLECTIONS = [
+  'meals', 'history', 'favorites', 'workouts', 'waterLogs', 'weights',
+  'dailyNotes', 'tretinoinLogs', 'foods', 'categories', 'quantityPresets',
+  'nutritionSources',
+] as const
+
+/** Typed-confirmation phrase for the destructive reset, in place of a shared password. */
+const RESET_CONFIRM_PHRASE = 'delete my data'
+
+/** Collections wiped by Reset. Reference data (foods, categories, presets, sources) is spared. */
+const RESET_COLLECTIONS = [
+  'meals', 'history', 'favorites', 'workouts', 'waterLogs', 'weights',
+  'dailyNotes', 'tretinoinLogs', 'settings', 'deletedMeals',
+] as const
+
 export default function Settings() {
   const settingsStore = useSettingsStore()
+  const authUser = useAuthStore((s) => s.user)
+  const authLoading = useAuthStore((s) => s.loading)
+  const handleSignOut = useAuthStore((s) => s.signOut)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [calories, setCalories] = useState(3300)
@@ -31,8 +56,10 @@ export default function Settings() {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [confirmReset, setConfirmReset] = useState(false)
-  const [resetPassword, setResetPassword] = useState('')
-  const [resetError, setResetError] = useState(false)
+  const [resetConfirmText, setResetConfirmText] = useState('')
+  const [resetting, setResetting] = useState(false)
+  const [resetError, setResetError] = useState<string | null>(null)
+  const resetPhraseMatches = resetConfirmText.trim() === RESET_CONFIRM_PHRASE
   const [importStatus, setImportStatus] = useState<string | null>(null)
   const [exportStatus, setExportStatus] = useState<string | null>(null)
 
@@ -81,10 +108,9 @@ export default function Settings() {
   const handleExport = async () => {
     setExportStatus(null)
     try {
-      const collections = ['meals', 'history', 'favorites', 'workouts', 'waterLogs', 'weights', 'dailyNotes', 'tretinoinLogs', 'respectLogs'] as const
       const entries: Record<string, any[]> = {}
-      for (const name of collections) {
-        const snap = await getDocs(collection(firestore, name))
+      for (const name of BACKUP_COLLECTIONS) {
+        const snap = await getDocs(userColl(name))
         entries[name] = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
       }
       const data = {
@@ -121,20 +147,20 @@ export default function Settings() {
 
       const now = new Date().toISOString()
       if (data.settings) {
-        await setDoc(doc(firestore, 'settings', data.settings.id ?? 'settings:default'), { ...data.settings, updatedAt: now })
+        await setDoc(userDoc('settings', data.settings.id ?? 'settings:default'), { ...data.settings, updatedAt: now })
       }
 
-      const collections = ['meals', 'history', 'favorites', 'workouts', 'waterLogs', 'weights', 'dailyNotes', 'tretinoinLogs', 'respectLogs'] as const
-      for (const name of collections) {
+      for (const name of BACKUP_COLLECTIONS) {
         const items = data[name]
         if (!items?.length) continue
-        const batch = writeBatch(firestore)
+        let batch = writeBatch(firestore)
         let count = 0
         for (const item of items) {
-          batch.set(doc(firestore, name, item.id ?? `${name}:${Date.now()}-${count}`), cleanForFirestore(item))
+          batch.set(userDoc(name, item.id ?? `${name}:${Date.now()}-${count}`), cleanForFirestore(item))
           count++
           if (count >= 490) {
             await batch.commit()
+            batch = writeBatch(firestore)
             count = 0
           }
         }
@@ -151,31 +177,49 @@ export default function Settings() {
   }
 
   const handleReset = async () => {
-    if (resetPassword !== 'godelete') {
-      setResetError(true)
-      return
+    if (!resetPhraseMatches) return
+
+    setResetting(true)
+    setResetError(null)
+    try {
+      for (const name of RESET_COLLECTIONS) {
+        const snap = await getDocs(userColl(name))
+        if (snap.empty) continue
+        let batch = writeBatch(firestore)
+        let count = 0
+        for (const d of snap.docs) {
+          batch.delete(d.ref)
+          count++
+          if (count >= 490) {
+            await batch.commit()
+            batch = writeBatch(firestore)
+            count = 0
+          }
+        }
+        if (count > 0) await batch.commit()
+      }
+
+      setCalories(DEFAULT_SETTINGS.nutritionTargets!.calories!)
+      setProtein(DEFAULT_SETTINGS.nutritionTargets!.protein!)
+      setCarbs(DEFAULT_SETTINGS.nutritionTargets!.carbs!)
+      setFat(DEFAULT_SETTINGS.nutritionTargets!.fat!)
+      setFiber(DEFAULT_SETTINGS.nutritionTargets!.fiber!)
+      setWaterGoal(DEFAULT_SETTINGS.waterGoalMl!)
+      setTheme('light')
+
+      setConfirmReset(false)
+      setResetConfirmText('')
+    } catch (e: any) {
+      setResetError(e?.message ?? 'Reset failed. Please try again.')
+    } finally {
+      setResetting(false)
     }
+  }
 
-    const collections = ['meals', 'history', 'favorites', 'workouts', 'waterLogs', 'weights', 'dailyNotes', 'tretinoinLogs', 'respectLogs', 'settings', 'deletedMeals'] as const
-    for (const name of collections) {
-      const snap = await getDocs(collection(firestore, name))
-      if (snap.empty) continue
-      const batch = writeBatch(firestore)
-      snap.docs.forEach((d) => batch.delete(d.ref))
-      await batch.commit()
-    }
-
-    setCalories(DEFAULT_SETTINGS.nutritionTargets!.calories!)
-    setProtein(DEFAULT_SETTINGS.nutritionTargets!.protein!)
-    setCarbs(DEFAULT_SETTINGS.nutritionTargets!.carbs!)
-    setFat(DEFAULT_SETTINGS.nutritionTargets!.fat!)
-    setFiber(DEFAULT_SETTINGS.nutritionTargets!.fiber!)
-    setWaterGoal(DEFAULT_SETTINGS.waterGoalMl!)
-    setTheme('light')
-
+  const cancelReset = () => {
     setConfirmReset(false)
-    setResetPassword('')
-    setResetError(false)
+    setResetConfirmText('')
+    setResetError(null)
   }
 
   return (
@@ -185,6 +229,22 @@ export default function Settings() {
       </div>
 
       <div className="space-y-6">
+        <Card title="Account" description="Your log is private to this account.">
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-1">
+              <p className="text-sm text-slate-950 dark:text-[#E8F1F6]">{authUser?.email ?? 'Signed in'}</p>
+              {authUser?.displayName && (
+                <p className="text-xs text-slate-500 dark:text-[#96A0AB]">{authUser.displayName}</p>
+              )}
+            </div>
+            <div>
+              <Button variant="outline" size="sm" onClick={handleSignOut} disabled={authLoading}>
+                Sign out
+              </Button>
+            </div>
+          </div>
+        </Card>
+
         <Card title="Nutrition Targets">
           <div className="grid grid-cols-2 gap-4">
             <NumberInput
@@ -295,20 +355,36 @@ export default function Settings() {
             </Button>
           ) : (
             <div className="space-y-3">
-              <input
-                type="password"
-                placeholder="Enter password"
-                className="w-full border border-slate-200 px-3 py-2 text-sm dark:border-[#2D2D2D] dark:bg-[#1F1F1F] dark:text-[#FDFDFD]"
-                value={resetPassword}
-                onChange={(e) => { setResetPassword(e.target.value); setResetError(false) }}
+              <p className="text-sm text-slate-600 dark:text-[var(--color-muted)]">
+                This permanently deletes your meals, history, tracking and settings. Your foods,
+                categories and presets are kept. This cannot be undone.
+              </p>
+              <p className="text-sm text-slate-950 dark:text-[var(--color-text)]">
+                To confirm, type <span className="font-semibold">{RESET_CONFIRM_PHRASE}</span> below.
+              </p>
+              <TextInput
+                label={`Type "${RESET_CONFIRM_PHRASE}" to confirm`}
+                isLabelHidden
+                value={resetConfirmText}
+                onChange={(v) => { setResetConfirmText(v); setResetError(null) }}
+                placeholder={RESET_CONFIRM_PHRASE}
+                size="lg"
+                width="100%"
+                isDisabled={resetting}
+                className="rounded-lg"
               />
-              {resetError && <p className="text-xs text-red-400">Incorrect password</p>}
+              {resetError && <p className="text-xs text-red-400">{resetError}</p>}
               <div className="flex items-center gap-3">
-                <Button variant="outline" size="sm" onClick={() => { setConfirmReset(false); setResetPassword(''); setResetError(false) }}>
+                <Button variant="outline" size="sm" onClick={cancelReset} disabled={resetting}>
                   Cancel
                 </Button>
-                <Button variant="danger" size="sm" onClick={handleReset}>
-                  Confirm Reset
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={handleReset}
+                  disabled={!resetPhraseMatches || resetting}
+                >
+                  {resetting ? 'Deleting...' : 'Delete my data'}
                 </Button>
               </div>
             </div>

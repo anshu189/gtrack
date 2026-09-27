@@ -1,5 +1,6 @@
-import { collection, getDocs, writeBatch, doc, query, limit } from 'firebase/firestore'
+import { getDocs, query, limit, writeBatch } from 'firebase/firestore'
 import { firestore } from '@/lib/firebase'
+import { collFor, docFor } from '@/lib/paths'
 import { cleanForFirestore } from '@/lib/utils/firestore'
 import builtInFoods from '@/data/builtInFoods'
 import builtInCategories from '@/data/categories'
@@ -7,36 +8,53 @@ import foodsSeed from '@/data/foodsSeed'
 import macroOverrides from '@/data/macroOverrides'
 import quantityPresetsSeed from '@/data/quantityPresets'
 import nutritionSourcesSeed from '@/data/nutritionSources'
-import type { Food } from '@/types'
+import type { Food, UserSettings } from '@/types'
 
-async function isCollectionEmpty(name: string): Promise<boolean> {
-  const snap = await getDocs(query(collection(firestore, name), limit(1)))
+const BATCH_LIMIT = 490
+
+export const DEFAULT_SETTINGS: UserSettings = {
+  id: 'settings:default',
+  unitSystem: 'metric',
+  theme: 'dark',
+  nutritionTargets: { calories: 3300, protein: 120, carbs: 420, fat: 95, fiber: 35 },
+  waterGoalMl: 2000,
+}
+
+async function isUserCollectionEmpty(uid: string, name: string): Promise<boolean> {
+  const snap = await getDocs(query(collFor(uid, name), limit(1)))
   return snap.empty
 }
 
-export async function seedIfEmpty() {
-  await seedCategories()
-  await seedFoods()
-  await seedQuantityPresets()
-  await seedNutritionSources()
+/**
+ * Seeds one user's reference data. Each step no-ops when that user's
+ * collection already holds documents, so it is safe to run on every sign-in.
+ */
+export async function provisionUser(uid: string) {
+  await seedCategories(uid)
+  await seedFoods(uid)
+  await seedQuantityPresets(uid)
+  await seedNutritionSources(uid)
+  await seedSettings(uid)
 }
 
-async function seedCategories() {
-  if (!(await isCollectionEmpty('categories'))) return
+async function seedCategories(uid: string) {
+  if (!(await isUserCollectionEmpty(uid, 'categories'))) return
   const batch = writeBatch(firestore)
   const now = new Date().toISOString()
   for (const c of builtInCategories) {
-    const ref = doc(firestore, 'categories', c.id)
-    batch.set(ref, cleanForFirestore({ ...c, createdAt: c.createdAt ?? now, updatedAt: c.updatedAt ?? now }))
+    batch.set(
+      docFor(uid, 'categories', c.id),
+      cleanForFirestore({ ...c, createdAt: c.createdAt ?? now, updatedAt: c.updatedAt ?? now }),
+    )
   }
   await batch.commit()
 }
 
-async function seedFoods() {
-  if (!(await isCollectionEmpty('foods'))) return
+async function seedFoods(uid: string) {
+  if (!(await isUserCollectionEmpty(uid, 'foods'))) return
   const combined = [...builtInFoods, ...foodsSeed]
   const now = new Date().toISOString()
-  const batch = writeBatch(firestore)
+  let batch = writeBatch(firestore)
   let count = 0
   for (const f of combined) {
     const override = macroOverrides[f.id]
@@ -44,35 +62,50 @@ async function seedFoods() {
     const food: Food = override
       ? { ...base, nutrition: { ...base.nutrition, ...override } }
       : base
-    const ref = doc(firestore, 'foods', food.id)
-    batch.set(ref, cleanForFirestore(food))
+    batch.set(docFor(uid, 'foods', food.id), cleanForFirestore(food))
     count++
-    if (count >= 490) {
+    if (count >= BATCH_LIMIT) {
       await batch.commit()
+      batch = writeBatch(firestore)
       count = 0
     }
   }
   if (count > 0) await batch.commit()
 }
 
-async function seedQuantityPresets() {
-  if (!(await isCollectionEmpty('quantityPresets'))) return
+async function seedQuantityPresets(uid: string) {
+  if (!(await isUserCollectionEmpty(uid, 'quantityPresets'))) return
   const batch = writeBatch(firestore)
   const now = new Date().toISOString()
   for (const p of quantityPresetsSeed) {
-    const ref = doc(firestore, 'quantityPresets', p.id)
-    batch.set(ref, cleanForFirestore({ ...p, createdAt: p.createdAt ?? now, updatedAt: p.updatedAt ?? now }))
+    batch.set(
+      docFor(uid, 'quantityPresets', p.id),
+      cleanForFirestore({ ...p, createdAt: p.createdAt ?? now, updatedAt: p.updatedAt ?? now }),
+    )
   }
   await batch.commit()
 }
 
-async function seedNutritionSources() {
-  if (!(await isCollectionEmpty('nutritionSources'))) return
+async function seedNutritionSources(uid: string) {
+  if (!(await isUserCollectionEmpty(uid, 'nutritionSources'))) return
   const batch = writeBatch(firestore)
   const now = new Date().toISOString()
   for (const s of nutritionSourcesSeed) {
-    const ref = doc(firestore, 'nutritionSources', s.id)
-    batch.set(ref, cleanForFirestore({ ...s, createdAt: s.createdAt ?? now, updatedAt: s.updatedAt ?? now }))
+    batch.set(
+      docFor(uid, 'nutritionSources', s.id),
+      cleanForFirestore({ ...s, createdAt: s.createdAt ?? now, updatedAt: s.updatedAt ?? now }),
+    )
   }
+  await batch.commit()
+}
+
+async function seedSettings(uid: string) {
+  if (!(await isUserCollectionEmpty(uid, 'settings'))) return
+  const now = new Date().toISOString()
+  const batch = writeBatch(firestore)
+  batch.set(
+    docFor(uid, 'settings', DEFAULT_SETTINGS.id ?? 'settings:default'),
+    cleanForFirestore({ ...DEFAULT_SETTINGS, createdAt: now, updatedAt: now }),
+  )
   await batch.commit()
 }

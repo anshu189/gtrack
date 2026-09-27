@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { Theme } from '@astryxdesign/core'
 import { gothicTheme } from '@astryxdesign/theme-gothic'
@@ -9,8 +9,8 @@ import MealBuilder from '@/pages/MealBuilder'
 import History from '@/pages/History'
 import Analytics from '@/pages/Analytics'
 import Settings from '@/pages/Settings'
-import { ensureSignedIn } from '@/lib/firebase'
-import { seedIfEmpty } from '@/lib/seed'
+import Login from '@/pages/Login'
+import { useAuthStore } from '@/stores/authStore'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { BarChart3, Clock, Home, UtensilsCrossed, Settings2 } from 'lucide-react'
 
@@ -23,20 +23,18 @@ const NAV_ITEMS = [
 ]
 
 function App() {
-  const [ready, setReady] = useState(false)
+  const user = useAuthStore((s) => s.user)
+  const initialized = useAuthStore((s) => s.initialized)
+  const init = useAuthStore((s) => s.init)
 
-  useEffect(() => {
-    ensureSignedIn()
-      .then(() => seedIfEmpty())
-      .then(() => setReady(true))
-      .catch((error) => {
-        console.error('Failed to initialize', error)
-        setReady(true)
-      })
-  }, [])
+  useEffect(() => init(), [init])
 
-  if (!ready) {
+  if (!initialized) {
     return <Theme theme={gothicTheme}><div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-[#111111]"><p className="text-sm text-slate-500 dark:text-[#FDFDFD]/70">Loading...</p></div></Theme>
+  }
+
+  if (!user) {
+    return <Theme theme={gothicTheme}><Login /></Theme>
   }
 
   return <Theme theme={gothicTheme}><AppLayout /></Theme>

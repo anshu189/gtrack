@@ -12,6 +12,18 @@ dist
 dist-ssr
 *.local
 
+# Local Firestore backups — contain personal data, never commit.
+# The folder's README is tracked so the directory is documented in the repo.
+backups/*
+!backups/README.md
+
+# Stray backups written outside the backups/ folder
+gtrak-backup-*.json
+gtrak-legacy-backup-*.json
+
+# Claude Code local tooling
+.claude/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

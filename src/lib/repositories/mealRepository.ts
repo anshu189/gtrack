@@ -1,16 +1,17 @@
 import {
-  collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc,
+  getDoc, getDocs, setDoc, updateDoc, deleteDoc,
   query, orderBy, where, writeBatch,
 } from 'firebase/firestore'
 import { firestore } from '@/lib/firebase'
+import { userColl, userDoc } from '@/lib/paths'
 import { cleanForFirestore } from '@/lib/utils/firestore'
 import type { Meal, DeletedMealEntry } from '@/types'
 
 const MEALS = 'meals'
 const DELETED = 'deletedMeals'
 
-function coll(name: string) { return collection(firestore, name) }
-function dRef(name: string, id: string) { return doc(firestore, name, id) }
+function coll(name: string) { return userColl(name) }
+function dRef(name: string, id: string) { return userDoc(name, id) }
 
 export interface MealRepository {
   getById(id: string): Promise<Meal | undefined>
