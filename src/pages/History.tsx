@@ -17,12 +17,10 @@ import { WaterLogging, WaterProgress } from '@/components/tracking'
 import { WeightLogging } from '@/components/tracking'
 import { TretinoinTracker } from '@/components/tracking'
 import { UndoBanner } from '@/components/meal'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { DatePicker, IconButton } from '@/components/ds'
-import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { Button, Card, Chip, DatePicker, FOCUS, Icon, IconButton, MacroInline, MacroTiles } from '@/components/ds'
+import { cn } from '@/lib/utils/cn'
 import { formatNum } from '@/lib/utils/format'
-import { mealItemGrams } from '@/lib/utils/nutrition'
+import { mealItemGrams, mealTotals } from '@/lib/utils/nutrition'
 import type { TretinoinLog } from '@/types'
 
 const DEFAULT_WATER_GOAL_ML = 2000
@@ -365,7 +363,7 @@ export default function History() {
       <div className="mb-6 flex items-center gap-2">
         <IconButton
           label="Previous day"
-          icon={<ChevronLeft size={20} />}
+          icon={<Icon name="chevron-left" size={20} />}
           onClick={handlePreviousDay}
         />
         <DatePicker
@@ -383,7 +381,7 @@ export default function History() {
         />
         <IconButton
           label="Next day"
-          icon={<ChevronRight size={20} />}
+          icon={<Icon name="chevron-right" size={20} />}
           onClick={handleNextDay}
           disabled={isToday}
           className="disabled:bg-surface-2 disabled:opacity-40"
@@ -414,48 +412,67 @@ export default function History() {
               <div className="space-y-2">
                 {meals.map((meal) => {
                   const mealNutrition = nutritionCalculationService.calculateMealNutrition(meal)
+                  const totals = mealTotals(meal.items)
                   const expanded = expandedMeals.has(meal.id)
                   return (
                     <div key={meal.id} className="overflow-hidden rounded-md bg-surface-2">
-                      <div className="flex items-center justify-between p-3">
+                      <div className="flex items-center gap-2 p-3">
                         <button
                           type="button"
                           onClick={() => toggleMealExpand(meal.id)}
-                          className="flex-1 text-left"
+                          aria-expanded={expanded}
+                          className={cn('flex min-w-0 flex-1 cursor-pointer items-center justify-between gap-2 rounded-sm text-left', FOCUS)}
                         >
-                          <span className="text-sm font-medium text-black capitalize">{meal.name ?? 'Meal'}</span>
+                          <span className="min-w-0 truncate footnote capitalize text-black">{meal.name ?? 'Meal'}</span>
+                          <span className="flex shrink-0 items-center gap-2 text-ink-2">
+                            <span className="inline-flex items-center gap-1 caption">
+                              <Icon name="flame" size={13} />
+                              {formatNum(mealNutrition.calories)} kcal
+                            </span>
+                            <Icon name={expanded ? 'chevron-up' : 'chevron-down'} size={16} />
+                          </span>
                         </button>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-ink-2">{formatNum(mealNutrition.calories)} kcal</span>
-                          <button type="button" onClick={() => toggleMealExpand(meal.id)} className="text-xs text-ink-3 px-1">
-                            {expanded ? '▲' : '▼'}
-                          </button>
-                          {editing && (
-                            <Button size="sm" variant="ghost" className="text-protein text-xs" onClick={() => handleDeleteMeal(meal.id)}>
-                              Delete
-                            </Button>
-                          )}
-                        </div>
+                        {editing && (
+                          <IconButton
+                            variant="ghost"
+                            size={32}
+                            label={`Delete ${meal.name ?? 'meal'}`}
+                            icon={<Icon name="trash" size={15} />}
+                            className="hover:text-protein"
+                            onClick={() => handleDeleteMeal(meal.id)}
+                          />
+                        )}
                       </div>
                       {expanded && meal.items && meal.items.length > 0 && (
-                        <div className="border-t border-line px-3 pb-3 pt-2 space-y-1">
-                          {meal.items.map((it) => {
-                            const displayName = it.name ?? resolvedFoodNames[it.foodId] ?? it.foodId.split(':').pop()
-                            const multiplier = mealItemGrams(it) / 100
-                            const n = it.nutrition
-                            return (
-                              <div key={it.id} className="flex items-center justify-between text-xs py-1">
-                                <span className="text-black">{displayName}</span>
-                                <div className="flex items-center gap-3">
-                                  <span className="text-ink-2">{it.quantity}{it.unit}</span>
-                                  <span className="text-black">{n ? formatNum(n.calories * multiplier) : '0'} kcal</span>
-                                  <span className="text-protein">{n ? formatNum(n.protein * multiplier) : '0'}g P</span>
-                                  <span className="text-carbs">{n ? formatNum(n.carbs * multiplier) : '0'}g C</span>
-                                  <span className="text-fat">{n ? formatNum(n.fat * multiplier) : '0'}g F</span>
+                        <div className="border-t border-line px-3 pb-3 pt-3">
+                          <MacroTiles
+                            protein={`${formatNum(totals.protein)}g`}
+                            carbs={`${formatNum(totals.carbs)}g`}
+                            fat={`${formatNum(totals.fat)}g`}
+                            className="mb-3"
+                          />
+                          <div className="flex flex-col gap-2">
+                            {meal.items.map((it) => {
+                              const displayName = it.name ?? resolvedFoodNames[it.foodId] ?? it.foodId.split(':').pop()
+                              const multiplier = mealItemGrams(it) / 100
+                              const n = it.nutrition
+                              return (
+                                <div key={it.id} className="flex flex-col gap-1 rounded-sm bg-surface px-3 py-2">
+                                  <div className="flex items-baseline justify-between gap-2">
+                                    <span className="min-w-0 truncate caption text-black">{displayName}</span>
+                                    <span className="shrink-0 caption text-ink-2">
+                                      {it.quantity}{it.unit} · {n ? formatNum(n.calories * multiplier) : '0'} kcal
+                                    </span>
+                                  </div>
+                                  <MacroInline
+                                    protein={`${n ? formatNum(n.protein * multiplier) : '0'}g`}
+                                    carbs={`${n ? formatNum(n.carbs * multiplier) : '0'}g`}
+                                    fat={`${n ? formatNum(n.fat * multiplier) : '0'}g`}
+                                  />
                                 </div>
-                              </div>
-                            )
-                          })}
+                              )
+                            })}
+                          </div>
                         </div>
                       )}
                     </div>
@@ -485,20 +502,14 @@ export default function History() {
                 {waterLogs.length > 0 && (
                   <div className="mt-3 flex flex-wrap gap-1">
                     {waterLogs.map((log) => (
-                      <span
+                      <Chip
                         key={log.id}
-                        className="inline-flex items-center gap-1.5 border border-line bg-surface-2 px-2.5 py-1 text-sm text-ink-2"
+                        variant="water"
+                        onRemove={() => handleDeleteWaterLog(log.id)}
+                        removeLabel={`Remove ${log.amount} ${log.unit}`}
                       >
                         {log.amount} {log.unit}
-                        <button
-                          type="button"
-                          className="text-ink-3 hover:text-protein"
-                          onClick={() => handleDeleteWaterLog(log.id)}
-                          aria-label="Delete water log"
-                        >
-                          &times;
-                        </button>
-                      </span>
+                      </Chip>
                     ))}
                   </div>
                 )}
@@ -554,7 +565,7 @@ export default function History() {
           <div className="flex flex-col gap-3 pt-2">
             {editing ? (
               <div className="flex items-center gap-3">
-                <Button variant="outline" className="flex-1" onClick={handleCancelEdit}>
+                <Button variant="secondary" className="flex-1" onClick={handleCancelEdit}>
                   Cancel
                 </Button>
                 <Button
@@ -566,25 +577,31 @@ export default function History() {
                 </Button>
               </div>
             ) : (
-              <Button variant="secondary" className="w-full" onClick={handleEditLog}>
+              <Button variant="secondary" block icon={<Icon name="pencil" size={16} />} onClick={handleEditLog}>
                 Edit Log
               </Button>
             )}
 
             {!confirmDelete ? (
               <Button
-                variant="outline"
-                className="w-full text-protein"
+                variant="secondary"
+                block
+                className="text-protein hover:text-protein"
+                icon={<Icon name="trash" size={16} />}
                 onClick={() => setConfirmDelete(true)}
               >
                 Delete Entire Day
               </Button>
             ) : (
               <div className="flex items-center gap-3">
-                <Button variant="outline" className="flex-1" onClick={() => setConfirmDelete(false)}>
+                <Button variant="secondary" className="flex-1" onClick={() => setConfirmDelete(false)}>
                   Cancel
                 </Button>
-                <Button variant="danger" className="flex-1" onClick={handleDeleteDay}>
+                <Button
+                  variant="secondary"
+                  className="flex-1 text-protein hover:text-protein"
+                  onClick={handleDeleteDay}
+                >
                   Confirm Delete
                 </Button>
               </div>

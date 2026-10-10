@@ -1,6 +1,6 @@
 import * as React from 'react'
-import { Eye, EyeOff } from 'lucide-react'
 import { TextField } from './TextField'
+import { Icon } from './Icon'
 import { FOCUS } from './primitives'
 import { cn } from '@/lib/utils/cn'
 
@@ -39,7 +39,7 @@ export const PasswordField = React.forwardRef<HTMLInputElement, PasswordFieldPro
               FOCUS,
             )}
           >
-            {visible ? <EyeOff size={18} aria-hidden="true" /> : <Eye size={18} aria-hidden="true" />}
+            <Icon name={visible ? 'eye-off' : 'eye'} size={18} />
           </button>
         }
         {...props}

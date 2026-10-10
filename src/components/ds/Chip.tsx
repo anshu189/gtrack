@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { cn } from '@/lib/utils/cn'
 import { FOCUS, PRESS } from './primitives'
+import { Icon } from './Icon'
 
 /**
  * Gtrak DS Chip — DESIGN.md §7, components/docs/Chip.md.
@@ -37,6 +38,10 @@ interface ChipProps {
   className?: string
   onClick?: () => void
   disabled?: boolean
+  /** Shows a trailing remove control. Takes precedence over onClick. */
+  onRemove?: () => void
+  /** Accessible name for the remove control. */
+  removeLabel?: string
   /** Renders a selected (pressed) state — 1.5px ink outline on white. */
   selected?: boolean
 }
@@ -49,6 +54,8 @@ export const Chip = ({
   onClick,
   disabled,
   selected,
+  onRemove,
+  removeLabel,
 }: ChipProps) => {
   const classes = cn(
     'inline-flex shrink-0 items-center justify-center gap-1.5',
@@ -60,6 +67,27 @@ export const Chip = ({
     disabled && 'cursor-not-allowed text-disabled',
     className,
   )
+
+  if (onRemove) {
+    return (
+      <span className={cn(classes, 'pr-1.5')}>
+        {icon}
+        {children}
+        <button
+          type="button"
+          onClick={onRemove}
+          aria-label={removeLabel ?? 'Remove'}
+          className={cn(
+            'ml-0.5 grid size-5 shrink-0 place-items-center rounded-pill',
+            'opacity-70 transition-opacity hover:opacity-100',
+            FOCUS,
+          )}
+        >
+          <Icon name="close" size={13} />
+        </button>
+      </span>
+    )
+  }
 
   if (!onClick) {
     return (

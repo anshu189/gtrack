@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Button, Icon, IconButton } from '@/components/ds'
 import type { DeletedMealEntry } from '@/types'
 
 function getTimeUntilMidnight(): string {
@@ -37,28 +38,23 @@ const UndoBanner = ({ entries, dismissedIds, onDismiss, onUndo }: UndoBannerProp
       {visible.map((entry) => (
         <div
           key={entry.id}
-          className="flex items-center justify-between rounded-lg border border-line bg-surface px-4 py-3"
+          className="flex items-center justify-between gap-3 rounded-md bg-surface-2 px-4 py-3"
         >
           <div className="flex-1">
-            <p className="text-sm text-black">"{entry.meal.name ?? 'Untitled'}" deleted.
-            </p>
-            <p className="text-xs text-ink-2">Undo available until midnight ({timeLeft} left)</p>
+            <p className="footnote text-black">"{entry.meal.name ?? 'Untitled'}" deleted.</p>
+            <p className="caption text-ink-2">Undo available until midnight ({timeLeft} left)</p>
           </div>
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => onUndo(entry.id)}
-              className="border border-ink px-3 py-1 text-xs font-medium text-black hover:bg-ink hover:text-on-ink transition-colors"
-            >
+            <Button variant="secondary" size="sm" onClick={() => onUndo(entry.id)}>
               Undo
-            </button>
-            <button
-              type="button"
+            </Button>
+            <IconButton
+              variant="ghost"
+              size={32}
+              label="Dismiss"
+              icon={<Icon name="close" size={16} />}
               onClick={() => onDismiss(entry.id)}
-              className="text-xs text-ink-2 hover:text-black transition-colors"
-            >
-              ✕
-            </button>
+            />
           </div>
         </div>
       ))}

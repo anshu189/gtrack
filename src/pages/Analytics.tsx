@@ -11,7 +11,7 @@ import { tretinoinRepository } from '@/lib/repositories/tretinoinRepository'
 import { nutritionCalculationService } from '@/lib/services/nutritionCalculation'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { ChartCard, SegmentedControl } from '@/components/ds'
-import { Card } from '@/components/ui/card'
+import { Card } from '@/components/ds'
 
 type RangeKey = '7d' | '30d' | '90d'
 

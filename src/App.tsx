@@ -1,23 +1,34 @@
 import { useEffect } from 'react'
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
-import { AppShell, TabBar } from '@/components/ds'
+import { AppShell, ScrollToTop, TabBar, type TabItem } from '@/components/ds'
 import Dashboard from '@/pages/Dashboard'
 import MealBuilder from '@/pages/MealBuilder'
 import History from '@/pages/History'
 import Analytics from '@/pages/Analytics'
 import Settings from '@/pages/Settings'
 import Login from '@/pages/Login'
+import Onboarding from '@/pages/Onboarding'
 import { useAuthStore } from '@/stores/authStore'
 import { useSettingsStore } from '@/stores/settingsStore'
-import { BarChart3, Clock, Home, UtensilsCrossed, Settings2 } from 'lucide-react'
+import { isProfileComplete } from '@/lib/utils/profile'
 
-const NAV_ITEMS = [
-  { label: 'Dashboard', icon: Home, path: '/' },
-  { label: 'Meals', icon: UtensilsCrossed, path: '/meals' },
-  { label: 'History', icon: Clock, path: '/history' },
-  { label: 'Analytics', icon: BarChart3, path: '/analytics' },
-  { label: 'Settings', icon: Settings2, path: '/settings' },
+/**
+ * Tab labels are short nouns so five cells fit the DS pill at phone width;
+ * the screens keep their fuller headings.
+ */
+const NAV_ITEMS: (Omit<TabItem, 'active' | 'onClick'> & { path: string })[] = [
+  { label: 'Home', icon: 'home', activeIcon: 'home-fill', path: '/' },
+  { label: 'Meals', icon: 'utensils', path: '/meals' },
+  { label: 'History', icon: 'clock', path: '/history' },
+  { label: 'Stats', icon: 'progress', path: '/analytics' },
+  { label: 'Settings', icon: 'settings', path: '/settings' },
 ]
+
+const Loading = () => (
+  <div className="flex min-h-screen items-center justify-center bg-canvas">
+    <p className="body-text text-ink-2">Loading…</p>
+  </div>
+)
 
 function App() {
   const user = useAuthStore((s) => s.user)
@@ -26,13 +37,29 @@ function App() {
 
   useEffect(() => init(), [init])
 
-  if (!initialized) {
-    return <div className="flex min-h-screen items-center justify-center bg-canvas"><p className="body-text text-ink-2">Loading…</p></div>
-  }
+  if (!initialized) return <Loading />
+  if (!user) return <Login />
 
-  if (!user) {
-    return <Login />
-  }
+  return <SignedIn />
+}
+
+/**
+ * Gate between the sign-up questions and the app proper. Settings carry the
+ * profile, so they have to be in hand before the choice can be made — but a
+ * settings read that fails must never lock someone out of their own data, so
+ * an error falls through to the app.
+ */
+function SignedIn() {
+  const settings = useSettingsStore((s) => s.settings)
+  const error = useSettingsStore((s) => s.error)
+  const load = useSettingsStore((s) => s.load)
+
+  useEffect(() => {
+    load()
+  }, [load])
+
+  if (!settings) return error ? <AppLayout /> : <Loading />
+  if (!isProfileComplete(settings.profile)) return <Onboarding />
 
   return <AppLayout />
 }
@@ -40,14 +67,17 @@ function App() {
 function AppLayout() {
   const navigate = useNavigate()
   const location = useLocation()
-  const settingsStore = useSettingsStore()
 
+  // Each tab opens at its top. Without this a tab kept the previous
+  // screen's scroll position and could open halfway down.
   useEffect(() => {
-    settingsStore.load()
-  }, [])
+    window.scrollTo({ top: 0, behavior: 'auto' })
+  }, [location.pathname])
 
-  const navItems = NAV_ITEMS.map((item) => ({
-    ...item,
+  const navItems: TabItem[] = NAV_ITEMS.map((item) => ({
+    label: item.label,
+    icon: item.icon,
+    activeIcon: item.activeIcon,
     active: location.pathname === item.path,
     onClick: () => navigate(item.path),
   }))
@@ -67,7 +97,12 @@ function AppLayout() {
           </span>
         </a>
       }
-      tabBar={<TabBar items={navItems} />}
+      tabBar={
+        <>
+          <ScrollToTop />
+          <TabBar items={navItems} />
+        </>
+      }
     >
       <Routes>
         <Route path="/" element={<Dashboard />} />

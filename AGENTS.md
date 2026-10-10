@@ -23,6 +23,12 @@ the project any more.
 - `src/components/ds/` — the DS components. Import from `@/components/ds`.
 - `public/fonts/` — Hanken Grotesk 400/500/600/700, self-hosted.
 
+**Icons come from `Icon`, not an icon library.** `src/components/ds/Icon.tsx`
+carries the DS's own 24x24 set verbatim plus a short list of app additions
+drawn to the same recipe (2px round stroke, `currentColor`). `lucide-react` is
+no longer imported anywhere. Need a glyph the set lacks? Add it to `ICONS` under
+the "Gtrak app additions" heading rather than reaching for another library.
+
 ### Rules
 
 1. **Light only.** Gtrak DS declares a single theme and has no dark variant.
@@ -45,6 +51,9 @@ the project any more.
    `rounded-sm` (12) for inner cards.
 6. **Numbers:** integers for calories (`2583`), one decimal for weight
    (`77.0 kg`), grams attached (`184g`). Macro order Protein → Carbs → Fats.
+   Macros are printed by `MacroTiles` (three tiles across, meal-detail) or
+   `MacroInline` (dense list rows) — never by hand-written coloured spans, which
+   is how the order and the units drifted apart before.
 7. **Layout:** the app is a centred column capped at 480px — every DS value is
    measured at 393×852pt, so the phone layout holds at every width. Home gutter
    30px, cards 12px apart, sections 32px.
@@ -58,8 +67,32 @@ the project any more.
 
 If Gtrak DS has one, use it. If it does not, build it from DS atoms, follow the
 DS rules, and write a comment saying it is an **intentional addition to Gtrak
-DS** and why. Existing additions: `AppShell`, `TabBar` (5-tab), `TextArea`,
-`TextLink`, `DatePicker`, `ChartCard`.
+DS** and why. Existing additions: `AppShell`, `TabBar` (5-tab pill),
+`TextArea`, `TextLink`, `SelectField`, `DatePicker`, `ChartCard`,
+`ScrollToTop`, plus the app glyphs in `Icon`.
+
+Ported from the DS and available now: `Icon`, `MacroTile` / `MacroTiles` /
+`MacroInline`, `OptionCard` / `OptionGroup`, `StepHeader`, `ContinueBar`,
+`OnboardingLayout`, `RulerPicker`. Check `src/components/ds/index.ts` before
+building anything — several of these existed in the DS long before the app grew
+its own copy, and the copies are what caused the drift.
+
+### First-run questions
+
+`src/pages/Onboarding.tsx` asks four questions once (age and gender, weight,
+height, goal) and writes them to `settings.profile`. `App.tsx` gates on
+`isProfileComplete`, which is just `profile.completedAt`; that stamp is written
+whether the user answered or skipped, so the flow never reappears. Everything is
+editable afterwards from the Settings tab only.
+
+Two rules here:
+
+- **Never write the onboarding weight into `weights`.** It is a starting figure
+  on the profile. Writing it would overwrite today's real entry.
+- **`saveProfile` reads the current settings first**, because the repository
+  writes the whole document. Saving a profile must not drop the nutrition
+  targets. Option sets live in `src/lib/utils/profile.ts`, shared by both
+  screens; the stored `GoalId` values are ids, so rename labels, never ids.
 
 ### Before finishing
 

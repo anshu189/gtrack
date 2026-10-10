@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { UserSettings } from '@/types'
+import type { PersonalProfile, UserSettings } from '@/types'
 import { settingsRepository } from '@/lib/repositories'
 
 type SettingsState = {
@@ -8,10 +8,11 @@ type SettingsState = {
   error?: string | null
   load: () => Promise<void>
   save: (s: UserSettings) => Promise<void>
+  saveProfile: (patch: Partial<PersonalProfile>) => Promise<void>
   clear: () => Promise<void>
 }
 
-export const useSettingsStore = create<SettingsState>((set) => ({ 
+export const useSettingsStore = create<SettingsState>((set, get) => ({
   settings: undefined,
   loading: false,
   error: null,
@@ -33,6 +34,28 @@ export const useSettingsStore = create<SettingsState>((set) => ({
       set({ settings: s, loading: false })
     } catch (e: any) {
       set({ loading: false, error: e?.message ?? String(e) })
+    }
+  },
+
+  /**
+   * Merges into settings.profile and leaves everything else untouched. The
+   * repository writes the whole document, so the current settings are read
+   * first — saving a profile must never drop the nutrition targets.
+   */
+  saveProfile: async (patch: Partial<PersonalProfile>) => {
+    set({ loading: true, error: null })
+    try {
+      const current = get().settings ?? (await settingsRepository.get())
+      const next: UserSettings = {
+        ...current,
+        unitSystem: current?.unitSystem ?? 'metric',
+        profile: { ...current?.profile, ...patch },
+      }
+      await settingsRepository.save(next)
+      set({ settings: next, loading: false })
+    } catch (e: any) {
+      set({ loading: false, error: e?.message ?? String(e) })
+      throw e
     }
   },
 

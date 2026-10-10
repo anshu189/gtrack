@@ -9,8 +9,8 @@ import { useDailyNoteStore } from '@/stores/dailyNoteStore'
 import { useTretinoinStore } from '@/stores/tretinoinStore'
 import { useSettingsStore } from '@/stores/settingsStore'
 
-import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { Button, Card, Chip, DatePicker, IconButton, ProgressBar, ProgressRing } from '@/components/ds'
+import { Button, Card, Chip, DatePicker, FOCUS, Icon, IconButton, MacroInline, MacroTiles, ProgressBar, ProgressRing } from '@/components/ds'
+import { cn } from '@/lib/utils/cn'
 import {
   WorkoutCard,
   WorkoutLogging,
@@ -23,7 +23,8 @@ import {
   TretinoinTracker,
 } from '@/components/tracking'
 import { foodRepository } from '@/lib/repositories/foodRepository'
-import { mealItemGrams } from '@/lib/utils/nutrition'
+import { mealItemGrams, mealTotals } from '@/lib/utils/nutrition'
+import { formatNum } from '@/lib/utils/format'
 import { getLastAppliedDate, isScheduledNight } from '@/lib/utils/tretinoin'
 import type { DailyNote, WaterLog, WeightEntry, WorkoutType } from '@/types'
 
@@ -299,7 +300,7 @@ const Dashboard = () => {
       <div className="mb-8 flex items-center gap-2">
         <IconButton
           label="Previous day"
-          icon={<ChevronLeft size={20} />}
+          icon={<Icon name="chevron-left" size={20} />}
           onClick={handlePreviousDay}
         />
         <Button variant="primary" size="md" className="h-10 flex-1" onClick={handleToday}>
@@ -307,7 +308,7 @@ const Dashboard = () => {
         </Button>
         <IconButton
           label="Next day"
-          icon={<ChevronRight size={20} />}
+          icon={<Icon name="chevron-right" size={20} />}
           onClick={handleNextDay}
           disabled={isToday}
           className="disabled:bg-surface-2 disabled:opacity-40"
@@ -407,40 +408,52 @@ const Dashboard = () => {
             ) : (
               mealStore.meals.map((meal) => {
                 const expanded = expandedMeals.has(meal.id)
-                const mealCalories = meal.items?.reduce((sum, item) => {
-                  const multiplier = mealItemGrams(item) / 100
-                  return sum + (item.nutrition?.calories ?? 0) * multiplier
-                }, 0) ?? 0
+                const totals = mealTotals(meal.items)
                 return (
-                  <div key={meal.id} className="rounded-md bg-surface-2 overflow-hidden">
+                  <div key={meal.id} className="overflow-hidden rounded-md bg-surface-2">
                     <button
                       type="button"
                       onClick={() => toggleMealExpand(meal.id)}
-                      className="flex w-full items-center justify-between px-3 py-2.5 text-left"
+                      aria-expanded={expanded}
+                      className={cn('flex w-full items-center justify-between gap-2 rounded-md px-3 py-2.5 text-left transition-colors hover:bg-fill-subtle', FOCUS)}
                     >
-                      <span className="text-sm font-medium text-black">{meal.name}</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-ink-2">{Math.round(mealCalories)} kcal</span>
-                        <span className="text-sm text-ink-2">{expanded ? '▲' : '▼'}</span>
-                      </div>
+                      <span className="min-w-0 truncate footnote text-black">{meal.name}</span>
+                      <span className="flex shrink-0 items-center gap-2 text-ink-2">
+                        <span className="inline-flex items-center gap-1 label-text">
+                          <Icon name="flame" size={13} />
+                          {Math.round(totals.calories)} kcal
+                        </span>
+                        <Icon name={expanded ? 'chevron-up' : 'chevron-down'} size={16} />
+                      </span>
                     </button>
                     {expanded && meal.items && meal.items.length > 0 && (
-                      <div className="border-t border-line px-3 pb-3 pt-2">
+                      <div className="border-t border-line px-3 pb-3 pt-3">
+                        {/* The DS macro readout for a meal detail: three tiles
+                            across, Protein then Carbs then Fats. */}
+                        <MacroTiles
+                          protein={`${formatNum(totals.protein)}g`}
+                          carbs={`${formatNum(totals.carbs)}g`}
+                          fat={`${formatNum(totals.fat)}g`}
+                          className="mb-3"
+                        />
                         <div className="flex flex-col gap-2">
                           {meal.items.map((it) => {
                             const displayName = it.name ?? resolvedFoodNames[it.foodId] ?? it.foodId.split(':').pop()
                             const multiplier = mealItemGrams(it) / 100
                             const n = it.nutrition
                             return (
-                              <div key={it.id} className="flex items-center justify-between text-xs py-0.5">
-                                <span className="text-[11px] text-black">{displayName}</span>
-                                <div className="flex items-center gap-3">
-                                  <span className="text-[11px] text-ink-2">{it.quantity} {it.unit}</span>
-                                  <span className="text-[11px] text-ink-2">{n ? Math.round(n.calories * multiplier) : '0'}<span className="text-black"> kcal</span></span>
-                                  <span className="text-[11px] text-ink-2">{n ? Math.round(n.protein * multiplier) : '0'}g <span className="text-black"> P</span></span>
-                                  <span className="text-[11px] text-ink-2">{n ? Math.round(n.carbs * multiplier) : '0'}g <span className="text-black"> C</span></span>
-                                  <span className="text-[11px] text-ink-2">{n ? Math.round(n.fat * multiplier) : '0'}g <span className="text-black"> F</span></span>
+                              <div key={it.id} className="flex flex-col gap-1 rounded-sm bg-surface px-3 py-2">
+                                <div className="flex items-baseline justify-between gap-2">
+                                  <span className="min-w-0 truncate caption text-black">{displayName}</span>
+                                  <span className="shrink-0 caption text-ink-2">
+                                    {it.quantity} {it.unit} · {n ? Math.round(n.calories * multiplier) : 0} kcal
+                                  </span>
                                 </div>
+                                <MacroInline
+                                  protein={`${n ? formatNum(n.protein * multiplier) : 0}g`}
+                                  carbs={`${n ? formatNum(n.carbs * multiplier) : 0}g`}
+                                  fat={`${n ? formatNum(n.fat * multiplier) : 0}g`}
+                                />
                               </div>
                             )
                           })}
@@ -481,7 +494,7 @@ const Dashboard = () => {
 
         {/* Water Intake */}
         <Card>
-          <p className="text-sm font-semibold text-black mb-3">Water intake</p>
+          <p className="title-2 mb-4 text-black">Water intake</p>
           <WaterLogging key={`water-${selectedDate}`} onAdd={handleAddWater} />
           <div className="mt-4">
             <WaterProgress current={waterStore.totalToday} goal={waterGoal} unit="ml" />
@@ -489,7 +502,14 @@ const Dashboard = () => {
           {waterStore.waterLogs.length > 0 && (
             <div className="flex gap-1.5 mt-3 flex-wrap">
               {waterStore.waterLogs.map((log) => (
-                <Chip key={log.id} variant="water">{log.amount} {log.unit}</Chip>
+                <Chip
+                  key={log.id}
+                  variant="water"
+                  onRemove={() => waterStore.remove(log.id)}
+                  removeLabel={`Remove ${log.amount} ${log.unit}`}
+                >
+                  {log.amount} {log.unit}
+                </Chip>
               ))}
             </div>
           )}

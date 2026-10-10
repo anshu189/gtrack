@@ -45,7 +45,7 @@ export const TextField = React.forwardRef<HTMLInputElement, TextFieldProps>(
           className={cn(
             'group flex h-[56px] items-center gap-2 rounded-md border pl-4 transition duration-150',
             action ? 'pr-2' : 'pr-4',
-            'border-transparent bg-surface-2 hover:border-track',
+            'border-track bg-surface-2 hover:border-line-strong',
             'focus-within:border-black focus-within:bg-surface',
             error && 'border-protein bg-surface',
           )}

@@ -2,6 +2,10 @@ import { useState, useEffect, useRef } from 'react'
 import type { Food } from '@/types'
 import { foodSearchService } from '@/lib/search/foodSearch'
 import { foodRepository } from '@/lib/repositories/foodRepository'
+import { DEFAULT_GRAMS_PER_UNIT, toPer100 } from '@/lib/utils/nutrition'
+import { formatCalories, formatNum } from '@/lib/utils/format'
+import { cn } from '@/lib/utils/cn'
+import { Button, FOCUS, Icon, MacroInline, SelectField, TextField } from '@/components/ds'
 
 const CATEGORIES = [
   { id: 'cat:fruits', name: 'Fruits' },
@@ -30,6 +34,9 @@ const FoodPicker = ({ onSelect, placeholder = 'Search food...' }: FoodPickerProp
   const [customProtein, setCustomProtein] = useState(0)
   const [customCarbs, setCustomCarbs] = useState(0)
   const [customFat, setCustomFat] = useState(0)
+  const [customFiber, setCustomFiber] = useState(0)
+  /** Grams in one unit, for discrete units like "piece". */
+  const [customGramsPerUnit, setCustomGramsPerUnit] = useState(DEFAULT_GRAMS_PER_UNIT.piece)
   const [saving, setSaving] = useState(false)
   const debounceRef = useRef<number | null>(null)
 
@@ -55,21 +62,48 @@ const FoodPicker = ({ onSelect, placeholder = 'Search food...' }: FoodPickerProp
     }
   }, [q])
 
+  const isWeightUnit = customUnit === 'g' || customUnit === 'ml'
+  /** The grams the entered macros actually describe. */
+  const customServingGrams = isWeightUnit
+    ? customServing
+    : customServing * (customGramsPerUnit || 1)
+
   const handleCreateCustom = async () => {
     if (!customName.trim()) return
     setSaving(true)
     try {
+      /**
+       * The macros are entered FOR THE SERVING ("600 kcal per 1 piece"), but
+       * nutrition is stored per 100g. This used to pass them through
+       * unconverted, so a 300g food was stored as though those were its
+       * per-100g values and read back at 3x.
+       */
       const food = await foodRepository.createCustom({
         name: customName.trim(),
         category: customCategory,
         servingSize: customServing,
         servingUnit: customUnit,
-        nutrition: {
-          calories: customCalories,
-          protein: customProtein,
-          carbs: customCarbs,
-          fat: customFat,
-        },
+        // Pin the unit's weight so nothing later falls back to a guess.
+        measures: isWeightUnit
+          ? []
+          : [
+              {
+                label: `${customServing} ${customUnit}`,
+                quantity: customServing,
+                unit: customUnit,
+                grams: customServingGrams,
+              },
+            ],
+        nutrition: toPer100(
+          {
+            calories: customCalories,
+            protein: customProtein,
+            carbs: customCarbs,
+            fat: customFat,
+            fiber: customFiber,
+          },
+          customServingGrams,
+        ),
       })
       setShowCustomForm(false)
       setCustomName('')
@@ -85,31 +119,43 @@ const FoodPicker = ({ onSelect, placeholder = 'Search food...' }: FoodPickerProp
 
   return (
     <div className="w-full">
-      <input
-        className="w-full h-[56px] rounded-md border border-transparent bg-surface-2 px-4 subhead text-black placeholder:text-ink-3 outline-none transition duration-150 hover:border-track focus:border-black focus:bg-surface"
+      <TextField
+        label="Search food"
+        isLabelHidden
         value={q}
         onChange={(e) => setQ(e.target.value)}
         placeholder={placeholder}
+        icon={<Icon name="search" size={18} />}
       />
+
       <div className="mt-2 max-h-56 overflow-auto">
-        {loading && <p className="text-sm text-ink-2">Searching...</p>}
-        {!loading && results.length === 0 && q && <p className="text-sm text-ink-2">No results</p>}
-        <ul className="space-y-1">
+        {loading && <p className="footnote text-ink-2">Searching…</p>}
+        {!loading && results.length === 0 && q && <p className="footnote text-ink-2">No results</p>}
+        <ul className="flex flex-col gap-1">
           {results.map((f) => (
-            <li
-              key={f.id}
-              className="flex cursor-pointer items-center justify-between rounded-lg p-2 border border-line bg-surface hover:bg-surface-2 transition-colors"
-              onClick={() => { onSelect(f); setQ('') }}
-            >
-              <div>
-                <p className="text-sm font-medium text-black">{f.name}</p>
-                <div className="flex items-center gap-2 text-xs mt-0.5">
-                  <span className="text-black">{f.nutrition.calories} kcal</span>
-                  <span className="text-protein">{f.nutrition.protein}g P</span>
-                  <span className="text-carbs">{f.nutrition.carbs}g C</span>
-                  <span className="text-fat">{f.nutrition.fat}g F</span>
+            <li key={f.id}>
+              <button
+                type="button"
+                className={cn(
+                  'flex w-full cursor-pointer flex-col gap-1 rounded-md border border-line bg-surface p-3 text-left',
+                  'transition-colors hover:bg-surface-2',
+                  FOCUS,
+                )}
+                onClick={() => { onSelect(f); setQ(''); setResults([]) }}
+              >
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="min-w-0 truncate footnote text-black">{f.name}</span>
+                  <span className="inline-flex shrink-0 items-center gap-1 caption text-ink-2">
+                    <Icon name="flame" size={13} />
+                    {formatCalories(f.nutrition.calories)} kcal
+                  </span>
                 </div>
-              </div>
+                <MacroInline
+                  protein={`${formatNum(f.nutrition.protein)}g`}
+                  carbs={`${formatNum(f.nutrition.carbs)}g`}
+                  fat={`${formatNum(f.nutrition.fat)}g`}
+                />
+              </button>
             </li>
           ))}
         </ul>
@@ -117,100 +163,133 @@ const FoodPicker = ({ onSelect, placeholder = 'Search food...' }: FoodPickerProp
 
       <div className="mt-3">
         {!showCustomForm ? (
-          <button
-            type="button"
-            className="w-full rounded-lg py-2 text-sm font-medium text-ink-2 border border-line hover:bg-surface transition-colors"
+          <Button
+            variant="secondary"
+            size="sm"
+            block
+            className="h-11"
+            icon={<Icon name="plus" size={16} />}
             onClick={() => setShowCustomForm(true)}
           >
-            + Create Custom Food
-          </button>
+            Create Custom Food
+          </Button>
         ) : (
-          <div className="rounded-lg border border-line bg-surface p-3 space-y-3">
-            <p className="text-xs font-semibold text-ink-2">New Custom Food</p>
-            <input
-              className="w-full h-[56px] rounded-md border border-transparent bg-surface-2 px-4 subhead text-black placeholder:text-ink-3 outline-none transition duration-150 hover:border-track focus:border-black focus:bg-surface"
+          <div className="flex flex-col gap-3 rounded-lg border border-line bg-surface p-3">
+            <p className="title-2 text-black">New custom food</p>
+
+            <TextField
+              label="Food name"
               value={customName}
               onChange={(e) => setCustomName(e.target.value)}
               placeholder="Food name"
             />
-            <select
-              className="w-full h-[56px] rounded-md border border-transparent bg-surface-2 px-4 subhead text-black placeholder:text-ink-3 outline-none transition duration-150 hover:border-track focus:border-black focus:bg-surface"
+
+            <SelectField
+              label="Category"
               value={customCategory}
               onChange={(e) => setCustomCategory(e.target.value)}
             >
               {CATEGORIES.map((c) => (
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
-            </select>
-            <div className="flex items-center gap-2">
-              <input
+            </SelectField>
+
+            <div className="flex items-end gap-2">
+              <TextField
+                label="Serving"
                 type="number"
-                className="w-24 h-[56px] rounded-md border border-transparent bg-surface-2 px-4 subhead text-black placeholder:text-ink-3 outline-none transition duration-150 hover:border-track focus:border-black focus:bg-surface"
-                value={customServing}
+                inputMode="decimal"
+                min={0}
+                className="w-24 shrink-0"
+                value={String(customServing)}
                 onChange={(e) => setCustomServing(Number(e.target.value))}
-                placeholder="Serving"
               />
-              <input
-                className="min-w-0 flex-1 h-[56px] rounded-md border border-transparent bg-surface-2 px-4 subhead text-black placeholder:text-ink-3 outline-none transition duration-150 hover:border-track focus:border-black focus:bg-surface"
+              <TextField
+                label="Unit"
+                className="min-w-0 flex-1"
                 value={customUnit}
                 onChange={(e) => setCustomUnit(e.target.value)}
-                placeholder="Unit (e.g. g, ml, oz)"
+                placeholder="g, ml, piece…"
               />
             </div>
+
+            {!isWeightUnit && (
+              <TextField
+                label={`One ${customUnit || 'piece'} weighs (g)`}
+                type="number"
+                inputMode="decimal"
+                min={0}
+                value={String(customGramsPerUnit)}
+                onChange={(e) => setCustomGramsPerUnit(Number(e.target.value) || 0)}
+              />
+            )}
+
+            <p className="footnote text-ink-2">
+              Enter the macros for {customServing || 0} {customUnit || 'g'}
+              {!isWeightUnit && customServingGrams > 0 ? ` (${customServingGrams}g)` : ''}.
+            </p>
+
             <div className="grid grid-cols-2 gap-2">
-              <div>
-                <p className="text-xs text-ink-2 mb-1">Calories</p>
-                <input
-                  type="number"
-                  className="w-full h-[56px] rounded-md border border-transparent bg-surface-2 px-4 subhead text-black placeholder:text-ink-3 outline-none transition duration-150 hover:border-track focus:border-black focus:bg-surface"
-                  value={customCalories}
-                  onChange={(e) => setCustomCalories(Number(e.target.value))}
-                />
-              </div>
-              <div>
-                <p className="text-xs text-ink-2 mb-1">Protein (g)</p>
-                <input
-                  type="number"
-                  className="w-full h-[56px] rounded-md border border-transparent bg-surface-2 px-4 subhead text-black placeholder:text-ink-3 outline-none transition duration-150 hover:border-track focus:border-black focus:bg-surface"
-                  value={customProtein}
-                  onChange={(e) => setCustomProtein(Number(e.target.value))}
-                />
-              </div>
-              <div>
-                <p className="text-xs text-ink-2 mb-1">Carbs (g)</p>
-                <input
-                  type="number"
-                  className="w-full h-[56px] rounded-md border border-transparent bg-surface-2 px-4 subhead text-black placeholder:text-ink-3 outline-none transition duration-150 hover:border-track focus:border-black focus:bg-surface"
-                  value={customCarbs}
-                  onChange={(e) => setCustomCarbs(Number(e.target.value))}
-                />
-              </div>
-              <div>
-                <p className="text-xs text-ink-2 mb-1">Fat (g)</p>
-                <input
-                  type="number"
-                  className="w-full h-[56px] rounded-md border border-transparent bg-surface-2 px-4 subhead text-black placeholder:text-ink-3 outline-none transition duration-150 hover:border-track focus:border-black focus:bg-surface"
-                  value={customFat}
-                  onChange={(e) => setCustomFat(Number(e.target.value))}
-                />
-              </div>
+              <TextField
+                label="Calories"
+                type="number"
+                inputMode="decimal"
+                min={0}
+                value={String(customCalories)}
+                onChange={(e) => setCustomCalories(Number(e.target.value))}
+              />
+              <TextField
+                label="Protein (g)"
+                type="number"
+                inputMode="decimal"
+                min={0}
+                value={String(customProtein)}
+                onChange={(e) => setCustomProtein(Number(e.target.value))}
+              />
+              <TextField
+                label="Carbs (g)"
+                type="number"
+                inputMode="decimal"
+                min={0}
+                value={String(customCarbs)}
+                onChange={(e) => setCustomCarbs(Number(e.target.value))}
+              />
+              <TextField
+                label="Fat (g)"
+                type="number"
+                inputMode="decimal"
+                min={0}
+                value={String(customFat)}
+                onChange={(e) => setCustomFat(Number(e.target.value))}
+              />
+              <TextField
+                label="Fiber (g)"
+                type="number"
+                inputMode="decimal"
+                min={0}
+                value={String(customFiber)}
+                onChange={(e) => setCustomFiber(Number(e.target.value))}
+              />
             </div>
+
             <div className="flex items-center gap-2">
-              <button
-                type="button"
+              <Button
+                size="sm"
+                className="h-11 min-w-0 flex-1"
                 onClick={handleCreateCustom}
                 disabled={!customName.trim() || saving}
-                className="min-w-0 flex-1 rounded-lg py-2 text-sm font-medium bg-ink text-on-ink hover:opacity-90 transition-colors disabled:opacity-50"
+                isLoading={saving}
               >
-                {saving ? 'Saving...' : 'Save Food'}
-              </button>
-              <button
-                type="button"
+                {saving ? 'Saving…' : 'Save Food'}
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                className="h-11 min-w-0 flex-1"
                 onClick={() => setShowCustomForm(false)}
-                className="min-w-0 flex-1 rounded-lg py-2 text-sm font-medium border border-line text-black hover:bg-surface transition-colors"
               >
                 Cancel
-              </button>
+              </Button>
             </div>
           </div>
         )}

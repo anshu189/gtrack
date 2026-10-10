@@ -2,8 +2,10 @@ import { useState, useEffect, useRef } from 'react'
 import type { Food, FoodMeasure, Nutrition } from '@/types'
 import { foodSearchService } from '@/lib/search/foodSearch'
 import { foodRepository } from '@/lib/repositories/foodRepository'
-import { formatNum } from '@/lib/utils/format'
-import { computeGramsPerUnit } from '@/lib/utils/nutrition'
+import { formatCalories, formatNum } from '@/lib/utils/format'
+import { computeGramsPerUnit, gramsFor, scaleNutrition, toPer100 } from '@/lib/utils/nutrition'
+import { cn } from '@/lib/utils/cn'
+import { Button, FOCUS, Icon, MacroInline, SelectField, TextField } from '@/components/ds'
 
 const LS_KEY = 'gtrak:macroOverrides'
 
@@ -16,6 +18,7 @@ const FoodMacroEditor = () => {
   const [fiber, setFiber] = useState(0)
   const [saving, setSaving] = useState(false)
   const [done, setDone] = useState<string | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState(false)
   const [importMsg, setImportMsg] = useState<string | null>(null)
   const [editQuantity, setEditQuantity] = useState<number>(100)
   const [editUnit, setEditUnit] = useState('g')
@@ -39,18 +42,26 @@ const FoodMacroEditor = () => {
 
   const handleSelect = (food: Food) => {
     setSelected(food)
+    // The choice is made, so the query and its result list get out of the way.
+    setQ('')
+    setResults([])
     const qty = food.servingSize ?? 100
     const unit = food.servingUnit ?? 'g'
     setEditQuantity(qty)
     setEditUnit(unit)
-    const factor = qty / 100
+    /**
+     * Scale by the serving's GRAMS, not its raw quantity. Using the quantity
+     * meant "1 piece" divided the stored per-100g values by 100, while saving
+     * used grams — so a non-gram unit could never round-trip.
+     */
+    const scaled = scaleNutrition(food.nutrition, gramsFor(food, qty, unit))
     setNutrition({
-      calories: Math.round(food.nutrition.calories * factor * 100) / 100,
-      protein: Math.round(food.nutrition.protein * factor * 100) / 100,
-      carbs: Math.round(food.nutrition.carbs * factor * 100) / 100,
-      fat: Math.round(food.nutrition.fat * factor * 100) / 100,
+      calories: scaled.calories,
+      protein: scaled.protein,
+      carbs: scaled.carbs,
+      fat: scaled.fat,
     })
-    setFiber(Math.round((food.nutrition.fiber ?? 0) * factor * 100) / 100)
+    setFiber(scaled.fiber ?? 0)
     setDone(null)
   }
 
@@ -70,12 +81,27 @@ const FoodMacroEditor = () => {
     setEditUnit(newUnit)
   }
 
+  const handleDelete = async () => {
+    if (!selected) return
+    setSaving(true)
+    try {
+      await foodRepository.delete(selected.id)
+      setDone(`Deleted ${selected.name}`)
+      setSelected(null)
+      setQ('')
+      setResults([])
+      setConfirmDelete(false)
+    } finally {
+      setSaving(false)
+    }
+  }
+
   const handleUpdate = async () => {
     if (!selected) return
     setSaving(true)
     try {
-      const grams = editQuantity * computeGramsPerUnit(selected, editUnit)
-      const factor = 100 / grams
+      const grams = gramsFor(selected, editQuantity, editUnit)
+
 
       const existingMeasures = selected.measures ?? []
       let newMeasures = [...existingMeasures]
@@ -95,13 +121,7 @@ const FoodMacroEditor = () => {
       }
 
       await foodRepository.update(selected.id, {
-        nutrition: {
-          calories: Math.round(nutrition.calories * factor * 100) / 100,
-          protein: Math.round(nutrition.protein * factor * 100) / 100,
-          carbs: Math.round(nutrition.carbs * factor * 100) / 100,
-          fat: Math.round(nutrition.fat * factor * 100) / 100,
-          fiber: Math.round((fiber ?? 0) * factor * 100) / 100,
-        },
+        nutrition: toPer100({ ...nutrition, fiber: fiber ?? 0 }, grams),
         measures: newMeasures,
         servingSize: editQuantity,
         servingUnit: editUnit,
@@ -171,28 +191,40 @@ const FoodMacroEditor = () => {
 
   return (
     <div className="w-full rounded-lg">
-      <input
-        className="w-full h-[56px] rounded-md border border-transparent bg-surface-2 px-4 subhead text-black placeholder:text-ink-3 outline-none transition duration-150 hover:border-track focus:border-black focus:bg-surface"
+      <TextField
+        label="Search food to edit macros"
+        isLabelHidden
         value={q}
         onChange={(e) => setQ(e.target.value)}
         placeholder="Search food to edit macros"
+        icon={<Icon name="search" size={18} />}
       />
 
       <div className="mt-2 max-h-72 overflow-auto">
-        {loading && <p className="text-sm text-ink-2">Searching...</p>}
-        {!loading && results.length === 0 && q && <p className="text-sm text-ink-2">No results</p>}
-        <ul className="space-y-1">
+        {loading && <p className="footnote text-ink-2">Searching…</p>}
+        {!loading && results.length === 0 && q && <p className="footnote text-ink-2">No results</p>}
+        <ul className="flex flex-col gap-1">
           {results.map((f) => (
-            <li
-              key={f.id}
-              className={`flex cursor-pointer items-center justify-between rounded-lg p-2 px-3 border border-line bg-surface hover:bg-surface-2 transition-colors ${selected?.id === f.id ? 'bg-surface-2' : ''}`}
-              onClick={() => handleSelect(f)}
-            >
-              <div>
-                <p className="text-sm font-medium text-black">{f.name}</p>
-                <p className="text-xs text-ink-2">{f.source}{f.sourceReference ? ` · ${f.sourceReference}` : ''}</p>
-              </div>
-              <p className="text-sm text-ink-2">{f.nutrition.calories} kcal</p>
+            <li key={f.id}>
+              <button
+                type="button"
+                className={cn(
+                  'flex w-full cursor-pointer items-center justify-between gap-2 rounded-md border border-line bg-surface p-3 text-left',
+                  'transition-colors hover:bg-surface-2',
+                  selected?.id === f.id && 'bg-surface-2',
+                  FOCUS,
+                )}
+                onClick={() => handleSelect(f)}
+              >
+                <span className="flex min-w-0 flex-col">
+                  <span className="truncate footnote text-black">{f.name}</span>
+                  <span className="truncate caption text-ink-2">{f.source}{f.sourceReference ? ` · ${f.sourceReference}` : ''}</span>
+                </span>
+                <span className="inline-flex shrink-0 items-center gap-1 caption text-ink-2">
+                  <Icon name="flame" size={13} />
+                  {formatCalories(f.nutrition.calories)} kcal
+                </span>
+              </button>
             </li>
           ))}
         </ul>
@@ -200,67 +232,99 @@ const FoodMacroEditor = () => {
 
       {selected && (
         <div className="mt-3 rounded-lg border border-line bg-surface p-3">
-          <p className="mb-2 text-md font-semibold text-black">{selected.name}</p>
-          <div className="mb-6 flex flex-wrap items-center gap-1 text-sm text-ink-2">
-            <span>Per</span>
-            <input
+          <p className="mb-3 title-2 text-black">{selected.name}</p>
+
+          <div className="mb-4 flex items-end gap-2">
+            <TextField
+              label="Per"
               type="number"
-              className="w-14 rounded border border-line bg-surface-2 px-1.5 py-0.5 text-xs text-black"
-              value={editQuantity}
-              onChange={(e) => handleQuantityChange(Number(e.target.value), editUnit)}
+              inputMode="decimal"
               min={0}
+              className="w-24 shrink-0"
+              value={String(editQuantity)}
+              onChange={(e) => handleQuantityChange(Number(e.target.value), editUnit)}
             />
-            <select
-              className="rounded border border-line bg-surface-2 px-1.5 py-0.5 text-xs text-black"
+            <SelectField
+              label="Unit"
+              className="min-w-0 flex-1"
               value={editUnit}
               onChange={(e) => handleQuantityChange(editQuantity, e.target.value)}
             >
               {['g', 'ml', 'piece', 'cup', 'tbsp', 'tsp', 'slice'].map((u) => (
                 <option key={u} value={u}>{u}</option>
               ))}
-            </select>
-            <span>: {formatNum(nutrition.calories)} kcal / {formatNum(nutrition.protein)}g P / {formatNum(nutrition.carbs)}g C / {formatNum(nutrition.fat)}g F{fiber ? ` / ${formatNum(fiber)}g fiber` : ''}</span>
-            {selected.source && <span> ({selected.source})</span>}
+            </SelectField>
+          </div>
+
+          <div className="mb-6 flex flex-wrap items-center gap-x-3 gap-y-1">
+            <span className="inline-flex items-center gap-1 caption text-ink-2">
+              <Icon name="flame" size={13} />
+              {formatCalories(nutrition.calories)} kcal
+            </span>
+            <MacroInline
+              protein={`${formatNum(nutrition.protein)}g`}
+              carbs={`${formatNum(nutrition.carbs)}g`}
+              fat={`${formatNum(nutrition.fat)}g`}
+            />
+            {fiber ? <span className="caption text-ink-2">{formatNum(fiber)}g fiber</span> : null}
+            {selected.source && <span className="caption text-ink-3">{selected.source}</span>}
           </div>
           <div className="grid grid-cols-2 gap-2">
             {fields.map((f) => (
-              <div key={f.key}>
-                <p className="text-sm text-ink-2 mb-1">{f.label}</p>
-                <input
-                  type="number"
-                  className="w-full h-[56px] rounded-md border border-transparent bg-surface-2 px-4 subhead text-black placeholder:text-ink-3 outline-none transition duration-150 hover:border-track focus:border-black focus:bg-surface"
-                  value={f.value}
-                  onChange={(e) => f.setter(Number(e.target.value))}
-                />
-              </div>
-            ))}
-            <div>
-              <p className="text-sm text-ink-2 mb-1">Fiber (g)</p>
-              <input
+              <TextField
+                key={f.key}
+                label={f.label}
                 type="number"
-                className="w-full h-[56px] rounded-md border border-transparent bg-surface-2 px-4 subhead text-black placeholder:text-ink-3 outline-none transition duration-150 hover:border-track focus:border-black focus:bg-surface"
-                value={fiber}
-                onChange={(e) => setFiber(Number(e.target.value))}
+                inputMode="decimal"
+                min={0}
+                value={String(f.value)}
+                onChange={(e) => f.setter(Number(e.target.value))}
               />
-            </div>
+            ))}
+            <TextField
+              label="Fiber (g)"
+              type="number"
+              inputMode="decimal"
+              min={0}
+              value={String(fiber)}
+              onChange={(e) => setFiber(Number(e.target.value))}
+            />
           </div>
-          <div className="mt-3 flex items-center gap-2">
-            <button
-              type="button"
+          <div className="mt-3 grid grid-cols-3 gap-2">
+            <Button
+              size="sm"
+              className="h-11 min-w-0"
               onClick={handleUpdate}
-              disabled={saving}
-              className="min-w-0 flex-1 rounded-lg py-2 text-sm font-medium bg-ink text-on-ink hover:opacity-90 transition-colors disabled:opacity-50"
+              disabled={saving || confirmDelete}
+              isLoading={saving}
             >
-              {saving ? 'Saving...' : 'Update'}
-            </button>
-            <button
-              type="button"
-              onClick={() => { setSelected(null); setQ('') }}
-              className="min-w-0 flex-1 rounded-lg py-2 text-sm font-medium border border-line text-black hover:bg-surface transition-colors"
+              {saving ? 'Saving…' : 'Update'}
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              className="h-11 min-w-0"
+              onClick={() => { setSelected(null); setQ(''); setResults([]); setConfirmDelete(false) }}
             >
               Cancel
-            </button>
+            </Button>
+            {/* Two-step: deleting a food cannot be undone from the UI. */}
+            <Button
+              variant="secondary"
+              size="sm"
+              className="h-11 min-w-0 text-protein hover:text-protein"
+              onClick={confirmDelete ? handleDelete : () => setConfirmDelete(true)}
+              disabled={saving}
+            >
+              {confirmDelete ? 'Confirm' : 'Delete'}
+            </Button>
           </div>
+          {confirmDelete && (
+            <p className="mt-2 footnote text-ink-2">
+              Removes {selected.name} from your food list. Meals already logged keep
+              their own copy of the name and macros, so your history is unchanged.
+            </p>
+          )}
         </div>
       )}
 
@@ -269,20 +333,24 @@ const FoodMacroEditor = () => {
       )}
 
       <div className="mt-4 flex items-center gap-2 border-t border-line pt-3">
-        <button
-          type="button"
+        <Button
+          variant="secondary"
+          size="sm"
+          className="h-11 min-w-0 flex-1"
+          icon={<Icon name="download" size={16} />}
           onClick={handleExport}
-          className="min-w-0 flex-1 rounded-lg py-2 text-sm font-medium border border-line text-black hover:bg-surface transition-colors"
         >
-          Export Overrides
-        </button>
-        <button
-          type="button"
+          Export
+        </Button>
+        <Button
+          variant="secondary"
+          size="sm"
+          className="h-11 min-w-0 flex-1"
+          icon={<Icon name="upload" size={16} />}
           onClick={() => fileRef.current?.click()}
-          className="min-w-0 flex-1 rounded-lg py-2 text-sm font-medium border border-line text-black hover:bg-surface transition-colors"
         >
-          Import Overrides
-        </button>
+          Import
+        </Button>
         <input ref={fileRef} type="file" accept=".json" className="hidden" onChange={handleImport} />
       </div>
       {importMsg && (

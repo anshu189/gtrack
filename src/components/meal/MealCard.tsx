@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react'
 import type { Meal } from '@/types'
 import { foodRepository } from '@/lib/repositories/foodRepository'
 import { formatNum } from '@/lib/utils/format'
-import { mealItemGrams } from '@/lib/utils/nutrition'
+import { mealItemGrams, mealTotals } from '@/lib/utils/nutrition'
+import { Button, Icon, MacroInline, MacroTiles } from '@/components/ds'
 
 interface MealCardProps {
   meal: Meal
@@ -34,55 +35,80 @@ const MealCard = ({ meal, onAddItem, onDelete }: MealCardProps) => {
     return () => { cancelled = true }
   }, [meal.items])
 
-  return (
-    <div className="rounded-lg border border-line bg-surface-2 p-4">
-      <p className="text-base font-semibold text-black mb-3">{meal.name}</p>
+  const totals = mealTotals(meal.items)
+  const hasItems = meal.items && meal.items.length > 0
 
-      {meal.items && meal.items.length > 0 ? (
-        <div className="space-y-2">
-          {meal.items.map((it) => {
-            const displayName = it.name ?? resolvedNames[it.foodId] ?? it.foodId.split(':').pop()
-            const multiplier = mealItemGrams(it) / 100
-            const n = it.nutrition
-            return (
-              <div key={it.id} className="rounded-lg border border-line bg-surface p-3">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm font-medium text-black">{displayName}</span>
-                  <span className="text-sm text-ink-2">{it.quantity} {it.unit}</span>
+  return (
+    <div className="rounded-lg bg-surface-2 p-4">
+      <div className="mb-3 flex items-baseline justify-between gap-2">
+        <p className="min-w-0 truncate title-2 text-black">{meal.name}</p>
+        <span className="inline-flex shrink-0 items-center gap-1 label-text text-ink-2">
+          <Icon name="flame" size={14} />
+          {Math.round(totals.calories)} kcal
+        </span>
+      </div>
+
+      {hasItems ? (
+        <>
+          {/* DS macro readout for a meal detail: three tiles across, in
+              Protein, Carbs, Fats order. */}
+          <MacroTiles
+            protein={`${formatNum(totals.protein)}g`}
+            carbs={`${formatNum(totals.carbs)}g`}
+            fat={`${formatNum(totals.fat)}g`}
+            className="mb-3"
+          />
+
+          <div className="flex flex-col gap-2">
+            {meal.items.map((it) => {
+              const displayName = it.name ?? resolvedNames[it.foodId] ?? it.foodId.split(':').pop()
+              const multiplier = mealItemGrams(it) / 100
+              const n = it.nutrition
+              return (
+                <div key={it.id} className="flex flex-col gap-1 rounded-sm bg-surface p-3">
+                  <div className="flex items-baseline justify-between gap-2">
+                    <span className="min-w-0 truncate footnote text-black">{displayName}</span>
+                    <span className="shrink-0 caption text-ink-2">
+                      {it.quantity} {it.unit} &middot; {n ? formatNum(n.calories * multiplier) : '0'} kcal
+                    </span>
+                  </div>
+                  <MacroInline
+                    protein={`${n ? formatNum(n.protein * multiplier) : '0'}g`}
+                    carbs={`${n ? formatNum(n.carbs * multiplier) : '0'}g`}
+                    fat={`${n ? formatNum(n.fat * multiplier) : '0'}g`}
+                  />
                 </div>
-                <div className="flex items-center gap-3 text-sm">
-                  <span className="text-black">{n ? formatNum(n.calories * multiplier) : '0'} kcal</span>
-                  <span className="text-protein">{n ? formatNum(n.protein * multiplier) : '0'}g P</span>
-                  <span className="text-carbs">{n ? formatNum(n.carbs * multiplier) : '0'}g C</span>
-                  <span className="text-fat">{n ? formatNum(n.fat * multiplier) : '0'}g F</span>
-                </div>
-              </div>
-            )
-          })}
-        </div>
+              )
+            })}
+          </div>
+        </>
       ) : (
-        <p className="text-sm text-ink-2">No items</p>
+        <p className="footnote text-ink-2">No items</p>
       )}
 
       {(onAddItem || onDelete) && (
         <div className="mt-3 grid grid-cols-2 gap-2">
           {onAddItem && (
-            <button
-              type="button"
+            <Button
+              variant="secondary"
+              size="sm"
+              className="h-11"
+              icon={<Icon name="plus" size={16} />}
               onClick={onAddItem}
-              className="rounded-lg py-2 text-sm font-medium text-black border border-line hover:bg-surface-2 transition-colors"
             >
               Add
-            </button>
+            </Button>
           )}
           {onDelete && (
-            <button
-              type="button"
+            <Button
+              variant="secondary"
+              size="sm"
+              className="h-11 text-protein hover:text-protein"
+              icon={<Icon name="trash" size={16} />}
               onClick={onDelete}
-              className="rounded-lg py-2 text-sm font-medium text-protein border border-line hover:bg-surface-2 transition-colors"
             >
               Delete
-            </button>
+            </Button>
           )}
         </div>
       )}

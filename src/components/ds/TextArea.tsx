@@ -37,9 +37,9 @@ export const TextArea = React.forwardRef<HTMLTextAreaElement, TextAreaProps>(
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy}
           className={cn(
-            'w-full resize-none rounded-md border border-transparent bg-surface-2 px-4 py-3',
+            'w-full resize-none rounded-md border border-track bg-surface-2 px-4 py-3',
             'subhead text-black placeholder:text-ink-3',
-            'outline-none transition duration-150 hover:border-track',
+            'outline-none transition duration-150 hover:border-line-strong',
             'focus:border-black focus:bg-surface',
             error && 'border-protein bg-surface',
           )}

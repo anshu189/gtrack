@@ -1,10 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useLocation } from 'react-router-dom'
 import type { Food, Meal, MealItem } from '@/types'
 import { useMealStore } from '@/stores/mealStore'
 import { MealCard, AddItem, QuantityPicker, FoodMacroEditor, UndoBanner } from '@/components/meal'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { Button, Card, DatePicker, IconButton, TextField } from '@/components/ds'
+import { Button, Card, DatePicker, Icon, IconButton, TextField } from '@/components/ds'
 import { cleanForFirestore } from '@/lib/utils/firestore'
 
 function getTodayIso() {
@@ -22,6 +21,18 @@ const MealBuilder = () => {
   )
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set())
   const [editItemId, setEditItemId] = useState<string | null>(null)
+  const editSectionRef = useRef<HTMLDivElement | null>(null)
+
+  const startEditingMeal = (meal: Meal) => {
+    setCurrentMeal(meal)
+    // Bring the meal's own editor into view, not the page top — the date pills
+    // and New meal card above it are not what you just asked for. The delay
+    // lets the editor render first; measuring it on the same frame gives the
+    // pre-render position and the scroll goes nowhere.
+    window.setTimeout(() => {
+      editSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 200)
+  }
 
   const today = getTodayIso()
   const isToday = selectedDate === today
@@ -152,7 +163,7 @@ const MealBuilder = () => {
         <div className="mb-5 flex items-center gap-2">
           <IconButton
             label="Previous day"
-            icon={<ChevronLeft size={20} />}
+            icon={<Icon name="chevron-left" size={20} />}
             onClick={handlePreviousDay}
           />
           <DatePicker
@@ -165,7 +176,7 @@ const MealBuilder = () => {
           />
           <IconButton
             label="Next day"
-            icon={<ChevronRight size={20} />}
+            icon={<Icon name="chevron-right" size={20} />}
             onClick={handleNextDay}
             disabled={isToday}
             className="disabled:bg-surface-2 disabled:opacity-40"
@@ -205,15 +216,16 @@ const MealBuilder = () => {
 
         {/* Current meal being edited */}
         {currentMeal && (
-          <div className="rounded-lg border border-line bg-surface p-5">
-            <p className="text-base font-semibold text-black mb-3">{currentMeal.name}</p>
+          // scroll-mt clears the sticky header when scrolled into view.
+          <div ref={editSectionRef} className="scroll-mt-28 rounded-lg bg-surface p-5 shadow-card">
+            <p className="mb-3 title-2 text-black">{currentMeal.name}</p>
             <AddItem onAdd={handleAddItem} />
             <div className="mt-4 space-y-2">
               {currentMeal.items?.map((item) => {
                 if (editItemId === item.id) {
                   return (
-                    <div key={item.id} className="rounded-lg border border-line bg-surface-2 p-3">
-                      <p className="text-base font-semibold text-black mb-2">Edit Item</p>
+                    <div key={item.id} className="rounded-md bg-surface-2 p-3">
+                      <p className="mb-2 title-2 text-black">Edit item</p>
                       <QuantityPicker
                         value={item.quantity}
                         unit={item.unit}
@@ -228,44 +240,42 @@ const MealBuilder = () => {
                         }}
                       />
                       <div className="mt-3 flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={handleSaveItem}
-                          className="flex-1 py-2 text-sm font-medium bg-ink text-on-ink hover:opacity-90 transition-colors"
-                        >
+                        <Button size="sm" className="h-11 min-w-0 flex-1" onClick={handleSaveItem}>
                           Save
-                        </button>
-                        <button
-                          type="button"
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          className="h-11 min-w-0 flex-1"
                           onClick={handleCancelEdit}
-                          className="flex-1 py-2 text-sm font-medium border border-line text-black hover:bg-surface transition-colors"
                         >
                           Cancel
-                        </button>
+                        </Button>
                       </div>
                     </div>
                   )
                 }
                 return (
-                  <div key={item.id} className="rounded-lg border border-line bg-surface-2 p-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-black">{item.name}</span>
-                      <span className="text-sm text-ink-2">{item.quantity} {item.unit}</span>
-                      <div className="flex items-center gap-1">
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveItem(item.id)}
-                          className="py-1.5 rounded-sm px-2 text-xs text-protein hover:bg-surface-2 transition-colors"
-                        >
-                          Remove
-                        </button>
-                        <button
-                          type="button"
+                  <div key={item.id} className="rounded-md bg-surface-2 p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="min-w-0 flex-1 truncate footnote text-black">{item.name}</span>
+                      <span className="shrink-0 caption text-ink-2">{item.quantity} {item.unit}</span>
+                      <div className="flex shrink-0 items-center gap-1">
+                        <IconButton
+                          variant="ghost"
+                          size={32}
+                          label={`Edit ${item.name}`}
+                          icon={<Icon name="pencil" size={15} />}
                           onClick={() => handleEditItem(item.id)}
-                          className="py-1.5 rounded-sm px-2 text-xs text-accent hover:bg-surface-2 transition-colors"
-                        >
-                          Edit
-                        </button>
+                        />
+                        <IconButton
+                          variant="ghost"
+                          size={32}
+                          label={`Remove ${item.name}`}
+                          icon={<Icon name="trash" size={15} />}
+                          className="hover:text-protein"
+                          onClick={() => handleRemoveItem(item.id)}
+                        />
                       </div>
                     </div>
                   </div>
@@ -273,42 +283,39 @@ const MealBuilder = () => {
               })}
             </div>
             <div className="mt-4 flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handleSaveMeal}
-                className="min-w-0 flex-1 rounded-lg py-2.5 text-sm font-medium bg-ink text-on-ink hover:opacity-90 transition-colors"
-              >
+              <Button size="sm" className="h-11 min-w-0 flex-1" onClick={handleSaveMeal}>
                 Save Meal
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                className="h-11 min-w-0 flex-1"
                 onClick={() => setCurrentMeal(null)}
-                className="min-w-0 flex-1 rounded-lg py-2.5 text-sm font-medium border border-line text-black hover:bg-surface transition-colors"
               >
                 Cancel
-              </button>
+              </Button>
             </div>
           </div>
         )}
 
         {/* Meals list */}
-        <div className="rounded-lg border border-line bg-surface p-5">
-          <p className="text-base font-semibold text-black mb-3">Meals</p>
+        <Card>
+          <p className="mb-3 title-2 text-black">Meals</p>
           {mealStore.meals.length === 0 ? (
-            <p className="text-sm text-ink-2">No meals for this day</p>
+            <p className="footnote text-ink-2">No meals for this day</p>
           ) : (
             <div className="space-y-4">
               {mealStore.meals.map((meal) => (
                 <MealCard
                   key={meal.id}
                   meal={meal}
-                  onAddItem={() => setCurrentMeal(meal)}
+                  onAddItem={() => startEditingMeal(meal)}
                   onDelete={() => handleDeleteMeal(meal.id)}
                 />
               ))}
             </div>
           )}
-        </div>
+        </Card>
       </div>
       )}
     </>

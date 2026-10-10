@@ -1,18 +1,20 @@
+import { Button, Icon } from '@/components/ds'
+
 interface DeleteItemButtonProps {
   onClick: () => void
   label?: string
 }
 
-const DeleteItemButton = ({ onClick, label = 'Delete' }: DeleteItemButtonProps) => {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="rounded-lg py-2 text-sm font-medium text-protein border border-line hover:bg-surface-2 transition-colors"
-    >
-      {label}
-    </button>
-  )
-}
+const DeleteItemButton = ({ onClick, label = 'Delete' }: DeleteItemButtonProps) => (
+  <Button
+    variant="secondary"
+    size="sm"
+    className="h-11 text-protein hover:text-protein"
+    icon={<Icon name="trash" size={16} />}
+    onClick={onClick}
+  >
+    {label}
+  </Button>
+)
 
 export default DeleteItemButton

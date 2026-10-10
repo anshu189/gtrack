@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import { FOCUS, PRESS } from './primitives'
+import { Icon } from './Icon'
 
 /**
  * Calendar date picker.
@@ -105,7 +105,7 @@ export const DatePicker = ({ value, onChange, label, max, fullWidth, className }
           FOCUS,
         )}
       >
-        <Calendar size={16} aria-hidden="true" />
+        <Icon name="calendar" size={16} />
         {selected.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
       </button>
 
@@ -122,7 +122,7 @@ export const DatePicker = ({ value, onChange, label, max, fullWidth, className }
               aria-label="Previous month"
               className={cn('grid size-8 cursor-pointer place-items-center rounded-pill text-black hover:bg-surface-2', FOCUS)}
             >
-              <ChevronLeft size={18} />
+              <Icon name="chevron-left" size={18} />
             </button>
             <span className="footnote text-black">{monthLabel}</span>
             <button
@@ -131,7 +131,7 @@ export const DatePicker = ({ value, onChange, label, max, fullWidth, className }
               aria-label="Next month"
               className={cn('grid size-8 cursor-pointer place-items-center rounded-pill text-black hover:bg-surface-2', FOCUS)}
             >
-              <ChevronRight size={18} />
+              <Icon name="chevron-right" size={18} />
             </button>
           </div>
 

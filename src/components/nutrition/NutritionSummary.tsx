@@ -1,6 +1,7 @@
+import { formatCalories } from '@/lib/utils/format'
 import type { NutritionStatus } from '@/lib/services/nutritionCalculation'
 import { useNutritionStatus } from '@/hooks/useNutrition'
-import { ProgressBar, ProgressRing } from '@/components/ds'
+import { Icon, MacroInline, ProgressBar, ProgressRing } from '@/components/ds'
 
 interface NutritionProgressBarProps {
   label: string
@@ -36,20 +37,22 @@ export const NutritionSummary = ({ status, compact = false }: NutritionSummaryPr
   const statusStrings = useNutritionStatus(status)
 
   if (!status) {
-    return <p className="text-sm text-ink-2">No nutrition data</p>
+    return <p className="footnote text-ink-2">No nutrition data</p>
   }
 
   if (compact) {
     return (
-      <div className="flex items-center justify-between gap-2 text-xs">
-        <div>
-          <span className="font-medium text-black">{Math.round(status.actual.calories)}</span>
-          <span className="text-ink-2"> / {status.target?.calories ?? 2000} kcal</span>
-        </div>
-        <div className="text-ink-2">
-          {statusStrings?.calories ?? 'On target'} &middot; P: {Math.round(status.actual.protein)}g &middot; C:{' '}
-          {Math.round(status.actual.carbs)}g &middot; F: {Math.round(status.actual.fat)}g
-        </div>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="inline-flex items-center gap-1 caption text-ink-2">
+          <Icon name="flame" size={13} />
+          <span className="text-black">{Math.round(status.actual.calories)}</span>
+          {' / '}{formatCalories(status.target?.calories ?? 2000)} kcal
+        </span>
+        <MacroInline
+          protein={`${Math.round(status.actual.protein)}g`}
+          carbs={`${Math.round(status.actual.carbs)}g`}
+          fat={`${Math.round(status.actual.fat)}g`}
+        />
       </div>
     )
   }
@@ -89,12 +92,12 @@ export const NutritionSummary = ({ status, compact = false }: NutritionSummaryPr
       </div>
 
       {statusStrings && (
-        <div className="mt-4 bg-surface-2 p-3">
-          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-2">
-            <span><span className="font-medium text-ink-2">Calories:</span> {statusStrings.calories}</span>
-            <span><span className="font-medium text-ink-2">Protein:</span> {statusStrings.protein}</span>
-            <span><span className="font-medium text-ink-2">Carbs:</span> {statusStrings.carbs}</span>
-            <span><span className="font-medium text-ink-2">Fat:</span> {statusStrings.fat}</span>
+        <div className="mt-4 rounded-md bg-surface-2 p-3">
+          <div className="flex flex-wrap gap-x-4 gap-y-1 caption text-ink-2">
+            <span><span className="text-black">Calories:</span> {statusStrings.calories}</span>
+            <span><span className="text-black">Protein:</span> {statusStrings.protein}</span>
+            <span><span className="text-black">Carbs:</span> {statusStrings.carbs}</span>
+            <span><span className="text-black">Fat:</span> {statusStrings.fat}</span>
           </div>
         </div>
       )}

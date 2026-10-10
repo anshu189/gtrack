@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Button, SegmentedControl, TextField, WheelPicker } from '@/components/ds'
+import { Button, Chip, SegmentedControl, TextField, WheelPicker } from '@/components/ds'
 import type { WeightEntry } from '@/types'
 
 /** Quick-fill options for the notes field, mirroring the water quick-add chips. */
@@ -153,23 +153,13 @@ export const WeightLogging = ({
       {showNotePresets && (
         <div className="flex flex-wrap gap-2">
           {NOTE_PRESETS.map((preset) => (
-            <button
-              key={preset}
-              type="button"
-              onClick={() => applyNote(preset)}
-              className="rounded-pill bg-surface-2 px-3 py-1.5 chip-text text-ink-2 transition-colors hover:bg-fill-strong hover:text-black disabled:opacity-40"
-            >
+            <Chip key={preset} variant="action" onClick={() => applyNote(preset)}>
               {preset}
-            </button>
+            </Chip>
           ))}
-          <button
-            type="button"
-            onClick={() => applyNote('')}
-            disabled={!notes}
-            className="rounded-pill bg-surface-2 px-3 py-1.5 chip-text text-black transition-colors hover:bg-fill-strong"
-          >
+          <Chip variant="action" onClick={() => applyNote('')} disabled={!notes}>
             Clear
-          </button>
+          </Chip>
         </div>
       )}
       <TextField
