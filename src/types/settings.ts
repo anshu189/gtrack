@@ -51,6 +51,23 @@ export interface PersonalProfile {
   skipped?: boolean
 }
 
+/**
+ * When the tretinoin switch appears on the Dashboard and in History.
+ *
+ * auto      the original rule: every third night, counted from the last
+ *           application. Left as the default so an account that predates this
+ *           setting behaves exactly as it did.
+ * weekdays  the days picked in Settings, repeating weekly.
+ * daily     every day.
+ */
+export type TretinoinScheduleMode = 'auto' | 'weekdays' | 'daily'
+
+export interface TretinoinSchedule {
+  mode: TretinoinScheduleMode
+  /** 0 = Sunday ... 6 = Saturday. Only read in 'weekdays' mode. */
+  weekdays?: number[]
+}
+
 export interface UserSettings {
   id?: string
   unitSystem: UnitSystem
@@ -59,6 +76,7 @@ export interface UserSettings {
   nutritionTargets?: NutritionTargets
   waterGoalMl?: number
   profile?: PersonalProfile
+  tretinoinSchedule?: TretinoinSchedule
   createdAt?: string
   updatedAt?: string
 }

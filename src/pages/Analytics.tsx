@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend,
 } from 'recharts'
-import type { Meal, Workout } from '@/types'
+import type { Meal, TretinoinLog, Workout } from '@/types'
 import { mealRepository } from '@/lib/repositories/mealRepository'
 import { weightRepository } from '@/lib/repositories/weightRepository'
 import { waterRepository } from '@/lib/repositories/waterRepository'
@@ -10,8 +10,9 @@ import { workoutRepository } from '@/lib/repositories/workoutRepository'
 import { tretinoinRepository } from '@/lib/repositories/tretinoinRepository'
 import { nutritionCalculationService } from '@/lib/services/nutritionCalculation'
 import { useSettingsStore } from '@/stores/settingsStore'
-import { ChartCard, SegmentedControl } from '@/components/ds'
+import { ChartCard, SegmentedControl, StreakCard } from '@/components/ds'
 import { Card } from '@/components/ds'
+import { tretinoinAdherence, tretinoinStreak, tretinoinWeek } from '@/lib/utils/tretinoin'
 
 type RangeKey = '7d' | '30d' | '90d'
 
@@ -48,17 +49,13 @@ interface WaterDataPoint {
   amount: number
 }
 
-interface TretinoinDataPoint {
-  date: string
-  applied: number
-}
 
 export default function Analytics() {
   const [range, setRange] = useState<RangeKey>('7d')
   const [nutritionData, setNutritionData] = useState<NutritionDataPoint[]>([])
   const [weightData, setWeightData] = useState<WeightDataPoint[]>([])
   const [waterData, setWaterData] = useState<WaterDataPoint[]>([])
-  const [tretinoinData, setTretinoinData] = useState<TretinoinDataPoint[]>([])
+  const [tretinoinLogs, setTretinoinLogs] = useState<TretinoinLog[]>([])
   const [workouts, setWorkouts] = useState<Workout[]>([])
   const [loading, setLoading] = useState(false)
 
@@ -67,6 +64,32 @@ export default function Analytics() {
   const proteinTarget = settingsStore.settings?.nutritionTargets?.protein ?? 150
   const carbsTarget = settingsStore.settings?.nutritionTargets?.carbs ?? 250
   const fatTarget = settingsStore.settings?.nutritionTargets?.fat ?? 70
+  const tretinoinSchedule = settingsStore.settings?.tretinoinSchedule
+  const todayIso = new Date().toISOString().split('T')[0]
+
+  const adherence = useMemo(() => {
+    const { start, end } = getDateRange(RANGE_DAYS[range])
+    return tretinoinAdherence(tretinoinLogs, tretinoinSchedule, start, end, todayIso)
+  }, [tretinoinLogs, tretinoinSchedule, range, todayIso])
+
+  /**
+   * Off-schedule applications are named rather than hidden: they draw a filled
+   * dot on the card, so leaving them out of the sentence makes the dots and
+   * the figure look like they disagree.
+   */
+  const adherenceLine = (() => {
+    const days = RANGE_DAYS[range]
+    const extra =
+      adherence.offSchedule > 0
+        ? `, plus ${adherence.offSchedule} off-schedule`
+        : ''
+    if (adherence.scheduled === 0) {
+      return adherence.offSchedule > 0
+        ? `No scheduled days in the last ${days} days — ${adherence.offSchedule} applied anyway.`
+        : `No scheduled days in the last ${days} days yet.`
+    }
+    return `Applied on ${adherence.applied} of ${adherence.scheduled} scheduled days in the last ${days} days${extra}.`
+  })()
 
   useEffect(() => {
     settingsStore.load()
@@ -113,19 +136,7 @@ export default function Analytics() {
       const waterResults = await Promise.all(waterPromises)
       setWaterData(waterResults.filter((w) => w.amount > 0))
 
-      const tretinoinMap = new Map<string, boolean>()
-      for (const t of allTretinoin) {
-        if (t.applied) tretinoinMap.set(t.date, true)
-      }
-      const tretinoinPoints: TretinoinDataPoint[] = []
-      const cursor = new Date(start)
-      const endDt = new Date(end)
-      while (cursor <= endDt) {
-        const iso = cursor.toISOString().split('T')[0]
-        tretinoinPoints.push({ date: iso, applied: tretinoinMap.has(iso) ? 1 : 0 })
-        cursor.setDate(cursor.getDate() + 1)
-      }
-      setTretinoinData(tretinoinPoints)
+      setTretinoinLogs(allTretinoin)
 
       const filteredWorkouts = allWorkouts.filter((w) => w.date >= start && w.date <= end)
       setWorkouts(filteredWorkouts)
@@ -266,27 +277,16 @@ export default function Analytics() {
             </Card>
           )}
 
-          <Card title="Tretinoin adherence">
-            <ResponsiveContainer width="100%" height={240}>
-              <BarChart data={tretinoinData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--track)" />
-                <XAxis dataKey="date" tickFormatter={formatShortDate} tick={{ fontSize: 11, fill: 'var(--ink-2)' }} />
-                <YAxis tick={{ fontSize: 11, fill: 'var(--ink-2)' }} domain={[0, 1]} ticks={[0, 1]} />
-                <Tooltip
-                  contentStyle={{
-                    background: 'var(--ink)',
-                    border: 'none',
-                    borderRadius: 10,
-                    padding: '8px 10px',
-                  }}
-                  labelStyle={{ color: 'var(--on-ink-muted)', fontSize: 11 }}
-                  itemStyle={{ color: 'var(--on-ink)', fontSize: 12, fontWeight: 600 }}
-                  cursor={{ stroke: 'var(--track)' }}
-                />
-                <Bar dataKey="applied" fill="var(--success)" radius={[2, 2, 0, 0]} name="Applied" />
-              </BarChart>
-            </ResponsiveContainer>
-          </Card>
+          {/* StreakCard is itself a DS card, so it stands on its own rather
+              than sitting inside another one. */}
+          <div>
+            <p className="mb-3 title-2 text-black">Tretinoin adherence</p>
+            <StreakCard
+              days={tretinoinStreak(tretinoinLogs, tretinoinSchedule, todayIso)}
+              week={tretinoinWeek(tretinoinLogs, tretinoinSchedule, todayIso)}
+              footer={adherenceLine}
+            />
+          </div>
 
           <Card title="Summary">
             <div className="grid grid-cols-2 gap-3">

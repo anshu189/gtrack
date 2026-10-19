@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef } from 'react'
-import type { Gender, GoalId, UserSettings } from '@/types'
+import type { Gender, GoalId, TretinoinScheduleMode, UserSettings } from '@/types'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { firestore } from '@/lib/firebase'
 import { getDocs, setDoc, writeBatch } from 'firebase/firestore'
 import { userColl, userDoc } from '@/lib/paths'
 import { useAuthStore } from '@/stores/authStore'
 import { cleanForFirestore } from '@/lib/utils/firestore'
-import { Button, Card, Icon, SegmentedControl, SelectField, TextField } from '@/components/ds'
+import { Button, Card, Icon, SegmentedControl, SelectField, TextField, WeekStrip } from '@/components/ds'
+import { WEEKDAYS } from '@/lib/utils/tretinoin'
 import {
   AGE_RANGE,
   GENDER_OPTIONS,
@@ -62,6 +63,8 @@ export default function Settings() {
   const [heightCm, setHeightCm] = useState<number | undefined>(undefined)
   const [weightKg, setWeightKg] = useState<number | undefined>(undefined)
   const [goal, setGoal] = useState<GoalId | ''>('')
+  const [tretinoinMode, setTretinoinMode] = useState<TretinoinScheduleMode>('auto')
+  const [tretinoinDays, setTretinoinDays] = useState<number[]>([])
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [confirmReset, setConfirmReset] = useState(false)
@@ -69,6 +72,9 @@ export default function Settings() {
   const [resetting, setResetting] = useState(false)
   const [resetError, setResetError] = useState<string | null>(null)
   const resetPhraseMatches = resetConfirmText.trim() === RESET_CONFIRM_PHRASE
+  const selectedDayNames = WEEKDAYS.filter((d) => tretinoinDays.includes(d.value))
+    .map((d) => d.name)
+    .join(', ')
   const [importStatus, setImportStatus] = useState<string | null>(null)
   const [exportStatus, setExportStatus] = useState<string | null>(null)
 
@@ -91,6 +97,8 @@ export default function Settings() {
       setHeightCm(s.profile?.heightCm)
       setWeightKg(s.profile?.weightKg)
       setGoal(s.profile?.goal ?? '')
+      setTretinoinMode(s.tretinoinSchedule?.mode ?? 'auto')
+      setTretinoinDays(s.tretinoinSchedule?.weekdays ?? [])
     }
   }, [settingsStore.settings])
 
@@ -131,6 +139,12 @@ export default function Settings() {
         heightCm: clamp(heightCm, HEIGHT_RANGE_CM),
         weightKg: clamp(weightKg, WEIGHT_RANGE_KG),
         goal: goal || undefined,
+      },
+      tretinoinSchedule: {
+        mode: tretinoinMode,
+        // The chosen days are kept even while another mode is active, so
+        // switching back does not make you pick them again.
+        weekdays: [...tretinoinDays].sort((a, b) => a - b),
       },
     }
     await settingsStore.save(settings)
@@ -245,6 +259,8 @@ export default function Settings() {
       setHeightCm(undefined)
       setWeightKg(undefined)
       setGoal('')
+      setTretinoinMode('auto')
+      setTretinoinDays([])
 
       /**
        * Reset wipes the settings collection, which takes the profile with it.
@@ -256,6 +272,7 @@ export default function Settings() {
       await settingsStore.save({
         ...DEFAULT_SETTINGS,
         profile: { completedAt: new Date().toISOString(), skipped: true },
+        tretinoinSchedule: { mode: 'auto', weekdays: [] },
       })
 
       setConfirmReset(false)
@@ -418,6 +435,56 @@ export default function Settings() {
               value={String(fiber)}
               onChange={(e) => setFiber(Number(e.target.value) || 0)}
             />
+          </div>
+        </Card>
+
+        <Card
+          title="Tretinoin schedule"
+          description="When the tretinoin switch appears on your Dashboard and in History."
+        >
+          <div className="flex flex-col gap-4">
+            <SegmentedControl
+              label="Tretinoin schedule"
+              value={tretinoinMode}
+              onChange={setTretinoinMode}
+              options={[
+                { value: 'auto', label: 'Auto' },
+                { value: 'weekdays', label: 'Chosen days' },
+                { value: 'daily', label: 'Daily' },
+              ]}
+            />
+
+            {tretinoinMode === 'auto' && (
+              <p className="footnote text-ink-2">
+                Every third night, counted from the last time you applied it. This is how
+                GTrak has always worked.
+              </p>
+            )}
+
+            {tretinoinMode === 'daily' && (
+              <p className="footnote text-ink-2">The switch appears every day.</p>
+            )}
+
+            {tretinoinMode === 'weekdays' && (
+              <div className="flex flex-col gap-2">
+                <WeekStrip
+                  multi
+                  label="Days the tretinoin switch appears"
+                  days={WEEKDAYS.map((d) => ({ value: d.value, letter: d.letter, name: d.name }))}
+                  selected={tretinoinDays}
+                  onSelect={(value) =>
+                    setTretinoinDays((prev) =>
+                      prev.includes(value) ? prev.filter((d) => d !== value) : [...prev, value],
+                    )
+                  }
+                />
+                <p className="footnote text-ink-2">
+                  {tretinoinDays.length === 0
+                    ? 'Pick at least one day, or the switch stays hidden.'
+                    : `Appears on ${selectedDayNames}. Logs already saved are kept either way.`}
+                </p>
+              </div>
+            )}
           </div>
         </Card>
 

@@ -21,6 +21,7 @@ import { Button, Card, Chip, DatePicker, FOCUS, Icon, IconButton, MacroInline, M
 import { cn } from '@/lib/utils/cn'
 import { formatNum } from '@/lib/utils/format'
 import { mealItemGrams, mealTotals } from '@/lib/utils/nutrition'
+import { getLastAppliedDate, showsTretinoin } from '@/lib/utils/tretinoin'
 import type { TretinoinLog } from '@/types'
 
 const DEFAULT_WATER_GOAL_ML = 2000
@@ -38,6 +39,8 @@ export default function History() {
   const [weightEntry, setWeightEntry] = useState<WeightEntry | undefined>()
   const [dailyNote, setDailyNote] = useState<DailyNote | undefined>()
   const [tretinoinLogs, setTretinoinLogs] = useState<TretinoinLog[]>([])
+  /** Every log, not just this day's — the auto schedule counts from the last one. */
+  const [allTretinoinLogs, setAllTretinoinLogs] = useState<TretinoinLog[]>([])
   const [loading, setLoading] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
 
@@ -73,7 +76,7 @@ export default function History() {
       const dayStart = dateIso.split('T')[0]
       const dayEnd = `${dayStart}T23:59:59.999Z`
 
-      const [loadedMeals, loadedWorkout, loadedWaterLogs, loadedTotal, loadedWeight, loadedNote, loadedTretinoin] = await Promise.all([
+      const [loadedMeals, loadedWorkout, loadedWaterLogs, loadedTotal, loadedWeight, loadedNote, loadedTretinoin, loadedAllTretinoin] = await Promise.all([
         mealRepository.listByDateRange(dayStart, dayEnd),
         workoutRepository.getByDate(dayStart),
         waterRepository.listByDate(dayStart),
@@ -81,6 +84,7 @@ export default function History() {
         weightRepository.getByDate(dayStart),
         dailyNoteRepository.getByDate(dayStart),
         tretinoinRepository.listByDate(dayStart),
+        tretinoinRepository.listAll(),
       ])
 
       setMeals(loadedMeals)
@@ -90,6 +94,7 @@ export default function History() {
       setWeightEntry(loadedWeight)
       setDailyNote(loadedNote)
       setTretinoinLogs(loadedTretinoin)
+      setAllTretinoinLogs(loadedAllTretinoin)
 
       mealStore.loadDeleted()
     } finally {
@@ -314,31 +319,31 @@ export default function History() {
   const isToday = selectedDate === getTodayIso()
 
   function renderWorkout() {
-    if (!workout) return <p className="text-base text-ink-2">No workout logged</p>
+    if (!workout) return <p className="footnote text-ink-2">No workout logged</p>
     const labels: Record<string, string> = { push: 'Push', pull: 'Pull', legs: 'Legs', rest: 'Rest' }
-    return <p className="text-base text-black">{labels[workout] ?? workout}</p>
+    return <p className="body-text text-black">{labels[workout] ?? workout}</p>
   }
 
   function renderWaterLogs() {
-    if (waterLogs.length === 0) return <p className="text-sm text-ink-2">No water logged</p>
+    if (waterLogs.length === 0) return <p className="footnote text-ink-2">No water logged</p>
     return (
-      <div className="flex flex-wrap gap-1">
+      <div className="flex flex-wrap gap-1.5">
         {waterLogs.map((log) => (
-          <span key={log.id} className="border border-line bg-surface-2 px-2.5 py-1 text-sm text-ink-2">
+          <Chip key={log.id} variant="water">
             {log.amount} {log.unit}
-          </span>
+          </Chip>
         ))}
       </div>
     )
   }
 
   function renderWeight() {
-    if (!weightEntry || !weightEntry.weight) return <p className="text-sm text-ink-2">No weight logged</p>
+    if (!weightEntry || !weightEntry.weight) return <p className="footnote text-ink-2">No weight logged</p>
     return (
       <div>
-        <p className="text-base text-black">{weightEntry.weight} {weightEntry.unit}</p>
+        <p className="body-text text-black">{weightEntry.weight} {weightEntry.unit}</p>
         {weightEntry.notes && (
-          <p className="mt-1 text-sm text-ink-2">{weightEntry.notes}</p>
+          <p className="mt-1 footnote text-ink-2">{weightEntry.notes}</p>
         )}
       </div>
     )
@@ -519,10 +524,15 @@ export default function History() {
             )}
           </Card>
 
-          {tretinoinLogs.length > 0 && (
+          {(tretinoinLogs.length > 0 ||
+            showsTretinoin(
+              selectedDate,
+              settingsStore.settings?.tretinoinSchedule,
+              getLastAppliedDate(allTretinoinLogs),
+            )) && (
             <Card title="Tretinoin">
               <TretinoinTracker
-                todayLog={tretinoinLogs[0]}
+                todayLog={tretinoinLogs[0] ?? null}
                 onToggle={editing ? handleTretinoinToggleInHistory : () => {}}
               />
             </Card>

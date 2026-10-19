@@ -25,7 +25,7 @@ import {
 import { foodRepository } from '@/lib/repositories/foodRepository'
 import { mealItemGrams, mealTotals } from '@/lib/utils/nutrition'
 import { formatNum } from '@/lib/utils/format'
-import { getLastAppliedDate, isScheduledNight } from '@/lib/utils/tretinoin'
+import { getLastAppliedDate, showsTretinoin } from '@/lib/utils/tretinoin'
 import type { DailyNote, WaterLog, WeightEntry, WorkoutType } from '@/types'
 
 const DEFAULT_WATER_GOAL_ML = 2000
@@ -516,11 +516,16 @@ const Dashboard = () => {
         </Card>
 
         {/* Tretinoin — only on scheduled nights. The card used to render its
-            heading with nothing under it on off-nights; now it stays away. */}
+            heading with nothing under it on off-nights; now it stays away.
+            Which nights count is the schedule set in Settings. */}
         {(() => {
           const lastApplied = getLastAppliedDate(tretinoinStore.logs)
-          const scheduled = isScheduledNight(selectedDate, lastApplied)
-          if (!scheduled && lastApplied) return null
+          const scheduled = showsTretinoin(
+            selectedDate,
+            settingsStore.settings?.tretinoinSchedule,
+            lastApplied,
+          )
+          if (!scheduled) return null
           return (
             <Card>
               <p className="title-2 mb-2 text-black">Tretinoin</p>

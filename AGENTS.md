@@ -73,8 +73,8 @@ DS** and why. Existing additions: `AppShell`, `TabBar` (5-tab pill),
 
 Ported from the DS and available now: `Icon`, `MacroTile` / `MacroTiles` /
 `MacroInline`, `OptionCard` / `OptionGroup`, `StepHeader`, `ContinueBar`,
-`OnboardingLayout`, `RulerPicker`. Check `src/components/ds/index.ts` before
-building anything — several of these existed in the DS long before the app grew
+`OnboardingLayout`, `RulerPicker`, `WeekStrip`, `StreakCard`. Check
+`src/components/ds/index.ts` before building anything — several of these existed in the DS long before the app grew
 its own copy, and the copies are what caused the drift.
 
 ### First-run questions
@@ -93,6 +93,42 @@ Two rules here:
   writes the whole document. Saving a profile must not drop the nutrition
   targets. Option sets live in `src/lib/utils/profile.ts`, shared by both
   screens; the stored `GoalId` values are ids, so rename labels, never ids.
+
+### Tretinoin schedule
+
+Which days the tretinoin switch appears on is `settings.tretinoinSchedule`,
+chosen in the Settings tab. `showsTretinoin(date, schedule, lastApplied)` in
+`src/lib/utils/tretinoin.ts` is the only thing that decides it — Dashboard and
+History both call it, so they can never disagree. Three modes:
+
+- `auto` — the original rule, every third night counted from the last
+  application, and visible before the first application because there is
+  nothing to count from yet. This is the default, so an account with no
+  schedule saved behaves exactly as it did before the setting existed.
+- `weekdays` — the days picked on the `WeekStrip`, repeating weekly.
+- `daily` — every day.
+
+Changing the schedule never touches a saved log. A day that already has an
+entry still shows its card in History whatever the schedule says, so history
+stays readable.
+
+Analytics shows adherence as the DS `StreakCard`, not a chart. The streak is
+consecutive applications no further apart than `maxGapFor(schedule)` and has to
+reach today, otherwise it has lapsed.
+
+The card's seven dots run **Sunday to Saturday**, like every other weekday row
+in the app — never reorder them. The *window* behind them is the seven days
+ending today rather than the current calendar week: a calendar week shows
+almost nothing on a Monday, so an application made the previous Thursday had no
+cell to fill while the figure underneath still counted it. Seven consecutive
+days hold one of each weekday, so each lands on its own column and the dots and
+the figure cover the same days. Four states, because colour alone cannot
+carry four meanings: `done` (filled `streak` + check), `missed` (grey fill,
+a past scheduled day), `pending` (dashed `streak` ring — due, night not over)
+and `off` (grey dashed — never asked for). Every dot also spells its state out
+for a screen reader. An application on an unscheduled day still fills its dot,
+so `tretinoinAdherence` returns `offSchedule` and the sentence names it —
+otherwise two filled dots sit above the words "applied on 1".
 
 ### Before finishing
 
