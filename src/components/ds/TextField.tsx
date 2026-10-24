@@ -5,7 +5,9 @@ import { FOCUS, PRESS } from './primitives'
 /**
  * Gtrak DS TextField — DESIGN.md §7, components/docs/TextField.md.
  *
- * 63px tall, surface-2 fill, 15px radius, 15px text, ink-3 placeholder.
+ * surface-2 fill, 15px radius, 15px text, ink-3 placeholder. 56px tall
+ * everywhere in the app; `fieldSize="md"` drops it to 48 for the sign-in
+ * screen, where a field taller than the primary button inverts the hierarchy.
  * Focus: fill turns white with a 1px black border.
  * Error: protein border plus an ink message with a red dot.
  * The optional inline action is disabled-2 until there is input, then black.
@@ -20,12 +22,14 @@ type TextFieldProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'> 
   suffix?: string
   /** Trailing control inside the field, e.g. a password reveal toggle. */
   trailing?: React.ReactNode
+  /** Row height. `lg` (56px) is the app default; `md` is 48. */
+  fieldSize?: 'lg' | 'md'
   icon?: React.ReactNode
   action?: { label: string; onClick: () => void; disabled?: boolean }
 }
 
 export const TextField = React.forwardRef<HTMLInputElement, TextFieldProps>(
-  ({ label, isLabelHidden, hint, error, suffix, trailing, icon, action, className, id, ...props }, ref) => {
+  ({ label, isLabelHidden, hint, error, suffix, trailing, icon, action, fieldSize = 'lg', className, id, ...props }, ref) => {
     const autoId = React.useId()
     const fieldId = id ?? autoId
     const describedBy = hint || error ? `${fieldId}-hint` : undefined
@@ -43,7 +47,8 @@ export const TextField = React.forwardRef<HTMLInputElement, TextFieldProps>(
 
         <div
           className={cn(
-            'group flex h-[56px] items-center gap-2 rounded-md border pl-4 transition duration-150',
+            'group flex items-center gap-2 rounded-md border pl-4 transition duration-150',
+            fieldSize === 'md' ? 'h-12' : 'h-[56px]',
             action ? 'pr-2' : 'pr-4',
             'border-track bg-surface-2 hover:border-line-strong',
             'focus-within:border-black focus-within:bg-surface',
@@ -71,7 +76,8 @@ export const TextField = React.forwardRef<HTMLInputElement, TextFieldProps>(
               onClick={action.onClick}
               disabled={action.disabled}
               className={cn(
-                'h-9 shrink-0 cursor-pointer rounded-pill px-4 btn-label text-on-ink',
+                'shrink-0 cursor-pointer rounded-pill px-4 btn-label text-on-ink',
+                fieldSize === 'md' ? 'h-8' : 'h-9',
                 action.disabled ? 'pointer-events-none bg-disabled-2' : 'bg-black hover:bg-black/85',
                 PRESS,
                 FOCUS,

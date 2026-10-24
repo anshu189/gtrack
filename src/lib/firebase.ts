@@ -13,6 +13,9 @@ import {
   signOut as firebaseSignOut,
   sendPasswordResetEmail,
   sendEmailVerification as firebaseSendEmailVerification,
+  setPersistence,
+  browserLocalPersistence,
+  browserSessionPersistence,
   type User,
 } from 'firebase/auth'
 
@@ -42,6 +45,22 @@ export function observeAuth(callback: (user: User | null) => void) {
 /** Uid of the signed-in user, or undefined when signed out. */
 export function currentUid(): string | undefined {
   return auth.currentUser?.uid ?? undefined
+}
+
+/**
+ * "Remember me". Local persistence survives closing the browser; session
+ * persistence ends with the tab. Firebase defaults to local, so an unticked
+ * box has to be set explicitly, and it has to be set before the sign-in call.
+ *
+ * Never allowed to block a sign-in: a browser with storage locked down throws
+ * here, and failing to remember someone is not a reason to refuse them entry.
+ */
+export async function setRememberMe(remember: boolean) {
+  try {
+    await setPersistence(auth, remember ? browserLocalPersistence : browserSessionPersistence)
+  } catch {
+    // Keep whatever persistence the SDK already had.
+  }
 }
 
 export async function signUpWithEmail(email: string, password: string, displayName?: string) {

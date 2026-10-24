@@ -92,6 +92,8 @@ export const ICONS = {
   download: { d: ['M12 3.5v11', 'M7.5 10.5 12 15l4.5-4.5', 'M4.5 18.5v1a1 1 0 0 0 1 1h13a1 1 0 0 0 1-1v-1'] },
   upload: { d: ['M12 15V4', 'M7.5 8.5 12 4l4.5 4.5', 'M4.5 18.5v1a1 1 0 0 0 1 1h13a1 1 0 0 0 1-1v-1'] },
   logout: { d: ['M14.5 4.5h4a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-4', 'M10 8l-4 4 4 4', 'M6 12h9'] },
+  mail: { d: ['M3.5 6h17a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1h-17a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1z', 'M3 7l9 6 9-6'] },
+  lock: { d: ['M5 11h14v9a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1z', 'M8 11V8a4 4 0 1 1 8 0v3', 'M12 15v2'] },
 } as const satisfies Record<string, IconDef>
 
 export type IconName = keyof typeof ICONS

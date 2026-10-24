@@ -18,6 +18,7 @@ interface GoogleSignInButtonProps {
   onClick: () => void
   disabled?: boolean
   label?: string
+  size?: 'lg' | 'md' | 'sm'
 }
 
 /** Gtrak DS documents the `outline` variant as exactly this button. */
@@ -25,8 +26,9 @@ export const GoogleSignInButton = ({
   onClick,
   disabled,
   label = 'Continue with Google',
+  size = 'lg',
 }: GoogleSignInButtonProps) => (
-  <Button variant="outline" size="lg" block icon={<GoogleMark />} onClick={onClick} disabled={disabled}>
+  <Button variant="outline" size={size} block icon={<GoogleMark />} onClick={onClick} disabled={disabled}>
     {label}
   </Button>
 )

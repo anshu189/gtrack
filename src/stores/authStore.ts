@@ -4,6 +4,7 @@ import {
   discardCurrentUser,
   observeAuth,
   sendPasswordReset,
+  setRememberMe,
   signInWithEmail,
   signInWithGoogle,
   signOut as firebaseSignOut,
@@ -13,7 +14,7 @@ import {
 import { providerFromId, SeatsFullError, SeatsMissingError, userRepository } from '@/lib/repositories'
 import { provisionUser } from '@/lib/seed'
 import { authErrorMessage } from '@/lib/utils/authErrors'
-import type { UserProfile } from '@/types'
+import type { SeatCounter, UserProfile } from '@/types'
 
 const SEATS_FULL_MESSAGE = 'All seats are full. Please wait for next round.'
 const SEATS_MISSING_MESSAGE = 'Sign-ups are not open yet. Please try again later.'
@@ -21,15 +22,18 @@ const SEATS_MISSING_MESSAGE = 'Sign-ups are not open yet. Please try again later
 type AuthState = {
   user?: AuthUser
   profile?: UserProfile
+  /** meta/seats, for the seats-remaining line on the sign-in screen. */
+  seats?: SeatCounter
   /** False until the first auth state callback has landed — gates the app shell. */
   initialized: boolean
   loading: boolean
   error?: string | null
   notice?: string | null
   init: () => () => void
+  loadSeats: () => Promise<void>
   signUp: (email: string, password: string, displayName?: string) => Promise<void>
-  signIn: (email: string, password: string) => Promise<void>
-  signInWithGoogle: () => Promise<void>
+  signIn: (email: string, password: string, remember?: boolean) => Promise<void>
+  signInWithGoogle: (remember?: boolean) => Promise<void>
   signOut: () => Promise<void>
   resetPassword: (email: string) => Promise<void>
   clearFeedback: () => void
@@ -38,6 +42,7 @@ type AuthState = {
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: undefined,
   profile: undefined,
+  seats: undefined,
   initialized: false,
   loading: false,
   error: null,
@@ -92,6 +97,20 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     })
   },
 
+  /**
+   * Reads the seat counter for the sign-in screen. Signed out, so meta/seats
+   * has to be publicly readable; when it is not, the line just stays on its
+   * static fallback rather than showing an error for something cosmetic.
+   */
+  loadSeats: async () => {
+    try {
+      const seats = await userRepository.getSeats()
+      if (seats) set({ seats })
+    } catch {
+      // Leave `seats` undefined; the screen falls back to the static line.
+    }
+  },
+
   signUp: async (email: string, password: string, displayName?: string) => {
     set({ loading: true, error: null, notice: null })
     try {
@@ -102,18 +121,20 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  signIn: async (email: string, password: string) => {
+  signIn: async (email: string, password: string, remember = true) => {
     set({ loading: true, error: null, notice: null })
     try {
+      await setRememberMe(remember)
       await signInWithEmail(email, password)
     } catch (e) {
       set({ loading: false, error: authErrorMessage(e) })
     }
   },
 
-  signInWithGoogle: async () => {
+  signInWithGoogle: async (remember = true) => {
     set({ loading: true, error: null, notice: null })
     try {
+      await setRememberMe(remember)
       await signInWithGoogle()
     } catch (e) {
       set({ loading: false, error: authErrorMessage(e) })

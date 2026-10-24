@@ -38,7 +38,10 @@ service cloud.firestore {
     }
 
     match /meta/seats {
-      allow read: if signedIn();
+      // Public: the sign-in screen prints how many seats are left, and nobody
+      // is signed in yet when it does. The document holds a count and a limit
+      // and nothing else, which is exactly what that line shows anyway.
+      allow read: if true;
 
       // The counter may only ever move up by one, never past the limit, never
       // change the limit, and only for a caller who does not already have a
