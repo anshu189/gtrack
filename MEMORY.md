@@ -1,131 +1,131 @@
 # GTrak — Project Memory File (handoff to any LLM / Claude)
 
-**Version:** 1.2.0
-**Last updated:** 2026-09-24
-**Repo:** the companion GitHub repo (provided alongside this file) is the code truth. This file is the *context* truth — read it first, then explore the repo. If this file and the code ever disagree, **the app code wins**.
+**Version:** 2.0.0
+**Last updated:** 2026-10-28 (after commit `9a14457` "Basic UI/UX Polish", branch `v2`)
+**Read order:** this file → `AGENTS.md` (rules, kept current) → the code. If this file and the code disagree, **the code wins**. The four files in `docs/` and the audit in `design-audit/` are older background, not current truth.
 
 ---
 
-## 1. App purpose (what GTrak is)
+## 1. What GTrak is
 
-GTrak ("Growth Tracker for G's", see `src/App.tsx`) is a **mobile-first nutrition + fitness + habit tracker** as a web app. One person (owner: Neo) uses it daily to log everything in one place with minimal taps:
+GTrak ("Growth Tracker for G's") is a **mobile-first nutrition + fitness + habit tracker** web app. Built for one owner (Neo), now open to a capped number of accounts. Log everything for the day in one place with minimal taps:
 
-- **Nutrition** — dynamically build meals from individual foods, instant macro math.
-- **Fitness** — daily workout (Push / Pull / Legs / Rest), bodyweight trend, water intake.
-- **Habits & accountability** — tretinoin every-3rd-night schedule, daily notes, and a Respect/Trust accountability score.
-- **Review** — History (any past day, editable) and Analytics (7/30/90-day Recharts trends).
-- **Data ownership** — export / import / password-protected reset in Settings. No telemetry, no analytics collection, anonymous auth only.
+- **Nutrition** — build meals from individual foods, instant macro math.
+- **Fitness** — daily workout (Push / Pull / Legs / Rest), bodyweight, water.
+- **Habits** — tretinoin on a configurable schedule, daily notes.
+- **Review** — History (any past day, editable) and Stats (7/30/90-day trends).
+- **Data ownership** — per-user export / import / reset in Settings. No telemetry.
 
-Routes (all inside `AppShell` + 5-tab `BottomNavigation`): `/` Dashboard · `/meals` MealBuilder · `/history` History · `/analytics` Analytics · `/settings` Settings.
+The Respect/Trust score from v1 has been **removed** (no store, repo or UI remains).
 
 ---
 
-## 2. Functionality (what each part does)
+## 2. App flow and screens
 
-### Dashboard (`src/pages/Dashboard.tsx`) — the daily operating screen
-Date-scoped (Prev / Today / Next pills + Astryx `DateInput`; Next disabled on today via `isToday`). Sections in fixed order: Daily Summary → Nutrition → Today's Meals (expandable) → Workout → Water Intake → Tretinoin (only on scheduled nights) → Weight → Respect/Trust Score → Daily Notes → **Submit daily log** (`size="lg"`, flushes pending weight, resets inputs, toast). Title is `text-xl`; "Daily summary" `text-base`, "Overview of today's activity" `text-sm`.
+`App.tsx` gates in three steps:
+1. **Not signed in → `Login`** (`src/pages/Login.tsx`): email + password sign-in, sign-up (with display name), password reset, Google sign-in (`GoogleSignInButton`), a "Remember me" checkbox (local vs session persistence via `setRememberMe` in `lib/firebase.ts`), and a seats-remaining line read from `meta/seats`.
+2. **Signed in, profile incomplete → `Onboarding`**: four questions (age + gender, weight, height, goal) written to `settings.profile`. `completedAt` is stamped whether answered or skipped, so it never reappears. Editable later in Settings only.
+3. **Otherwise → `AppShell`** with the 5-tab DS `TabBar`: Home `/` · Meals `/meals` · History `/history` · Stats `/analytics` · Settings `/settings`. Each tab opens scrolled to top.
+
+### Dashboard (`src/pages/Dashboard.tsx`)
+Date-scoped (Prev / date picker / Next; Next disabled on today). Sections in order: Daily summary → Nutrition → Today's meals (expandable) → Workout → Water intake → Tretinoin (only when `showsTretinoin` says so) → Weight → Daily notes. **Every tracker auto-saves on interaction** — the old "Submit daily log" button and buffered weight are gone.
 
 ### Meals (`src/pages/MealBuilder.tsx`)
-Build meals for any date (past allowed, future blocked). Flow: **New Meal card** (name input → Create) → draft meal → `AddItem` (`FoodPicker` → `QuantityPicker`) → items editable inline (quantity/unit) or removable → Save (create vs update via `cleanForFirestore`) / Cancel. Saved meals listed via `MealCard` (add-more-items, delete with 24h undo via `UndoBanner`). Top-right **Edit Foods** toggles `FoodMacroEditor`. Date pills: Prev / center pill (formatted date, opens Astryx calendar) / Next (disabled on today).
-**Rules enforced:** meal **cannot be created without a name** — Create button is disabled on empty/whitespace input and `handleCreateMeal` returns early on empty trim (no more silent `'Meal'` fallback).
+Build meals for any date (future blocked). New meal (name required — Create disabled on empty) → draft → `AddItem` (`FoodPicker` → `QuantityPicker`) → items editable/removable → Save / Cancel. Saved meals via `MealCard` (add items, delete with undo via `UndoBanner`). **Edit Foods** toggles `FoodMacroEditor`. Macros printed by `MacroTiles` / `MacroInline` only.
 
 ### History (`src/pages/History.tsx`)
-Read/edit/delete any past day. Loads via repositories directly (not stores). Edit mode buffers changes (`editWorkout/Weight/Unit/Notes/NoteContent`, `respectPatch`, `waterChanged`) behind `hasChanges` gating; Save persists, Cancel reloads. Delete-entire-day is two-step confirm. Meal deletes only in edit mode + undo.
+Read/edit/delete any past day via repositories directly. Edit mode buffers changes behind `hasChanges`; Save persists, Cancel reloads. Delete-day is two-step confirm. A day with a tretinoin entry always shows its card regardless of schedule.
 
-### Analytics (`src/pages/Analytics.tsx`)
-Recharts over 7/30/90d, loaded on range change only: daily-calories line + target, macros line, weight trend, water bars (non-zero days only), tretinoin adherence bars, respect trend, summary grid (avg kcal/P/C/F vs targets, workout split).
+### Stats (`src/pages/Analytics.tsx`)
+7 / 30 / 90-day `SegmentedControl`. Daily calories (`ChartCard`), Macronutrients, Weight trend (`ChartCard`), Water intake, tretinoin adherence as the DS **`StreakCard`** (not a chart — see `AGENTS.md` for the dot rules), Summary (averages vs targets, workout split).
 
 ### Settings (`src/pages/Settings.tsx`)
-Targets (3300 kcal, 120P, 420C, 95F, 35 fiber, 2000 ml water; theme light/dark/system via `NumberInput` + buttons) → Save. **Export** (9 collections + settings → `gtrak-export-YYYY-MM-DD.json`) · **Import** (validates version, 490/batch `writeBatch`, preserves existing) · **Reset All Data** (password `godelete`, deletes 11 collections — see §6 for what survives).
+Cards: Account (sign out) · Your profile · Nutrition targets · Tretinoin schedule (`auto` / `weekdays` via `WeekStrip` / `daily`) · Water goal · Export data · Import data · Reset app data.
+- **Export / Import** cover 12 per-user collections **including `foods`, `categories`, `quantityPresets`, `nutritionSources`** (custom foods are backed up now). `deletedMeals` excluded.
+- **Reset** requires typing `delete my data` (the old `godelete` password is gone). Wipes meals, history, favorites, workouts, waterLogs, weights, dailyNotes, tretinoinLogs, settings, deletedMeals. Spares foods/categories/presets/sources. Wiping settings also clears the profile, so onboarding returns.
 
-### Trackers (all in `src/components/tracking/`)
+### Trackers (`src/components/tracking/`)
 | Feature | Store | Notes |
 |---|---|---|
-| Meals/nutrition | `mealStore` (+`foodStore`, `favoriteStore`, `categoryStore`, `quantityPresetStore`, `nutritionSourceStore`) | soft-delete → `deletedMeals`, 24h undo |
-| Workouts | `workoutStore` | one/day, upsert (`workout:{date}`) |
-| Water | `waterStore` | quick-add **250 / 300 / 350 / 500 / 750 ml** + custom `NumberInput`; multiple logs/day summed |
-| Weight | `weightStore` | one/day (`weight:{date}`); Dashboard buffers until Submit; Astryx `Table` history, rows `text-sm`, headers `text-xs` |
-| Daily notes | `dailyNoteStore` | auto-save debounced 500 ms |
-| Tretinoin | `tretinoinStore` | every-3rd-night from last applied (`lib/utils/tretinoin.ts`) |
-| Respect/Trust | `respectStore` | factors Do-what-you-said ±1, Excuse ±1, Flake ±3; bar max 50, green/red |
+| Meals / foods | `mealStore`, `foodStore`, `favoriteStore`, `categoryStore`, `quantityPresetStore`, `nutritionSourceStore` | soft-delete to `deletedMeals`, undo |
+| Workouts | `workoutStore` | one per day, upsert |
+| Water | `waterStore` | quick-add chips 250/300/350/500/750 ml + custom |
+| Weight | `weightStore` | one per day, auto-saves |
+| Daily notes | `dailyNoteStore` | debounced auto-save |
+| Tretinoin | `tretinoinStore` | schedule logic only in `lib/utils/tretinoin.ts` (`showsTretinoin`, `maxGapFor`, `tretinoinAdherence`) |
 
 ---
 
-## 3. Approach (architecture & conventions — follow these)
+## 3. Architecture & conventions
 
-**One-way data flow (mandatory):**
-`Component → Zustand store → Repository → Firestore → store update → re-render`.
-Components never import Firestore (except Settings bulk export/import/reset). Stores hold `{data, loading, error}` + actions only — never DB logic or JSX. Business math lives in `lib/services/` + `lib/utils/`, consumed via `hooks/`.
+**One-way data flow (mandatory):** `Component → Zustand store → Repository → Firestore → store → re-render`. Components never import Firestore, except Settings bulk export/import/reset. Stores hold `{data, loading, error}` + actions. Business math lives in `lib/services/` + `lib/utils/`, used through `hooks/`.
 
-**Per-domain pattern:** each domain = `types/x.ts` + `lib/repositories/xRepository.ts` + `stores/xStore.ts`, re-exported via barrel `index.ts` files. 14 repositories, 15 stores.
+**Per-user paths:** every repository builds paths through `src/lib/paths.ts` — `userColl(name)` / `userDoc(name, id)` resolve to `users/{uid}/<name>`; `requireUid()` throws `NotAuthenticatedError` when signed out. Never build a Firestore path by hand.
 
-**Conventions:** `@/` alias imports · `PascalCase.tsx` components · `useX.ts` hooks · `xStore.ts` / `xRepository.ts` · lowercase `types/x.ts` · `calculateMealNutrition()`-style names · no `any` · `formatNum` for display only (max 2 decimals) · every write wrapped in `cleanForFirestore()` (strips `undefined`) · `??` (not `||`) when reading optional numerics so `0` survives · components < ~300 lines, pages compose with minimal logic.
+**Per-domain pattern:** `types/x.ts` + `lib/repositories/xRepository.ts` + `stores/xStore.ts`, re-exported from barrel `index.ts` files. 14 repositories (incl. `userRepository`), plus `authStore` and `settingsStore`.
 
-**To add a feature:** `types/X.ts` → `repositories/XRepository.ts` (+ barrel) → `stores/XStore.ts` (+ barrel) → `components/<domain>/` → wire into page + route/`NAV_ITEMS` if needed.
+**Conventions:** `@/` imports · `PascalCase.tsx` components · `useX.ts` hooks · no `any` · every write through `cleanForFirestore()` · `??` not `||` for numerics so `0` survives · `formatNum` for display only · components under ~300 lines.
 
----
-
-## 4. Design system (gothic + Astryx — the app is truth, not old docs)
-
-- **UI framework:** Astryx v0.4.3 (`@astryxdesign/core`, `@astryxdesign/theme-gothic`, `@astryxdesign/cli`) + Tailwind CSS v4 + `clsx`/`tailwind-merge` (`cn()`). StyleX is Astryx-internal only. `src/components/ui/` are hand-rolled wrappers (not real shadcn).
-- **Setup (required):** `src/main.tsx` via `src/index.css` imports `@astryxdesign/core/reset.css` + `astryx.css`. Theme: `gothic` (`package.json` → `<Theme theme={gothicTheme}>` in `App.tsx`; `<html class="dark">` default).
-- **Astryx workflow (AGENTS.md):** run everything as `npx astryx <cmd>` — `astryx build "<idea>"` first, `astryx template <name>`, `astryx component <Name>` for props. Tokens for every value; never override `--color-*` in `:root`.
-- **Live dark tokens (`src/index.css`):** bg `#101314` · surface `#1a1d20` · border `#24292D` · text `#E8F1F6` · muted `#96A0AB` · accent `#a3b5d6` (periwinkle) · success `#b3c79a` (sage) · warning `#d3c490` (aged gold) · error `#c6a6a2` (dusty rose). Light theme exists but dark is the used theme.
-- **Shape (user-mandated):** rounded corners everywhere — cards `rounded-xl`, inputs/buttons/items `rounded-lg` — flat, no shadows. (Old docs said "square"; that is obsolete.)
-- **Type:** sentence-case section labels ("Water intake", "Respect/Trust score", "Daily notes", "Submit daily log"; "Do what you said", "Flake (ignored)"). Dashboard h1 `text-xl`; Nutrition % stats `text-lg`, completion stats `text-sm`; weight-table rows `text-sm`/headers `text-xs`.
-- **Astryx components in use:** `Theme, Card, Button, Badge, ProgressBar, Grid, VStack, Text, DateInput, NumberInput, TextInput, TextArea, Table(/Header/HeaderCell/Body/Row/Cell)`. Progress displays (`WaterProgress`, `NutritionSummary`) use Astryx `ProgressBar` with real `label` props (a11y), not hand-rolled divs.
-- **⚠️ Known gotcha — DateInput overlay:** the Meals center pill renders a custom button over a hidden Astryx `DateInput` overlay (`absolute inset-0 opacity-0`) and opens it via `dateInputRef.current?.click()`. **Never put `pointer-events-none` on that wrapper**: Astryx renders its calendar popover *inline* as a DOM child (no portal when ancestors are "safe"), and `pointer-events` is inherited — the whole calendar becomes visible-but-unclickable (dead month/year arrows, no selectable dates). The fix that works: overlay has no `pointer-events-none`, custom button sits above it (`relative z-10`) and receives the clicks. Keep this pattern if you touch the date pills.
+**To add a feature:** type → repository (+barrel) → store (+barrel) → component → wire into page (+ `NAV_ITEMS` in `App.tsx` if it's a tab).
 
 ---
 
-## 5. Scalability
+## 4. Design system — Gtrak DS (full rules in `AGENTS.md`)
 
-Supports 1000+ foods, years of history, unlimited meals without refactoring: flat Firestore collections, per-domain repos/stores, derived-on-demand nutrition (nothing calculated is persisted except meal-item snapshots), Analytics loads on demand, search index built once (Fuse.js + 180 ms debounce). Bundle is large (~1.68 MB JS; chunk-size warning is known/pre-existing) — code-split with `import()` if it ever matters.
-
----
-
-## 6. Frontend & backend services
-
-**Frontend:** React 19 + Vite 8 + TypeScript ~6.0 (strict: `noUnusedLocals`, `noUnusedParameters` — unused imports/props **fail the build**) + Tailwind v4 + Recharts + Fuse.js + React Hook Form + Zod + lucide-react + react-router. Path alias `@/* → src/*` (`vite-tsconfig-paths`). **Build = `npm run build` = `tsc -b && vite build`. Always run it before pushing — Vercel runs it and fails on any TS error (exit 2).** Lint: `npm run lint` (oxlint). Deploy: GitHub → auto Vercel deploy on `main`. No PWA plugin/manifest/SW in repo (PRD still mentions PWA as future — leave as-is per owner).
-
-**Backend:** Firebase Firestore + Anonymous Auth only. Config hardcoded in `src/lib/firebase.ts` (`projectId: gs-gtrak`). No `.env`, no `firestore.rules`/`firebase.json` in repo — treat rules as unknown/open; all collections are global/shared (no per-user namespacing). Boot: `ensureSignedIn()` → `seedIfEmpty()` → ready.
-
-**Collection ↔ repo ↔ store map (all flat top-level collections):**
-`foods`→foodRepository→foodStore · `meals`+`deletedMeals`→mealRepository→mealStore · `history`→historyRepository→historyStore · `settings` (doc `settings:default`)→settingsRepository→settingsStore · `categories`→categoryStore · `quantityPresets`→quantityPresetStore · `nutritionSources`→nutritionSourceStore · `favorites` (doc `fav:{foodId}`)→favoriteStore · `workouts` (`workout:{day}`)→workoutStore · `waterLogs`→waterStore · `weights`→weightStore · `dailyNotes`→dailyNoteStore · `tretinoinLogs`→tretinoinStore · `respectLogs`→respectStore.
-
-**Destructive ops (never run casually):** Settings Reset (`godelete`) wipes 11 collections but **spares `foods`/`categories`/`quantityPresets`/`nutritionSources`** · History Delete-Day wipes that day's meals/workout/water/weight/note · `deletedMeals` auto-purge past midnight (undo = today only).
+- **Gtrak DS**: light, monochrome, derived from Cal AI. Source of truth: `D:\Growth\App UI\Gtrak Design System\DESIGN.md`. Astryx, StyleX, the gothic theme and dark mode are **all gone**.
+- Tokens + Hanken Grotesk `@font-face` + type utilities in `src/index.css`; components in `src/components/ds/` (import from `@/components/ds`); icons from DS `Icon` only.
+- **`lucide-react` is still listed in `package.json` but imported nowhere** — safe to remove.
+- `DEFAULT_SETTINGS` in `src/lib/seed.ts` still writes `theme: 'dark'`; the field is unused leftover.
+- Key rules: light only (no `dark:`), tokens only, monochrome chrome with colour only for data, type from utilities, radius by role, macros P→C→F via `MacroTiles`/`MacroInline`, 480px centred column, `min-w-0` on flex inputs, base resets in `@layer base`.
 
 ---
 
-## 7. Food data (VERY IMPORTANT — read carefully)
+## 5. Backend — Firebase (`projectId: gs-gtrak`)
 
-- **Types:** `Food{id, name, category?, servingSize?, servingUnit?, measures?: FoodMeasure[{label,quantity,unit,grams?}], isCustom?, source?: IFCT|USDA|FSSAI|Brand|Custom, nutrition{calories,protein,carbs,fat,fiber?}, aliases?, tags?}` (`src/types/food.ts`). Nutrition stored **per 100 g/ml**; non-weight units convert via `measures[].grams` (`mealItemGrams()` / `computeGramsPerUnit()` in `lib/utils/nutrition.ts`; fallbacks piece 50 / cup 240 / tbsp 15 / tsp 5 / slice 30). Meal items snapshot `name` + `gramsPerUnit` so history is stable.
-- **Seeds (initial source ONLY):** `src/data/foodsSeed.ts` (~130 foods, IFCT/USDA/Brand) + `builtInFoods.ts` (currently `[]`) + `macroOverrides.ts` (currently `{}`, applied at seed time only) + `categories.ts` / `quantityPresets.ts` / `nutritionSources.ts`. Seeder `src/lib/seed.ts` runs on every boot but each seeder **no-ops unless its collection is empty** (`limit(1)` check).
-- **Live truth = Firestore `foods` collection.** Custom foods: `foodRepository.createCustom()` → `food:custom:{uuid}`, `isCustom:true, source:'Custom'` (created from `FoodPicker` → `AddItem`). Macro tweaks: `FoodMacroEditor` → `foodRepository.update()` (direct `updateDoc`, includes nutrition/measures/serving). The `gtrak:macroOverrides` localStorage key is only import/export staging, not the live path.
-- **Answer to the owner's migration question:** custom foods + macro tweaks are **NOT lost** by cloning the repo, editing code in another LLM, or pushing — code changes never rewrite Firestore, and seed files have zero effect on a non-empty DB. They are lost **only if**: the `foods` collection is deleted/emptied (next boot reseeds seed-only data), the Firebase config is pointed at a new project (fresh empty DB), or docs are explicitly deleted.
-- **⚠️ Backup gap:** Settings Export/Import covers only 9 collections + `settings` — **`foods` (incl. all custom foods + macro tweaks) is NOT exported**. Before any risky change, export `foods` from the Firestore console. There is no in-app full backup of food data.
+- **Auth:** Email/password + Google. **Anonymous auth is disabled.** Config hardcoded in `src/lib/firebase.ts` — never change it.
+- **Sign-in flow (`authStore.init`):** `observeAuth` → `userRepository.claimSeat(uid)` (transaction: creates `users/{uid}` and increments `meta/seats.count` for a new user; returning users keep their seat) → `provisionUser(uid)` (seeds that user's categories, foods, presets, sources, settings; each step no-ops if non-empty) → `markProvisioned`. On `SeatsFullError` / `SeatsMissingError` the new auth user is discarded and a message shown.
+- **Seats:** `meta/seats {count, limit}`, default limit 50. Create it once with `node scripts/init-seats.mjs [--limit N]` (idempotent). Raising the limit is a console-only edit.
+- **`firestore.rules`** (in repo, paste into the console manually): owner-only access to `users/{uid}/**`; profile creation only in the same commit that takes one seat; `meta/seats` publicly readable, count may only go up by one; profiles never client-deleted; **all legacy top-level collections locked**.
+- **Collections (all under `users/{uid}/`):** foods, meals, deletedMeals, history, settings (doc `settings:default`), categories, quantityPresets, nutritionSources, favorites, workouts, waterLogs, weights, dailyNotes, tretinoinLogs.
+- **Migration:** `scripts/migrate-to-user.mjs --uid <uid> [--apply]` copied the old global collections into one user (dry run by default, never deletes, writes a local backup first).
+- **Backups:** `backups/` is gitignored except its README. `scripts/backup-firestore.mjs` still signs in anonymously, so it **no longer works**; in-app Settings → Export is the current backup path.
+
+**Unverified (repo can't tell):** whether the current `firestore.rules` are live in the console, and whether the migration was run with `--apply` for the owner's uid.
 
 ---
 
-## 8. Session changelog (what was built/fixed before this handoff)
+## 6. Food data (important)
 
-1. Dashboard label casing → sentence case (Water intake, Respect/Trust score, Daily notes, Submit daily log); RespectTracker labels ("Do what you said", "Flake (ignored)").
-2. Hardcoded colors → gothic theme tokens in RespectTracker, WaterProgress, NutritionSummary.
-3. WaterProgress + NutritionSummary → Astryx `ProgressBar` with real `label` props (`isLabelHidden` for water); fixed TS errors (unused var, missing label).
-4. WeightHistory → Astryx `Table` (children mode, Date/Weight/Change), rows `text-sm`, headers `text-xs`; Submit button `size="lg"`; Dashboard font tuning (h1 `text-xl`, Daily summary `text-base`, etc.); Nutrition % `text-lg` / completion `text-sm`.
-5. MealBuilder gothic redesign (header + Edit Foods, Prev/date/Next pills, New Meal card, meal edit section, meals list); all meal components re-tokenized + rounded corners.
-6. DateInput-behind-pill pattern + `pointer-events-none` bug (dead calendar) fixed via `relative z-10` button over a `pointer-events-none`-free overlay.
-7. Per-item Remove/Edit in drafting meal (`editItemId`, inline `QuantityPicker`, Save/Cancel); duplicate-declaration build breaks fixed; missing `QuantityPicker` import fixed; `isToday` restore.
-8. Meal-name-required validation (button disabled + handler guard).
-9. Water quick-add: added 300ml.
-10. Vercel `TS6133` fixes (unused `Button` import, unused `onDelete` prop removed from `MealItem`).
-11. Docs v1.2.0: this memory file + 4 doc updates (rounded gothic is truth; Astryx in stack; foods writable; backup gap documented).
+- `Food` (`src/types/food.ts`): nutrition stored **per 100 g/ml**; non-weight units convert through `measures[].grams` (`mealItemGrams()` / `computeGramsPerUnit()` in `lib/utils/nutrition.ts`; fallbacks piece 50 / cup 240 / tbsp 15 / tsp 5 / slice 30). Meal items snapshot `name` + `gramsPerUnit` so history stays stable.
+- Seeds (`src/data/foodsSeed.ts` ~130 foods, `builtInFoods.ts`, `macroOverrides.ts`, categories, presets, sources) are **only the initial data for a new user**. Code changes never rewrite anyone's `foods`.
+- Live truth = `users/{uid}/foods`. Custom foods: `foodRepository.createCustom()` → `food:custom:{uuid}`. Macro edits: `FoodMacroEditor` → `foodRepository.update()`.
+- Foods are lost only if a user's `foods` collection is emptied (next sign-in reseeds defaults), the Firebase config changes, or docs are deleted. Export first before anything risky.
 
-## 9. Handoff instructions for the next model
+---
 
-1. Read this file, then `AGENTS.md`, then the 4 docs in `docs/`.
-2. Never override `--color-*` in `:root`; use tokens; rounded corners; sentence-case labels.
-3. Data flow is law: Component → store → repository → Firestore. No Firestore imports in components (except Settings bulk ops). Wrap writes in `cleanForFirestore()`, read numerics with `??`.
-4. Run `npm run build` before finishing anything — strict TS fails Vercel on unused code.
-5. Never add `pointer-events-none` around an Astryx DateInput (§4 gotcha).
-6. Never delete/empty `foods`, never change `src/lib/firebase.ts` config, never run Reset/Delete-Day unless asked — and warn that Settings Export does not back up `foods`.
+## 7. Stack & build
+
+React 19 · Vite 8 · TypeScript ~6.0 strict (`noUnusedLocals`/`noUnusedParameters` — unused code **fails the build**) · Tailwind v4 · Zustand · Recharts · Fuse.js · React Hook Form + Zod · react-router 7 · Firebase 12.
+**Build:** `npm run build` (`tsc -b && vite build`) — always run before pushing; Vercel runs it on deploy. **Lint:** `npm run lint` (oxlint). Bundle chunk-size warning is known.
+**Git:** work happens on `v2`; `main` is the PR/deploy target.
+
+---
+
+## 8. Changelog since v1.2.0
+
+| Date | Commit | Change |
+|---|---|---|
+| 2026-09-28 | `1633434` | Login/sign-up wall: multi-user auth (email + Google), per-user `users/{uid}` paths, seats cap, `firestore.rules`, migration + seat scripts; Respect/Trust removed |
+| 2026-09-28 | `b4d423e` | Astryx/gothic → Gtrak DS (light, Hanken Grotesk, `components/ds/`); design audit in `design-audit/` |
+| 2026-10-11 | `e831c94` | Onboarding (4 questions), `Icon` set (lucide dropped), `MacroTiles`, `RulerPicker`, `OptionCard`, `SelectField`; Dashboard auto-save; `scripts/set-serving-defaults.mjs` |
+| 2026-10-19 | `dd03a4e` | Tretinoin schedule setting (`auto`/`weekdays`/`daily`), `WeekStrip`, `StreakCard` in Stats |
+| 2026-10-24 | `9a14457` | Login polish: Remember me (`Checkbox`), seats-remaining line, Google button tweaks |
+
+## 9. Rules for the next model
+
+1. Read this file, then `AGENTS.md`. Follow Gtrak DS; never reintroduce Astryx, dark mode or another icon library.
+2. Data flow is law; build paths only through `lib/paths.ts`; wrap writes in `cleanForFirestore()`; read numerics with `??`.
+3. Never write the onboarding weight into `weights`; `saveProfile` must read settings first so targets survive.
+4. Tretinoin visibility comes only from `showsTretinoin()`.
+5. Never change `src/lib/firebase.ts` config, never loosen `firestore.rules`, never run Reset/Delete-day or touch `meta/seats` unless asked.
+6. Run `npm run build` and check the page in a browser before finishing.
