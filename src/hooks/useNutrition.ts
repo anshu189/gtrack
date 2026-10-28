@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { Meal, Nutrition, NutritionTargets } from '@/types'
 import type { NutritionStatus } from '@/lib/services/nutritionCalculation'
 import { nutritionCalculationService } from '@/lib/services/nutritionCalculation'
@@ -79,6 +79,16 @@ export function useDailyNutritionProgress(dateIso: string) {
   const status = useNutritionProgress(nutrition)
 
   return { nutrition, status, loading }
+}
+
+/**
+ * Progress for meals the screen already holds. Recomputes whenever they
+ * change, so logging a supplement moves the rings at once.
+ */
+export function useMealsNutritionProgress(meals: Meal[]) {
+  const nutrition = useMemo(() => nutritionCalculationService.calculateMealsNutrition(meals), [meals])
+  const status = useNutritionProgress(nutrition)
+  return { nutrition, status }
 }
 
 /**

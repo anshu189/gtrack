@@ -77,6 +77,11 @@ export interface UserSettings {
   waterGoalMl?: number
   profile?: PersonalProfile
   tretinoinSchedule?: TretinoinSchedule
+  /**
+   * Whether the pinned Supplements row shows on Home and Meals (and its chart
+   * on Analytics). Absent means shown, so existing accounts see it.
+   */
+  showSupplements?: boolean
   createdAt?: string
   updatedAt?: string
 }

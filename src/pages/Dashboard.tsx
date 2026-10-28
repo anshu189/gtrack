@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useDailyNutritionProgress } from '@/hooks/useNutrition'
+import { useMealsNutritionProgress } from '@/hooks/useNutrition'
 import { useMealStore } from '@/stores/mealStore'
 import { useWorkoutStore } from '@/stores/workoutStore'
 import { useWaterStore } from '@/stores/waterStore'
@@ -26,6 +26,8 @@ import { foodRepository } from '@/lib/repositories/foodRepository'
 import { mealItemGrams, mealTotals } from '@/lib/utils/nutrition'
 import { formatNum } from '@/lib/utils/format'
 import { getLastAppliedDate, showsTretinoin } from '@/lib/utils/tretinoin'
+import { regularMeals } from '@/lib/utils/supplements'
+import { SupplementsRow } from '@/components/meal'
 import type { DailyNote, WaterLog, WeightEntry, WorkoutType } from '@/types'
 
 const DEFAULT_WATER_GOAL_ML = 2000
@@ -44,7 +46,11 @@ const Dashboard = () => {
   const dailyNoteStore = useDailyNoteStore()
   const tretinoinStore = useTretinoinStore()
   const settingsStore = useSettingsStore()
-  const { status: dailyStatus } = useDailyNutritionProgress(selectedDate)
+  // Totals come from the meals already loaded for the day, so a tap on the
+  // Supplements row moves the rings at once.
+  const { status: dailyStatus } = useMealsNutritionProgress(mealStore.meals)
+  const meals = regularMeals(mealStore.meals)
+  const showSupplements = settingsStore.settings?.showSupplements !== false
 
   const waterGoal = settingsStore.settings?.waterGoalMl ?? DEFAULT_WATER_GOAL_ML
 
@@ -337,7 +343,7 @@ const Dashboard = () => {
           </div>
           <div className="grid grid-cols-2 gap-3">
             {[
-              { label: 'Meals', value: `${mealStore.meals.length}`, suffix: '' },
+              { label: 'Meals', value: `${meals.length}`, suffix: '' },
               { label: 'Calories', value: `${Math.round(totalCal)}`, suffix: 'kcal' },
               { label: 'Workout', value: workoutStore.todayWorkout?.type ?? 'Rest', suffix: '' },
               { label: 'Water', value: `${waterStore.totalToday}`, suffix: `/ ${waterGoal} ml` },
@@ -403,10 +409,10 @@ const Dashboard = () => {
         <Card>
           <p className="title-2 mb-4 text-black">Today's meals</p>
           <div className="flex flex-col gap-2">
-            {mealStore.meals.length === 0 ? (
-              <p className="text-sm text-ink-2">No meals logged for this day</p>
+            {meals.length === 0 ? (
+              <p className="footnote text-ink-2">No meals logged for this day</p>
             ) : (
-              mealStore.meals.map((meal) => {
+              meals.map((meal) => {
                 const expanded = expandedMeals.has(meal.id)
                 const totals = mealTotals(meal.items)
                 return (
@@ -464,6 +470,9 @@ const Dashboard = () => {
                 )
               })
             )}
+            {/* Pinned under the meals, before Add meal, so it never reads as
+                one of them. Settings can hide it for people who take none. */}
+            {showSupplements && <SupplementsRow date={selectedDate} />}
             <Button
               variant="secondary"
               size="md"

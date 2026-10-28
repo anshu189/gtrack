@@ -119,57 +119,131 @@ export function tretinoinStreak(
   return streak
 }
 
-/**
- * The seven days ending today, laid out Sunday to Saturday for the DS
- * StreakCard.
- *
- * Two separate decisions, and they are easy to confuse:
- *
- *  - The *layout* is the conventional S M T W T F S, as everywhere else in the
- *    app and in the DS. Never reorder it.
- *  - The *window* is the seven days ending today, not the current calendar
- *    week. A calendar week shows almost nothing on a Monday: an application
- *    made the previous Thursday has no cell to fill, even while the figure
- *    underneath counts it, and the card looks broken.
- *
- * Seven consecutive days hold exactly one of each weekday, so placing each at
- * its own weekday is a reordering with no gaps and no collisions — the
- * conventional row, every cell a real and recent day, and the same seven days
- * the adherence figure covers.
- *
- * Today is `pending`, never `missed` — the night is not over yet. A day the
- * schedule never asked for is `off`, which is a different thing again.
- */
-export function tretinoinWeek(
-  logs: { date: string; applied: boolean }[],
-  schedule: TretinoinSchedule | undefined,
-  today: string,
-): StreakDayCell[] {
-  const applied = new Set(logs.filter((l) => l.applied).map((l) => l.date))
-  const lastApplied = getLastAppliedDate(logs)
+/** The Sunday that starts the week holding `date`. */
+export function startOfWeek(date: string): string {
+  return addDays(date, -weekdayOf(date))
+}
 
-  const cells = new Array<StreakDayCell>(7)
-  for (let i = 0; i < 7; i++) {
-    const date = addDays(today, i - 6)
-    const weekday = WEEKDAYS[weekdayOf(date)]
-    const state: StreakDay = applied.has(date)
-      ? 'done'
-      : !showsTretinoin(date, schedule, lastApplied)
-        ? 'off'
-        : date >= today
-          ? 'pending'
-          : 'missed'
-    cells[weekday.value] = {
-      state,
-      letter: weekday.letter,
-      name: `${weekday.name} ${formatDayLabel(date)}`,
-    }
+type Logs = { date: string; applied: boolean }[]
+
+/**
+ * The one rule for what a day looks like, shared by the week row, both
+ * calendars and the adherence figure, so they can never tell different
+ * stories.
+ *
+ *  - after today: `upcoming` — nothing to say yet.
+ *  - applied: `done`, scheduled or not.
+ *  - not a day the schedule asked for: `off`.
+ *  - today, not applied: `pending` — the night is not over.
+ *  - otherwise: `missed`.
+ *
+ * `auto` counts from the last application *before* the day, which is exactly
+ * what the Dashboard showed on that day.
+ */
+function dayState(date: string, applied: Set<string>, sorted: string[], schedule: TretinoinSchedule | undefined, today: string): StreakDay {
+  if (date > today) return 'upcoming'
+  if (applied.has(date)) return 'done'
+  const lastBefore = sorted.filter((d) => d < date).pop() ?? null
+  if (!showsTretinoin(date, schedule, lastBefore)) return 'off'
+  return date === today ? 'pending' : 'missed'
+}
+
+function cellFor(date: string, state: StreakDay): StreakDayCell {
+  const weekday = WEEKDAYS[weekdayOf(date)]
+  return {
+    state,
+    letter: weekday.letter,
+    day: Number(date.slice(8, 10)),
+    name: `${weekday.name} ${formatDayLabel(date)}`,
   }
-  return cells
+}
+
+function prepare(logs: Logs) {
+  const applied = new Set(logs.filter((l) => l.applied).map((l) => l.date))
+  return { applied, sorted: [...applied].sort() }
+}
+
+/**
+ * The current calendar week, Sunday to Saturday, for the 7-day view. Days
+ * after today are `upcoming`, so the row reads as "this week so far" and every
+ * column is the date its letter says.
+ *
+ * (It used to be the seven days ending today, each dropped into its weekday's
+ * column. That put last Thursday after this Wednesday, and the dates ran
+ * backwards past today.)
+ */
+export function tretinoinWeek(logs: Logs, schedule: TretinoinSchedule | undefined, today: string): StreakDayCell[] {
+  const { applied, sorted } = prepare(logs)
+  const sunday = startOfWeek(today)
+  return Array.from({ length: 7 }, (_, i) => {
+    const date = addDays(sunday, i)
+    return cellFor(date, dayState(date, applied, sorted, schedule, today))
+  })
+}
+
+/** Weeks of a calendar, Sunday first; `null` is a cell outside the range. */
+export type CalendarWeeks = (StreakDayCell | null)[][]
+
+/**
+ * `start` to `end` as calendar rows, for the 30-day view. The first row is
+ * padded back to its Sunday and the last forward to its Saturday; padding
+ * before `start` is blank, padding after today is `upcoming`.
+ */
+export function tretinoinCalendar(logs: Logs, schedule: TretinoinSchedule | undefined, start: string, end: string, today: string): CalendarWeeks {
+  const { applied, sorted } = prepare(logs)
+  const weeks: CalendarWeeks = []
+  for (let sunday = startOfWeek(start); sunday <= end; sunday = addDays(sunday, 7)) {
+    weeks.push(
+      Array.from({ length: 7 }, (_, i) => {
+        const date = addDays(sunday, i)
+        if (date < start) return null
+        if (date > end && date <= today) return null
+        return cellFor(date, dayState(date, applied, sorted, schedule, today))
+      }),
+    )
+  }
+  return weeks
+}
+
+/**
+ * One calendar month, for the 90-day view's month pager. Days before
+ * `windowStart` are outside what the range covers and come back `none`.
+ */
+export function tretinoinMonth(
+  logs: Logs,
+  schedule: TretinoinSchedule | undefined,
+  year: number,
+  month: number,
+  windowStart: string,
+  today: string,
+): CalendarWeeks {
+  const { applied, sorted } = prepare(logs)
+  const first = isoDate(year, month, 1)
+  const last = isoDate(year, month + 1, 0)
+  const weeks: CalendarWeeks = []
+  for (let sunday = startOfWeek(first); sunday <= last; sunday = addDays(sunday, 7)) {
+    weeks.push(
+      Array.from({ length: 7 }, (_, i) => {
+        const date = addDays(sunday, i)
+        if (date < first || date > last) return null
+        if (date < windowStart) return cellFor(date, 'none')
+        return cellFor(date, dayState(date, applied, sorted, schedule, today))
+      }),
+    )
+  }
+  return weeks
+}
+
+/** ISO date for a local year/month/day; day 0 is the last day of the month before. */
+function isoDate(year: number, month: number, day: number): string {
+  const d = new Date(year, month, day, 12)
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  return `${d.getFullYear()}-${mm}-${dd}`
 }
 
 /** "13 Oct" — enough to tell two Tuesdays apart. */
-function formatDayLabel(date: string): string {
+export function formatDayLabel(date: string): string {
   return new Date(`${date}T12:00:00`).toLocaleDateString('en-GB', {
     day: 'numeric',
     month: 'short',
@@ -196,24 +270,26 @@ export function tretinoinAdherence(
   end: string,
   today: string,
 ): { applied: number; scheduled: number; offSchedule: number } {
-  const applied = new Set(logs.filter((l) => l.applied).map((l) => l.date))
-  const sorted = [...applied].sort()
+  const { applied, sorted } = prepare(logs)
 
   let scheduled = 0
   let done = 0
   let offSchedule = 0
-  for (let date = start; date <= end; date = addDays(date, 1)) {
-    const wasApplied = applied.has(date)
-    if (date >= today && !wasApplied) continue
-    // `auto` counts from the last application before the day in question,
-    // which is exactly what the Dashboard does for that same day.
-    const lastBefore = sorted.filter((d) => d < date).pop() ?? null
-    if (!showsTretinoin(date, schedule, lastBefore)) {
-      if (wasApplied) offSchedule++
-      continue
+  for (let date = start; date <= end && date <= today; date = addDays(date, 1)) {
+    const state = dayState(date, applied, sorted, schedule, today)
+    if (state === 'pending') continue
+    if (state === 'done') {
+      // Applied on a day the schedule did not ask for: a filled dot that is
+      // not part of `scheduled`, named in the sentence instead.
+      const lastBefore = sorted.filter((d) => d < date).pop() ?? null
+      if (!showsTretinoin(date, schedule, lastBefore)) {
+        offSchedule++
+        continue
+      }
+      done++
     }
+    if (state === 'off') continue
     scheduled++
-    if (wasApplied) done++
   }
   return { applied: done, scheduled, offSchedule }
 }

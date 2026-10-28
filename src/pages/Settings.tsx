@@ -6,7 +6,7 @@ import { getDocs, setDoc, writeBatch } from 'firebase/firestore'
 import { userColl, userDoc } from '@/lib/paths'
 import { useAuthStore } from '@/stores/authStore'
 import { cleanForFirestore } from '@/lib/utils/firestore'
-import { Button, Card, Icon, SegmentedControl, SelectField, TextField, WeekStrip } from '@/components/ds'
+import { Button, Card, Icon, SegmentedControl, SelectField, SettingRow, TextField, WeekStrip } from '@/components/ds'
 import { WEEKDAYS } from '@/lib/utils/tretinoin'
 import {
   AGE_RANGE,
@@ -32,13 +32,17 @@ const DEFAULT_SETTINGS: UserSettings = {
 const BACKUP_COLLECTIONS = [
   'meals', 'history', 'favorites', 'workouts', 'waterLogs', 'weights',
   'dailyNotes', 'tretinoinLogs', 'foods', 'categories', 'quantityPresets',
-  'nutritionSources',
+  'nutritionSources', 'supplements',
 ] as const
 
 /** Typed-confirmation phrase for the destructive reset, in place of a shared password. */
 const RESET_CONFIRM_PHRASE = 'delete my data'
 
-/** Collections wiped by Reset. Reference data (foods, categories, presets, sources) is spared. */
+/**
+ * Collections wiped by Reset. Reference data (foods, categories, presets,
+ * sources, and your supplement list) is spared; the supplements you logged are
+ * meals and go with them.
+ */
 const RESET_COLLECTIONS = [
   'meals', 'history', 'favorites', 'workouts', 'waterLogs', 'weights',
   'dailyNotes', 'tretinoinLogs', 'settings', 'deletedMeals',
@@ -65,6 +69,7 @@ export default function Settings() {
   const [goal, setGoal] = useState<GoalId | ''>('')
   const [tretinoinMode, setTretinoinMode] = useState<TretinoinScheduleMode>('auto')
   const [tretinoinDays, setTretinoinDays] = useState<number[]>([])
+  const [showSupplements, setShowSupplements] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [confirmReset, setConfirmReset] = useState(false)
@@ -99,6 +104,7 @@ export default function Settings() {
       setGoal(s.profile?.goal ?? '')
       setTretinoinMode(s.tretinoinSchedule?.mode ?? 'auto')
       setTretinoinDays(s.tretinoinSchedule?.weekdays ?? [])
+      setShowSupplements(s.showSupplements !== false)
     }
   }, [settingsStore.settings])
 
@@ -146,6 +152,7 @@ export default function Settings() {
         // switching back does not make you pick them again.
         weekdays: [...tretinoinDays].sort((a, b) => a - b),
       },
+      showSupplements,
     }
     await settingsStore.save(settings)
     setSaving(false)
@@ -261,6 +268,7 @@ export default function Settings() {
       setGoal('')
       setTretinoinMode('auto')
       setTretinoinDays([])
+      setShowSupplements(true)
 
       /**
        * Reset wipes the settings collection, which takes the profile with it.
@@ -486,6 +494,23 @@ export default function Settings() {
               </div>
             )}
           </div>
+        </Card>
+
+        <Card
+          title="Supplements"
+          description="The Supplements row under your meals, and its chart on Analytics."
+        >
+          <SettingRow
+            label="Show the Supplements row"
+            description={
+              showSupplements
+                ? 'Shown on Home and Meals.'
+                : 'Hidden. Anything already logged still counts in your totals.'
+            }
+            checked={showSupplements}
+            onChange={setShowSupplements}
+            className="-mx-4"
+          />
         </Card>
 
         <Card title="Water goal">

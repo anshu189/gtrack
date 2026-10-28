@@ -41,7 +41,7 @@ Read/edit/delete any past day via repositories directly. Edit mode buffers chang
 
 ### Settings (`src/pages/Settings.tsx`)
 Cards: Account (sign out) · Your profile · Nutrition targets · Tretinoin schedule (`auto` / `weekdays` via `WeekStrip` / `daily`) · Water goal · Export data · Import data · Reset app data.
-- **Export / Import** cover 12 per-user collections **including `foods`, `categories`, `quantityPresets`, `nutritionSources`** (custom foods are backed up now). `deletedMeals` excluded.
+- **Export / Import** cover 13 per-user collections **including `foods`, `categories`, `quantityPresets`, `nutritionSources`, `supplements`** (custom foods and your supplement list are backed up). `deletedMeals` excluded.
 - **Reset** requires typing `delete my data` (the old `godelete` password is gone). Wipes meals, history, favorites, workouts, waterLogs, weights, dailyNotes, tretinoinLogs, settings, deletedMeals. Spares foods/categories/presets/sources. Wiping settings also clears the profile, so onboarding returns.
 
 ### Trackers (`src/components/tracking/`)
@@ -52,7 +52,8 @@ Cards: Account (sign out) · Your profile · Nutrition targets · Tretinoin sche
 | Water | `waterStore` | quick-add chips 250/300/350/500/750 ml + custom |
 | Weight | `weightStore` | one per day, auto-saves |
 | Daily notes | `dailyNoteStore` | debounced auto-save |
-| Tretinoin | `tretinoinStore` | schedule logic only in `lib/utils/tretinoin.ts` (`showsTretinoin`, `maxGapFor`, `tretinoinAdherence`) |
+| Tretinoin | `tretinoinStore` | schedule logic only in `lib/utils/tretinoin.ts` (`showsTretinoin`, `maxGapFor`, `tretinoinAdherence`); Analytics: 7d = this week, 30d = calendar, 90d = month pager |
+| Supplements | `supplementStore` (list) + `mealStore.setSupplementQuantity` (daily log) | pinned row on Home + Meals (Meals adds edit/remove/add); per-user `supplements` collection, Whey + Creatine seeded once; daily log = `meals` doc `meal:supplements:{date}` (`kind: 'supplements'`); Settings switch `showSupplements`; Analytics chart per supplement. Full rules in `AGENTS.md` |
 
 ---
 
@@ -72,7 +73,8 @@ Cards: Account (sign out) · Your profile · Nutrition targets · Tretinoin sche
 
 ## 4. Design system — Gtrak DS (full rules in `AGENTS.md`)
 
-- **Gtrak DS**: light, monochrome, derived from Cal AI. Source of truth: `D:\Growth\App UI\Gtrak Design System\DESIGN.md`. Astryx, StyleX, the gothic theme and dark mode are **all gone**.
+- **Gtrak DS is the only design system allowed**: light, monochrome, derived from Cal AI. Full copy in the repo at `design-system/` (start at `design-system/ORIGIN.md`; rules in `design-system/DESIGN.md`; tokens in `design-system/tokens/`; component specs in `design-system/components/docs/`). Published original: https://claude.ai/artifact/D4Whn6HYLyjsG3gwuJGfVw. Astryx, StyleX, the gothic theme and dark mode are **all gone**.
+- **Known mismatches** (listed in `design-system/ORIGIN.md`): the app's top six type sizes are 2px under the DS, the header draws a dot logo instead of the "Gtrak" wordmark, and titles use sentence case where the DS wants Title Case.
 - Tokens + Hanken Grotesk `@font-face` + type utilities in `src/index.css`; components in `src/components/ds/` (import from `@/components/ds`); icons from DS `Icon` only.
 - **`lucide-react` is still listed in `package.json` but imported nowhere** — safe to remove.
 - `DEFAULT_SETTINGS` in `src/lib/seed.ts` still writes `theme: 'dark'`; the field is unused leftover.
@@ -86,7 +88,7 @@ Cards: Account (sign out) · Your profile · Nutrition targets · Tretinoin sche
 - **Sign-in flow (`authStore.init`):** `observeAuth` → `userRepository.claimSeat(uid)` (transaction: creates `users/{uid}` and increments `meta/seats.count` for a new user; returning users keep their seat) → `provisionUser(uid)` (seeds that user's categories, foods, presets, sources, settings; each step no-ops if non-empty) → `markProvisioned`. On `SeatsFullError` / `SeatsMissingError` the new auth user is discarded and a message shown.
 - **Seats:** `meta/seats {count, limit}`, default limit 50. Create it once with `node scripts/init-seats.mjs [--limit N]` (idempotent). Raising the limit is a console-only edit.
 - **`firestore.rules`** (in repo, paste into the console manually): owner-only access to `users/{uid}/**`; profile creation only in the same commit that takes one seat; `meta/seats` publicly readable, count may only go up by one; profiles never client-deleted; **all legacy top-level collections locked**.
-- **Collections (all under `users/{uid}/`):** foods, meals, deletedMeals, history, settings (doc `settings:default`), categories, quantityPresets, nutritionSources, favorites, workouts, waterLogs, weights, dailyNotes, tretinoinLogs.
+- **Collections (all under `users/{uid}/`):** foods, meals, deletedMeals, history, settings (doc `settings:default`), categories, quantityPresets, nutritionSources, favorites, workouts, waterLogs, weights, dailyNotes, tretinoinLogs, supplements.
 - **Migration:** `scripts/migrate-to-user.mjs --uid <uid> [--apply]` copied the old global collections into one user (dry run by default, never deletes, writes a local backup first).
 - **Backups:** `backups/` is gitignored except its README. `scripts/backup-firestore.mjs` still signs in anonymously, so it **no longer works**; in-app Settings → Export is the current backup path.
 

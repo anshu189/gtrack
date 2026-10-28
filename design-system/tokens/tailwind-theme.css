@@ -1,0 +1,74 @@
+/* Gtrak — Tailwind v4 theme. Import tokens.css before this file. */
+@import "tailwindcss";
+@font-face { font-family: "Hanken Grotesk"; font-weight: 400; src: url(../fonts/HankenGrotesk-400.woff2) format("woff2"); }
+@font-face { font-family: "Hanken Grotesk"; font-weight: 500; src: url(../fonts/HankenGrotesk-500.woff2) format("woff2"); }
+@font-face { font-family: "Hanken Grotesk"; font-weight: 600; src: url(../fonts/HankenGrotesk-600.woff2) format("woff2"); }
+@font-face { font-family: "Hanken Grotesk"; font-weight: 700; src: url(../fonts/HankenGrotesk-700.woff2) format("woff2"); }
+@theme inline {
+  --font-sans: var(--font-ui);
+  --color-black: var(--black);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-ink-4: var(--ink-4);
+  --color-on-ink: var(--on-ink);
+  --color-on-ink-muted: var(--on-ink-muted);
+  --color-canvas: var(--canvas);
+  --color-canvas-glow: var(--canvas-glow);
+  --color-canvas-glow-2: var(--canvas-glow-2);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-fill-subtle: var(--fill-subtle);
+  --color-fill: var(--fill);
+  --color-fill-strong: var(--fill-strong);
+  --color-track: var(--track);
+  --color-ring-track: var(--ring-track);
+  --color-slider-track: var(--slider-track);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-disabled: var(--disabled);
+  --color-disabled-2: var(--disabled-2);
+  --color-protein: var(--protein);
+  --color-carbs: var(--carbs);
+  --color-fat: var(--fat);
+  --color-accent: var(--accent);
+  --color-tint-over: var(--tint-over);
+  --color-success: var(--success);
+  --color-success-text: var(--success-text);
+  --color-success-soft: var(--success-soft);
+  --color-streak: var(--streak);
+  --color-streak-soft: var(--streak-soft);
+  --color-day-over: var(--day-over);
+  --color-day-met: var(--day-met);
+  --color-avatar: var(--avatar);
+  --color-avatar-2: var(--avatar-2);
+  --color-camera-tile: var(--camera-tile);
+  --color-glass: var(--glass);
+  --color-focus: var(--focus);
+  --radius-xs: 8px;
+  --radius-sm: 12px;
+  --radius-md: 15px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-pill: 9999px;
+  --shadow-card: 0 4px 16px #1c1a220f;
+  --shadow-float: 0 12px 32px #1c1a2217, 0 2px 8px #1c1a220a;
+  --shadow-cta: 0 -24px 48px #0000000a;
+  --shadow-focus: 0 0 0 2px #ffffff, 0 0 0 4px #1c1a22;
+}
+@utility stat-xl { font-size: 44px; line-height: 48px; font-weight: 600; }
+@utility large-title { font-size: 34px; line-height: 38px; font-weight: 600; }
+@utility stat-lg { font-size: 34px; line-height: 38px; font-weight: 600; }
+@utility title-1 { font-size: 24px; line-height: 30px; font-weight: 600; }
+@utility stat-md { font-size: 20px; line-height: 24px; font-weight: 600; }
+@utility title-2 { font-size: 20px; line-height: 26px; font-weight: 600; }
+@utility headline { font-size: 17px; line-height: 22px; font-weight: 600; }
+@utility btn-label { font-size: 17px; line-height: 22px; font-weight: 600; }
+@utility option { font-size: 17px; line-height: 22px; font-weight: 500; }
+@utility body { font-size: 17px; line-height: 19px; font-weight: 400; }
+@utility callout { font-size: 16px; line-height: 20px; font-weight: 400; }
+@utility subhead { font-size: 15px; line-height: 20px; font-weight: 400; }
+@utility chip { font-size: 14px; line-height: 18px; font-weight: 500; }
+@utility label { font-size: 14px; line-height: 18px; font-weight: 400; }
+@utility footnote { font-size: 13px; line-height: 16px; font-weight: 500; }
+@utility caption { font-size: 12px; line-height: 15px; font-weight: 500; }

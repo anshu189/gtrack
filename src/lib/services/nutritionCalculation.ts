@@ -44,7 +44,15 @@ export class NutritionCalculationService {
     const dayStart = dateIso.split('T')[0]
     const dayEnd = `${dayStart}T23:59:59.999Z`
     const meals = await mealRepository.listByDateRange(dayStart, dayEnd)
+    return this.calculateMealsNutrition(meals)
+  }
 
+  /**
+   * Totals for meals already in hand. A screen that holds the day's meals uses
+   * this so its totals move with every change — a fetch keyed on the date
+   * alone only ever ran once per day.
+   */
+  calculateMealsNutrition(meals: Meal[]): Nutrition {
     const totals: Nutrition = {
       calories: 0,
       protein: 0,

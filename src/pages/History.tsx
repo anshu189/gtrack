@@ -8,20 +8,24 @@ import { dailyNoteRepository } from '@/lib/repositories/dailyNoteRepository'
 import { tretinoinRepository } from '@/lib/repositories/tretinoinRepository'
 import { foodRepository } from '@/lib/repositories/foodRepository'
 import { nutritionCalculationService } from '@/lib/services/nutritionCalculation'
-import { useDailyNutritionProgress } from '@/hooks/useNutrition'
+import { useMealsNutritionProgress } from '@/hooks/useNutrition'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { useMealStore } from '@/stores/mealStore'
+import { useSupplementStore } from '@/stores/supplementStore'
 import { NutritionSummary } from '@/components/nutrition'
 import { WorkoutLogging } from '@/components/tracking'
 import { WaterLogging, WaterProgress } from '@/components/tracking'
 import { WeightLogging } from '@/components/tracking'
 import { TretinoinTracker } from '@/components/tracking'
-import { UndoBanner } from '@/components/meal'
+import { SupplementList, UndoBanner } from '@/components/meal'
 import { Button, Card, Chip, DatePicker, FOCUS, Icon, IconButton, MacroInline, MacroTiles } from '@/components/ds'
 import { cn } from '@/lib/utils/cn'
 import { formatNum } from '@/lib/utils/format'
 import { mealItemGrams, mealTotals } from '@/lib/utils/nutrition'
 import { getLastAppliedDate, showsTretinoin } from '@/lib/utils/tretinoin'
+import {
+  buildSupplementItems, isSupplementLog, quantitiesFrom, regularMeals, supplementLogId,
+} from '@/lib/utils/supplements'
 import type { TretinoinLog } from '@/types'
 
 const DEFAULT_WATER_GOAL_ML = 2000
@@ -54,13 +58,37 @@ export default function History() {
   const [waterChanged, setWaterChanged] = useState(false)
   const [expandedMeals, setExpandedMeals] = useState<Set<string>>(new Set())
   const [resolvedFoodNames, setResolvedFoodNames] = useState<Record<string, string>>({})
+  const [editSupplements, setEditSupplements] = useState<Record<string, number>>({})
 
   const settingsStore = useSettingsStore()
   const mealStore = useMealStore()
+  const supplements = useSupplementStore((s) => s.supplements)
+  const supplementsLoaded = useSupplementStore((s) => s.loaded)
+  const loadSupplements = useSupplementStore((s) => s.load)
+
+  /** The day's supplements live in `meals` too; the list shows them apart. */
+  const dayMeals = regularMeals(meals)
+  const supplementLog = meals.find(isSupplementLog)
+  const loggedSupplements = quantitiesFrom(supplementLog)
+  const knownSupplements = new Set(supplements.map((s) => s.id))
+  const supplementOrphans = (supplementLog?.items ?? []).filter((it) => !knownSupplements.has(it.foodId))
+  const showSupplements = settingsStore.settings?.showSupplements !== false || !!supplementLog
+  const supplementsChanged = (() => {
+    const ids = new Set([...Object.keys(editSupplements), ...Object.keys(loggedSupplements)])
+    for (const id of ids) {
+      if ((editSupplements[id] ?? 0) !== (loggedSupplements[id] ?? 0)) return true
+    }
+    return false
+  })()
+
+  useEffect(() => {
+    if (!supplementsLoaded) loadSupplements()
+  }, [supplementsLoaded, loadSupplements])
   const waterGoal = settingsStore.settings?.waterGoalMl ?? DEFAULT_WATER_GOAL_ML
   const [dismissedUndoIds, setDismissedUndoIds] = useState<Set<string>>(new Set())
 
-  const { status: dailyStatus } = useDailyNutritionProgress(selectedDate)
+  // From the meals on screen, so a saved edit shows in the totals at once.
+  const { status: dailyStatus } = useMealsNutritionProgress(meals)
 
   useEffect(() => {
     settingsStore.load()
@@ -211,6 +239,7 @@ export default function History() {
     setEditWeightUnit(weightEntry?.unit ?? 'kg')
     setEditWeightNotes(weightEntry?.notes ?? '')
     setEditNoteContent(dailyNote?.content ?? '')
+    setEditSupplements(loggedSupplements)
     setWaterChanged(false)
     setEditing(true)
     setHasChanges(false)
@@ -223,8 +252,8 @@ export default function History() {
       editWeightNotes !== (weightEntry?.notes ?? '')
     const workoutChanged = editWorkout !== workout
     const noteChanged = editNoteContent !== (dailyNote?.content ?? '')
-    setHasChanges(weightChanged || workoutChanged || noteChanged || waterChanged)
-  }, [editing, editWorkout, editWeight, editWeightUnit, editWeightNotes, editNoteContent, workout, weightEntry, dailyNote, waterChanged])
+    setHasChanges(weightChanged || workoutChanged || noteChanged || waterChanged || supplementsChanged)
+  }, [editing, editWorkout, editWeight, editWeightUnit, editWeightNotes, editNoteContent, workout, weightEntry, dailyNote, waterChanged, supplementsChanged])
 
   const toggleMealExpand = (mealId: string) => {
     setExpandedMeals((prev) => {
@@ -302,6 +331,29 @@ export default function History() {
         createdAt: prev?.createdAt ?? now,
         updatedAt: now,
       }))
+    }
+
+    if (supplementsChanged) {
+      // Same rule as the Supplements row: the day's document is rebuilt whole,
+      // and removed when nothing is left in it.
+      const id = supplementLogId(selectedDate)
+      const items = buildSupplementItems(supplements, editSupplements, supplementLog?.items)
+      if (items.length === 0) {
+        if (supplementLog) await mealRepository.delete(id)
+        setMeals((prev) => prev.filter((m) => m.id !== id))
+      } else {
+        const meal: Meal = {
+          id,
+          kind: 'supplements',
+          name: 'Supplements',
+          loggedAt: `${selectedDate}T12:00:00Z`,
+          items,
+          createdAt: supplementLog?.createdAt ?? now,
+          updatedAt: now,
+        }
+        await mealRepository.add(meal)
+        setMeals((prev) => [...prev.filter((m) => m.id !== id), meal])
+      }
     }
 
     setEditing(false)
@@ -410,12 +462,12 @@ export default function History() {
             </Card>
           )}
 
-          <Card title={`Meals (${meals.length})`}>
-            {meals.length === 0 ? (
-              <p className="text-sm text-ink-2">No meals logged for this day.</p>
+          <Card title={`Meals (${dayMeals.length})`}>
+            {dayMeals.length === 0 ? (
+              <p className="footnote text-ink-2">No meals logged for this day.</p>
             ) : (
               <div className="space-y-2">
-                {meals.map((meal) => {
+                {dayMeals.map((meal) => {
                   const mealNutrition = nutritionCalculationService.calculateMealNutrition(meal)
                   const totals = mealTotals(meal.items)
                   const expanded = expandedMeals.has(meal.id)
@@ -483,6 +535,28 @@ export default function History() {
                     </div>
                   )
                 })}
+              </div>
+            )}
+
+            {/* Same place as on Home: pinned under the meals. Read-only until
+                Edit, then counters that save with the rest of the day. */}
+            {showSupplements && (
+              <div className="mt-4 flex flex-col gap-2 rounded-md bg-surface-2 p-3">
+                <p className="footnote text-black">Supplements</p>
+                {editing ? (
+                  <SupplementList
+                    supplements={supplements}
+                    quantities={editSupplements}
+                    orphans={supplementOrphans}
+                    onChange={(s, q) => setEditSupplements((prev) => ({ ...prev, [s.id]: q }))}
+                  />
+                ) : (
+                  <SupplementList
+                    supplements={supplements}
+                    quantities={loggedSupplements}
+                    orphans={supplementOrphans}
+                  />
+                )}
               </div>
             )}
           </Card>

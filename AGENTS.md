@@ -5,10 +5,19 @@ Project-specific guidance for AI coding agents.
 ## Design system
 
 GTrak's UI is built on **Gtrak DS** — a light, monochrome design system derived
-from Cal AI. The system itself lives at `D:\Growth\App UI\Gtrak Design System\`
-(README.md, DESIGN.md, tokens/tokens.json, components/docs/*.md, reference
-screenshots). Read `DESIGN.md` before writing UI; it is the source of truth for
-tokens, type scale, spacing, radii and component recipes.
+from Cal AI — and **on nothing else**. Every font, colour, size, radius, shadow,
+component and copy rule comes from it; no other design system, UI kit, icon
+library or palette is allowed.
+
+A full copy lives in the repo at `design-system/` (start with
+`design-system/ORIGIN.md`, which says what is where). Read
+`design-system/DESIGN.md` before writing UI; it is the source of truth for
+tokens, type scale, spacing, radii and component recipes. Per-component specs
+are in `design-system/components/docs/`, the reference implementation to port
+from is `design-system/components/src/`. Published original:
+https://claude.ai/artifact/D4Whn6HYLyjsG3gwuJGfVw; working copy:
+`D:\Growth\App UI\Gtrak Design System\`. Never edit `design-system/` to suit
+the app — update the source and copy it in again.
 
 A full audit of the app against the system lives in `design-audit/`.
 
@@ -69,11 +78,13 @@ If Gtrak DS has one, use it. If it does not, build it from DS atoms, follow the
 DS rules, and write a comment saying it is an **intentional addition to Gtrak
 DS** and why. Existing additions: `AppShell`, `TabBar` (5-tab pill),
 `TextArea`, `TextLink`, `SelectField`, `DatePicker`, `ChartCard`,
-`ScrollToTop`, plus the app glyphs in `Icon`.
+`ScrollToTop`, `StreakCalendar`, `SupplementsRow` / `SupplementList`, plus the
+app glyphs in `Icon`.
 
 Ported from the DS and available now: `Icon`, `MacroTile` / `MacroTiles` /
 `MacroInline`, `OptionCard` / `OptionGroup`, `StepHeader`, `ContinueBar`,
-`OnboardingLayout`, `RulerPicker`, `WeekStrip`, `StreakCard`. Check
+`OnboardingLayout`, `RulerPicker`, `WeekStrip`, `StreakCard`, `Stepper`,
+`SettingRow`. Check
 `src/components/ds/index.ts` before building anything — several of these existed in the DS long before the app grew
 its own copy, and the copies are what caused the drift.
 
@@ -116,19 +127,55 @@ Analytics shows adherence as the DS `StreakCard`, not a chart. The streak is
 consecutive applications no further apart than `maxGapFor(schedule)` and has to
 reach today, otherwise it has lapsed.
 
-The card's seven dots run **Sunday to Saturday**, like every other weekday row
-in the app — never reorder them. The *window* behind them is the seven days
-ending today rather than the current calendar week: a calendar week shows
-almost nothing on a Monday, so an application made the previous Thursday had no
-cell to fill while the figure underneath still counted it. Seven consecutive
-days hold one of each weekday, so each lands on its own column and the dots and
-the figure cover the same days. Four states, because colour alone cannot
-carry four meanings: `done` (filled `streak` + check), `missed` (grey fill,
-a past scheduled day), `pending` (dashed `streak` ring — due, night not over)
-and `off` (grey dashed — never asked for). Every dot also spells its state out
-for a screen reader. An application on an unscheduled day still fills its dot,
-so `tretinoinAdherence` returns `offSchedule` and the sentence names it —
-otherwise two filled dots sit above the words "applied on 1".
+What the card draws depends on the range:
+
+- **7 days** — the **current calendar week**, Sunday to Saturday, each dot with
+  its date under it (`tretinoinWeek`). Days after today are `upcoming`. Never
+  go back to "the seven days ending today dropped into weekday columns": that
+  put last Thursday after this Wednesday and the dates ran backwards.
+- **30 days** — the last 30 days as calendar rows (`tretinoinCalendar` +
+  `StreakCalendar`).
+- **90 days** — one month at a time with prev/next arrows, limited to the
+  months the range reaches (`tretinoinMonth`).
+
+The adherence sentence covers exactly the same days ("this week", "in the last
+30 days"). One function, `dayState` in `tretinoin.ts`, decides every cell and
+the figure, so they cannot disagree. States differ in shape, not just colour:
+`done` (filled `streak`), `missed` (grey fill), `pending` (dashed `streak`
+ring — due, night not over), `off` (grey dashed — never asked for),
+`upcoming` and `none` (plain, faint). Each cell spells its state out for a
+screen reader, and the calendar prints a key. An application on an
+unscheduled day still fills its cell, so `tretinoinAdherence` returns
+`offSchedule` and the sentence names it.
+
+### Supplements
+
+A fixed **Supplements** row is pinned under the day's meals on Home and on the
+Meals tab: one DS `Stepper` per supplement, every tap saves. Settings has a
+switch (`settings.showSupplements`, absent = shown) that hides the row and its
+Analytics chart; anything already logged still counts.
+
+- **The list** is per user, in its own collection `users/{uid}/supplements`
+  (`Supplement` type, `supplementStore`). It is kept apart from `foods` so
+  supplements never appear in the meal food search. Macros are stored **per
+  unit** (per scoop, per gram), as a label prints them, plus `gramsPerUnit`.
+  Edit, Remove and Add supplement live on the Meals tab's row only.
+- **Seeding:** Whey protein and Creatine (`src/data/supplements.ts`) are
+  seeded once per account by `seedSupplements`, gated on
+  `profile.supplementsSeededAt` — not on an empty collection, so someone who
+  removes both does not get them back. Changing the defaults affects new
+  accounts only.
+- **The daily log** is one `meals` document per day, id
+  `meal:supplements:{date}`, `kind: 'supplements'`. Being a meal, every total,
+  Analytics, export, reset and Delete day include it with no special case.
+  Items snapshot macros per 100g, exactly like meal items, so editing a
+  supplement never rewrites past days (the day on screen is re-snapshotted).
+  The document is deleted when nothing is left in it.
+- **Meal lists must skip it.** Use `regularMeals(meals)` anywhere meals are
+  listed or counted; `isSupplementLog` tells them apart.
+- **Totals on Home and History** come from the meals in hand
+  (`useMealsNutritionProgress`), not a once-per-date fetch, so a tap moves the
+  rings immediately.
 
 ### Before finishing
 

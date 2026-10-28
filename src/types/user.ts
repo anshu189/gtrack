@@ -11,6 +11,12 @@ export interface UserProfile {
   schemaVersion?: number
   /** Set once the user's reference data (foods, categories, presets) is seeded. */
   provisionedAt?: string
+  /**
+   * Set once the default supplements have been seeded. Seeding checks this
+   * rather than an empty collection, so a user who deletes both defaults does
+   * not get them back on the next sign-in.
+   */
+  supplementsSeededAt?: string
   lastLoginAt?: string
   createdAt?: string
   updatedAt?: string

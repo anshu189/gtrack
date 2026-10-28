@@ -1,6 +1,7 @@
 import { create } from 'zustand'
-import type { Meal, DeletedMealEntry } from '@/types'
+import type { Meal, DeletedMealEntry, Supplement } from '@/types'
 import { mealRepository } from '@/lib/repositories'
+import { buildSupplementItems, quantitiesFrom, supplementLogId } from '@/lib/utils/supplements'
 
 type MealState = {
   meals: Meal[]
@@ -18,6 +19,7 @@ type MealState = {
   removeWithUndo: (id: string) => Promise<void>
   restoreDeleted: (deleteId: string) => Promise<void>
   dismissUndo: (deleteId: string) => void
+  setSupplementQuantity: (date: string, supplements: Supplement[], supplementId: string, quantity: number) => Promise<void>
 }
 
 export const useMealStore = create<MealState>((set, get) => ({
@@ -111,5 +113,40 @@ export const useMealStore = create<MealState>((set, get) => ({
 
   dismissUndo: (deleteId: string) => {
     set((s) => ({ deletedMeals: s.deletedMeals.filter((d) => d.id !== deleteId) }))
+  },
+
+  /**
+   * One tap on the Supplements row. The day's supplements document is rebuilt
+   * from the new quantity and written whole; when nothing is left it is
+   * deleted, so a day you took nothing has no document at all.
+   *
+   * State changes before the write, so a run of quick taps each builds on the
+   * last one. Firestore applies a client's writes in the order they were
+   * issued, so the last tap is the one that lands.
+   */
+  setSupplementQuantity: async (date, supplements, supplementId, quantity) => {
+    const id = supplementLogId(date)
+    const existing = get().meals.find((m) => m.id === id)
+    const quantities = { ...quantitiesFrom(existing), [supplementId]: Math.max(0, quantity) }
+    const items = buildSupplementItems(supplements, quantities, existing?.items)
+    const now = new Date().toISOString()
+
+    if (items.length === 0) {
+      set((s) => ({ meals: s.meals.filter((m) => m.id !== id) }))
+      if (existing) await mealRepository.delete(id)
+      return
+    }
+
+    const meal: Meal = {
+      id,
+      kind: 'supplements',
+      name: 'Supplements',
+      loggedAt: `${date}T12:00:00Z`,
+      items,
+      createdAt: existing?.createdAt ?? now,
+      updatedAt: now,
+    }
+    set((s) => ({ meals: existing ? s.meals.map((m) => (m.id === id ? meal : m)) : [...s.meals, meal] }))
+    await mealRepository.add(meal)
   },
 }))

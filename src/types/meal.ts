@@ -25,6 +25,12 @@ export interface MealItem {
 
 export interface Meal {
   id: MealID
+  /**
+   * `supplements` marks the one document per day that holds what was taken
+   * from the Supplements row. It is a meal so every total counts it, but the
+   * meal lists skip it and show the row instead. Absent on ordinary meals.
+   */
+  kind?: 'supplements'
   name?: string
   /** ISO date/time when meal was consumed or logged */
   loggedAt: string

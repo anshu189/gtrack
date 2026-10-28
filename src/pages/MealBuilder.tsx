@@ -2,9 +2,11 @@ import { useState, useEffect, useRef } from 'react'
 import { useLocation } from 'react-router-dom'
 import type { Food, Meal, MealItem } from '@/types'
 import { useMealStore } from '@/stores/mealStore'
-import { MealCard, AddItem, QuantityPicker, FoodMacroEditor, UndoBanner } from '@/components/meal'
+import { useSettingsStore } from '@/stores/settingsStore'
+import { MealCard, AddItem, QuantityPicker, FoodMacroEditor, UndoBanner, SupplementsRow } from '@/components/meal'
 import { Button, Card, DatePicker, Icon, IconButton, TextField } from '@/components/ds'
 import { cleanForFirestore } from '@/lib/utils/firestore'
+import { regularMeals } from '@/lib/utils/supplements'
 
 function getTodayIso() {
   return new Date().toISOString().split('T')[0]
@@ -36,6 +38,8 @@ const MealBuilder = () => {
 
   const today = getTodayIso()
   const isToday = selectedDate === today
+  const meals = regularMeals(mealStore.meals)
+  const showSupplements = useSettingsStore((s) => s.settings?.showSupplements) !== false
 
   useEffect(() => {
     mealStore.loadByDateRange(`${selectedDate}T00:00:00Z`, `${selectedDate}T23:59:59Z`)
@@ -298,14 +302,15 @@ const MealBuilder = () => {
           </div>
         )}
 
-        {/* Meals list */}
+        {/* Meals list. The day's supplements are a document in the same
+            collection; they show as the pinned row below, never as a meal. */}
         <Card>
           <p className="mb-3 title-2 text-black">Meals</p>
-          {mealStore.meals.length === 0 ? (
+          {meals.length === 0 ? (
             <p className="footnote text-ink-2">No meals for this day</p>
           ) : (
             <div className="space-y-4">
-              {mealStore.meals.map((meal) => (
+              {meals.map((meal) => (
                 <MealCard
                   key={meal.id}
                   meal={meal}
@@ -313,6 +318,12 @@ const MealBuilder = () => {
                   onDelete={() => handleDeleteMeal(meal.id)}
                 />
               ))}
+            </div>
+          )}
+          {/* The full row: counters plus Edit, Remove and Add supplement. */}
+          {showSupplements && (
+            <div className="mt-4">
+              <SupplementsRow date={selectedDate} manage />
             </div>
           )}
         </Card>

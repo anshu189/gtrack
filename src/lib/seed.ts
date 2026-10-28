@@ -1,6 +1,6 @@
-import { getDocs, query, limit, writeBatch } from 'firebase/firestore'
+import { getDoc, getDocs, query, limit, updateDoc, writeBatch } from 'firebase/firestore'
 import { firestore } from '@/lib/firebase'
-import { collFor, docFor } from '@/lib/paths'
+import { collFor, docFor, profileDoc } from '@/lib/paths'
 import { cleanForFirestore } from '@/lib/utils/firestore'
 import builtInFoods from '@/data/builtInFoods'
 import builtInCategories from '@/data/categories'
@@ -8,6 +8,7 @@ import foodsSeed from '@/data/foodsSeed'
 import macroOverrides from '@/data/macroOverrides'
 import quantityPresetsSeed from '@/data/quantityPresets'
 import nutritionSourcesSeed from '@/data/nutritionSources'
+import supplementsSeed from '@/data/supplements'
 import type { Food, UserSettings } from '@/types'
 
 const BATCH_LIMIT = 490
@@ -35,6 +36,27 @@ export async function provisionUser(uid: string) {
   await seedQuantityPresets(uid)
   await seedNutritionSources(uid)
   await seedSettings(uid)
+  await seedSupplements(uid)
+}
+
+/**
+ * Whey protein and Creatine, once per account. Gated on a stamp on the user's
+ * profile rather than on an empty collection: someone who removes both
+ * defaults has made a choice, and the next sign-in must not undo it.
+ * Accounts that predate supplements get them on their next sign-in.
+ */
+async function seedSupplements(uid: string) {
+  const profile = await getDoc(profileDoc(uid))
+  if (profile.data()?.supplementsSeededAt) return
+  const now = new Date().toISOString()
+  if (await isUserCollectionEmpty(uid, 'supplements')) {
+    const batch = writeBatch(firestore)
+    for (const s of supplementsSeed) {
+      batch.set(docFor(uid, 'supplements', s.id), cleanForFirestore({ ...s, createdAt: now, updatedAt: now }))
+    }
+    await batch.commit()
+  }
+  await updateDoc(profileDoc(uid), { supplementsSeededAt: now, updatedAt: now })
 }
 
 async function seedCategories(uid: string) {

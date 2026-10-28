@@ -1,0 +1,95 @@
+:root, [data-theme="light"] {
+  --black: #000000;
+  --ink: #1c1a22;
+  --ink-2: #767578;
+  --ink-3: #9a999e;
+  --ink-4: #cfcfcf;
+  --on-ink: #ffffff;
+  --on-ink-muted: #a09ea6;
+  --canvas: #ffffff;
+  --canvas-glow: #f0eae7;
+  --canvas-glow-2: #e3e8e9;
+  --surface: #ffffff;
+  --surface-2: #f9f8fd;
+  --fill-subtle: #f5f5f5;
+  --fill: #f0eff4;
+  --fill-strong: #ececec;
+  --track: #e8e8e8;
+  --ring-track: #eff1f7;
+  --slider-track: #e0e0e0;
+  --line: #ececec;
+  --line-strong: #d8d8d8;
+  --disabled: #bababc;
+  --disabled-2: #c0bfc6;
+  --protein: #dd6668;
+  --carbs: #df9a65;
+  --fat: #6596dd;
+  --accent: var(--carbs);
+  --tint-over: #fbf0ef;
+  --success: #349470;
+  --success-text: #3e8c6c;
+  --success-soft: #eaf8ef;
+  --streak: #f69716;
+  --streak-soft: #fce298;
+  --day-over: #bc6c70;
+  --day-met: #8fce89;
+  --avatar: #5ab0ce;
+  --avatar-2: #84c8e0;
+  --camera-tile: #222220;
+  --glass: rgba(56, 56, 52, 0.72);
+  --focus: var(--ink);
+  --shadow-card: 0 4px 16px #1c1a220f;
+  --shadow-float: 0 12px 32px #1c1a2217, 0 2px 8px #1c1a220a;
+  --shadow-cta: 0 -24px 48px #0000000a;
+  --shadow-focus: 0 0 0 2px #ffffff, 0 0 0 4px #1c1a22;
+}
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-gutter-home: 30px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --radius-xs: 8px;
+  --radius-sm: 12px;
+  --radius-md: 15px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-pill: 9999px;
+  --control-xl: 58px;
+  --control-md: 48px;
+  --control-sm: 36px;
+  --option-row: 69px;
+  --option-row-2: 90px;
+  --input-height: 63px;
+  --icon-button: 40px;
+  --fab-size: 64px;
+  --step-bar: 3px;
+  --slider-bar: 4px;
+  --ring-stroke: 12px;
+  --switch-w: 51px;
+  --font-ui: "Hanken Grotesk", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+}
+@font-face { font-family: 'Hanken Grotesk'; font-weight: 400; font-style: normal; font-display: swap; src: url(../fonts/HankenGrotesk-400.woff2) format('woff2'); }
+@font-face { font-family: 'Hanken Grotesk'; font-weight: 500; font-style: normal; font-display: swap; src: url(../fonts/HankenGrotesk-500.woff2) format('woff2'); }
+@font-face { font-family: 'Hanken Grotesk'; font-weight: 600; font-style: normal; font-display: swap; src: url(../fonts/HankenGrotesk-600.woff2) format('woff2'); }
+@font-face { font-family: 'Hanken Grotesk'; font-weight: 700; font-style: normal; font-display: swap; src: url(../fonts/HankenGrotesk-700.woff2) format('woff2'); }
+.stat-xl { font-family: var(--font-ui); font-size: 44px; line-height: 48px; font-weight: 600; }
+.large-title { font-family: var(--font-ui); font-size: 34px; line-height: 38px; font-weight: 600; }
+.stat-lg { font-family: var(--font-ui); font-size: 34px; line-height: 38px; font-weight: 600; }
+.title-1 { font-family: var(--font-ui); font-size: 24px; line-height: 30px; font-weight: 600; }
+.stat-md { font-family: var(--font-ui); font-size: 20px; line-height: 24px; font-weight: 600; }
+.title-2 { font-family: var(--font-ui); font-size: 20px; line-height: 26px; font-weight: 600; }
+.headline { font-family: var(--font-ui); font-size: 17px; line-height: 22px; font-weight: 600; }
+.btn-label { font-family: var(--font-ui); font-size: 17px; line-height: 22px; font-weight: 600; }
+.option { font-family: var(--font-ui); font-size: 17px; line-height: 22px; font-weight: 500; }
+.body { font-family: var(--font-ui); font-size: 17px; line-height: 19px; font-weight: 400; }
+.callout { font-family: var(--font-ui); font-size: 16px; line-height: 20px; font-weight: 400; }
+.subhead { font-family: var(--font-ui); font-size: 15px; line-height: 20px; font-weight: 400; }
+.chip { font-family: var(--font-ui); font-size: 14px; line-height: 18px; font-weight: 500; }
+.label { font-family: var(--font-ui); font-size: 14px; line-height: 18px; font-weight: 400; }
+.footnote { font-family: var(--font-ui); font-size: 13px; line-height: 16px; font-weight: 500; }
+.caption { font-family: var(--font-ui); font-size: 12px; line-height: 15px; font-weight: 500; }

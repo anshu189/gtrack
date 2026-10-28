@@ -10,19 +10,26 @@ import { workoutRepository } from '@/lib/repositories/workoutRepository'
 import { tretinoinRepository } from '@/lib/repositories/tretinoinRepository'
 import { nutritionCalculationService } from '@/lib/services/nutritionCalculation'
 import { useSettingsStore } from '@/stores/settingsStore'
-import { ChartCard, SegmentedControl, StreakCard } from '@/components/ds'
+import { useSupplementStore } from '@/stores/supplementStore'
+import { ChartCard, SegmentedControl, StreakCalendar, StreakCard } from '@/components/ds'
 import { Card } from '@/components/ds'
-import { tretinoinAdherence, tretinoinStreak, tretinoinWeek } from '@/lib/utils/tretinoin'
+import { SupplementTrends, type SupplementSeries } from '@/components/tracking/SupplementTrends'
+import { isSupplementLog } from '@/lib/utils/supplements'
+import {
+  addDays, formatDayLabel, startOfWeek, tretinoinAdherence, tretinoinCalendar, tretinoinMonth,
+  tretinoinStreak, tretinoinWeek,
+} from '@/lib/utils/tretinoin'
 
 type RangeKey = '7d' | '30d' | '90d'
 
 const RANGE_LABELS: Record<RangeKey, string> = { '7d': '7 Days', '30d': '30 Days', '90d': '90 Days' }
 const RANGE_DAYS: Record<RangeKey, number> = { '7d': 7, '30d': 30, '90d': 90 }
 
+/** The `days` days ending today, today included — "7 Days" is seven points, not eight. */
 function getDateRange(days: number): { start: string; end: string } {
   const end = new Date()
   const start = new Date()
-  start.setDate(start.getDate() - days)
+  start.setDate(start.getDate() - (days - 1))
   return { start: start.toISOString().split('T')[0], end: end.toISOString().split('T')[0] }
 }
 
@@ -57,9 +64,15 @@ export default function Analytics() {
   const [waterData, setWaterData] = useState<WaterDataPoint[]>([])
   const [tretinoinLogs, setTretinoinLogs] = useState<TretinoinLog[]>([])
   const [workouts, setWorkouts] = useState<Workout[]>([])
+  const [supplementLogs, setSupplementLogs] = useState<Meal[]>([])
   const [loading, setLoading] = useState(false)
+  /** 90-day view: months back from the current one. */
+  const [monthOffset, setMonthOffset] = useState(0)
 
   const settingsStore = useSettingsStore()
+  const supplements = useSupplementStore((s) => s.supplements)
+  const supplementsLoaded = useSupplementStore((s) => s.loaded)
+  const loadSupplements = useSupplementStore((s) => s.load)
   const calTarget = settingsStore.settings?.nutritionTargets?.calories ?? 2000
   const proteinTarget = settingsStore.settings?.nutritionTargets?.protein ?? 150
   const carbsTarget = settingsStore.settings?.nutritionTargets?.carbs ?? 250
@@ -67,10 +80,21 @@ export default function Analytics() {
   const tretinoinSchedule = settingsStore.settings?.tretinoinSchedule
   const todayIso = new Date().toISOString().split('T')[0]
 
-  const adherence = useMemo(() => {
-    const { start, end } = getDateRange(RANGE_DAYS[range])
-    return tretinoinAdherence(tretinoinLogs, tretinoinSchedule, start, end, todayIso)
-  }, [tretinoinLogs, tretinoinSchedule, range, todayIso])
+  /**
+   * What the tretinoin card covers. 7 days is the current calendar week, so
+   * its row reads Sunday to Saturday with every column the date it says;
+   * 30 and 90 are the days ending today, drawn as a calendar.
+   */
+  const tretWindow = useMemo(() => {
+    if (range === '7d') return { start: startOfWeek(todayIso), phrase: 'this week' }
+    const days = RANGE_DAYS[range]
+    return { start: addDays(todayIso, -(days - 1)), phrase: `in the last ${days} days` }
+  }, [range, todayIso])
+
+  const adherence = useMemo(
+    () => tretinoinAdherence(tretinoinLogs, tretinoinSchedule, tretWindow.start, todayIso, todayIso),
+    [tretinoinLogs, tretinoinSchedule, tretWindow, todayIso],
+  )
 
   /**
    * Off-schedule applications are named rather than hidden: they draw a filled
@@ -78,25 +102,74 @@ export default function Analytics() {
    * the figure look like they disagree.
    */
   const adherenceLine = (() => {
-    const days = RANGE_DAYS[range]
+    const { phrase } = tretWindow
     const extra =
       adherence.offSchedule > 0
         ? `, plus ${adherence.offSchedule} off-schedule`
         : ''
     if (adherence.scheduled === 0) {
       return adherence.offSchedule > 0
-        ? `No scheduled days in the last ${days} days — ${adherence.offSchedule} applied anyway.`
-        : `No scheduled days in the last ${days} days yet.`
+        ? `No scheduled days ${phrase} — ${adherence.offSchedule} applied anyway.`
+        : `No scheduled days ${phrase} yet.`
     }
-    return `Applied on ${adherence.applied} of ${adherence.scheduled} scheduled days in the last ${days} days${extra}.`
+    return `Applied on ${adherence.applied} of ${adherence.scheduled} scheduled days ${phrase}${extra}.`
   })()
+
+  /** 90-day pager: the month on screen, and how far back the range reaches. */
+  const monthView = useMemo(() => {
+    const now = new Date(`${todayIso}T12:00:00`)
+    const startDate = new Date(`${tretWindow.start}T12:00:00`)
+    const maxOffset =
+      now.getFullYear() * 12 + now.getMonth() - (startDate.getFullYear() * 12 + startDate.getMonth())
+    const shown = new Date(now.getFullYear(), now.getMonth() - monthOffset, 1, 12)
+    return {
+      year: shown.getFullYear(),
+      month: shown.getMonth(),
+      title: shown.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+      maxOffset,
+    }
+  }, [todayIso, tretWindow, monthOffset])
+
+  /** One series per supplement on the list, plus any logged that has since left it. */
+  const supplementSeries = useMemo<SupplementSeries[]>(() => {
+    const dates = nutritionData.map((d) => d.date)
+    const byDay = new Map<string, Record<string, number>>()
+    const orphans = new Map<string, { name: string; unit: string }>()
+    const known = new Set(supplements.map((s) => s.id))
+    for (const log of supplementLogs) {
+      const day = log.loggedAt.split('T')[0]
+      const amounts = byDay.get(day) ?? {}
+      for (const item of log.items ?? []) {
+        amounts[item.foodId] = (amounts[item.foodId] ?? 0) + (item.quantity ?? 0)
+        if (!known.has(item.foodId)) orphans.set(item.foodId, { name: item.name ?? 'Supplement', unit: item.unit ?? '' })
+      }
+      byDay.set(day, amounts)
+    }
+    const series = (id: string, name: string, unit: string): SupplementSeries => ({
+      id,
+      name,
+      unit,
+      values: dates.map((d) => byDay.get(d)?.[id] ?? 0),
+    })
+    return [
+      ...supplements.map((s) => series(s.id, s.name, s.unit)),
+      ...[...orphans].map(([id, o]) => series(id, o.name, o.unit)),
+    ]
+  }, [supplements, supplementLogs, nutritionData])
+
+  const showSupplements = settingsStore.settings?.showSupplements !== false || supplementLogs.length > 0
 
   useEffect(() => {
     settingsStore.load()
   }, [])
 
   useEffect(() => {
+    if (!supplementsLoaded) loadSupplements()
+  }, [supplementsLoaded, loadSupplements])
+
+  useEffect(() => {
     loadAnalytics(range)
+    setMonthOffset(0)
   }, [range])
 
   async function loadAnalytics(rangeKey: RangeKey) {
@@ -115,6 +188,7 @@ export default function Analytics() {
 
       const nutrition = aggregateNutrition(allMeals, start, end)
       setNutritionData(nutrition)
+      setSupplementLogs(allMeals.filter(isSupplementLog))
 
       const filteredWeights = allWeights.filter((w) => w.date >= start && w.date <= end)
       setWeightData(
@@ -277,15 +351,42 @@ export default function Analytics() {
             </Card>
           )}
 
+          {showSupplements && (
+            <SupplementTrends
+              series={supplementSeries}
+              dates={nutritionData.map((d) => d.date)}
+              formatDate={formatShortDate}
+            />
+          )}
+
           {/* StreakCard is itself a DS card, so it stands on its own rather
-              than sitting inside another one. */}
+              than sitting inside another one. 7 days: this week's row.
+              30 days: the last 30 as a calendar. 90 days: a month at a time. */}
           <div>
             <p className="mb-3 title-2 text-black">Tretinoin adherence</p>
             <StreakCard
               days={tretinoinStreak(tretinoinLogs, tretinoinSchedule, todayIso)}
-              week={tretinoinWeek(tretinoinLogs, tretinoinSchedule, todayIso)}
+              week={range === '7d' ? tretinoinWeek(tretinoinLogs, tretinoinSchedule, todayIso) : undefined}
               footer={adherenceLine}
-            />
+            >
+              {range === '30d' ? (
+                <StreakCalendar
+                  title={`${formatDayLabel(tretWindow.start)} – ${formatDayLabel(todayIso)}`}
+                  weeks={tretinoinCalendar(tretinoinLogs, tretinoinSchedule, tretWindow.start, todayIso, todayIso)}
+                />
+              ) : range === '90d' ? (
+                <StreakCalendar
+                  title={monthView.title}
+                  weeks={tretinoinMonth(
+                    tretinoinLogs, tretinoinSchedule, monthView.year, monthView.month, tretWindow.start, todayIso,
+                  )}
+                  onPrev={() => setMonthOffset((o) => Math.min(monthView.maxOffset, o + 1))}
+                  onNext={() => setMonthOffset((o) => Math.max(0, o - 1))}
+                  prevDisabled={monthOffset >= monthView.maxOffset}
+                  nextDisabled={monthOffset === 0}
+                />
+              ) : undefined}
+            </StreakCard>
           </div>
 
           <Card title="Summary">
